@@ -349,16 +349,24 @@ class CustomDrawer extends StatelessWidget {
                   _buildDrawerItem(
                     context,
                     icon: Icons.folder_shared,
-                    title: 'main.shared_files'.tr(),
+                    title: 'main.shared_with_me'.tr(),
                     route: '/shared-files',
                     isSelected: currentRoute == '/shared-files',
                   ),
                   _buildDrawerItem(
                     context,
                     icon: Icons.people,
-                    title: 'main.share'.tr(),
+                    title: 'main.shared_by_me'.tr(),
                     route: '/my-shared-files',
                     isSelected: currentRoute == '/my-shared-files',
+                  ),
+                  const Divider(height: 1, color: Colors.grey),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.group,
+                    title: 'main.groups'.tr(),
+                    route: '/groups',
+                    isSelected: currentRoute == '/groups',
                   ),
                   _buildDrawerItem(
                     context,

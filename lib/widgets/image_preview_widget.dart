@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
+import 'dart:io';
+import 'package:http/http.dart' as http;
 import '../utils/api_service.dart';
 import '../utils/token_service.dart';
+import '../utils/cache_service.dart';
 
 class ImagePreviewWidget extends StatelessWidget {
   final String filename;
@@ -56,19 +59,30 @@ class ImagePreviewWidget extends StatelessWidget {
                 return _buildErrorWidget();
               }
               
-              return CachedNetworkImage(
-                imageUrl: _imageUrl,
-                fit: fit,
-                httpHeaders: {
-                  'API_KEY': ApiService.apiKey,
-                  'Authorization': 'Bearer $token',
+              return FutureBuilder<String?>(
+                future: _getCachedImagePath(),
+                builder: (context, cacheSnapshot) {
+                  if (cacheSnapshot.connectionState == ConnectionState.waiting) {
+                    return _buildPlaceholder();
+                  }
+                  
+                  final cachedPath = cacheSnapshot.data;
+                  if (cachedPath != null) {
+                    // Użyj cache'owanego obrazu
+                    return Image.file(
+                      File(cachedPath),
+                      fit: fit,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Jeśli cache'owany plik jest uszkodzony, usuń go i pobierz ponownie
+                        CacheService().clearImageCache(_imageUrl);
+                        return _buildNetworkImage(token);
+                      },
+                    );
+                  } else {
+                    // Pobierz z sieci i cache'uj
+                    return _buildNetworkImage(token);
+                  }
                 },
-                placeholder: (context, url) => _buildPlaceholder(),
-                errorWidget: (context, url, error) => _buildErrorWidget(),
-                memCacheWidth: (width * 2).toInt(),
-                memCacheHeight: (height * 2).toInt(),
-                maxWidthDiskCache: 800,
-                maxHeightDiskCache: 800,
               );
             },
           ),
@@ -101,6 +115,45 @@ class ImagePreviewWidget extends StatelessWidget {
     );
   }
 
+  /// Pobiera ścieżkę cache'owanego obrazu
+  Future<String?> _getCachedImagePath() async {
+    return CacheService().getCachedImagePath(_imageUrl);
+  }
+
+  /// Buduje widget obrazu z sieci z cache'owaniem
+  Widget _buildNetworkImage(String token) {
+    return FutureBuilder<http.Response>(
+      future: http.get(
+        Uri.parse(_imageUrl),
+        headers: {
+          'API_KEY': ApiService.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _buildPlaceholder();
+        }
+        
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.statusCode != 200) {
+          return _buildErrorWidget();
+        }
+        
+        final response = snapshot.data!;
+        final imageBytes = response.bodyBytes;
+        
+        // Cache'uj obraz
+        CacheService().cacheImage(_imageUrl, imageBytes);
+        
+        return Image.memory(
+          imageBytes,
+          fit: fit,
+          errorBuilder: (context, error, stackTrace) => _buildErrorWidget(),
+        );
+      },
+    );
+  }
+
   void _showFullScreen(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -109,6 +162,80 @@ class ImagePreviewWidget extends StatelessWidget {
           filename: filename,
         ),
       ),
+    );
+  }
+
+  /// Buduje widget obrazu z sieci dla galerii z cache'owaniem
+  Widget _buildGalleryNetworkImage(String token, String imageUrl) {
+    return FutureBuilder<http.Response>(
+      future: http.get(
+        Uri.parse(imageUrl),
+        headers: {
+          'API_KEY': ApiService.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          );
+        }
+        
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.statusCode != 200) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.broken_image,
+                  color: Colors.white,
+                  size: 64,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Nie można załadować obrazu',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        final response = snapshot.data!;
+        final imageBytes = response.bodyBytes;
+        
+        // Cache'uj obraz
+        CacheService().cacheImage(imageUrl, imageBytes);
+        
+        return PhotoView(
+          imageProvider: MemoryImage(imageBytes),
+          loadingBuilder: (context, event) => const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+          errorBuilder: (context, error, stackTrace) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.broken_image,
+                  color: Colors.white,
+                  size: 64,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Nie można załadować obrazu',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+          minScale: PhotoViewComputedScale.contained,
+          maxScale: PhotoViewComputedScale.covered * 2.0,
+          initialScale: PhotoViewComputedScale.contained,
+          heroAttributes: PhotoViewHeroAttributes(tag: imageUrl),
+        );
+      },
     );
   }
 }
@@ -160,38 +287,38 @@ class FullScreenImageView extends StatelessWidget {
             );
           }
           
-          return PhotoView(
-            imageProvider: CachedNetworkImageProvider(
-              imageUrl,
-              headers: {
-                'API_KEY': ApiService.apiKey,
-                'Authorization': 'Bearer $token',
-              },
-            ),
-            loadingBuilder: (context, event) => const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
-            errorBuilder: (context, error, stackTrace) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.broken_image,
-                    color: Colors.white,
-                    size: 64,
+          return FutureBuilder<String?>(
+            future: Future.value(CacheService().getCachedImagePath(imageUrl)),
+            builder: (context, cacheSnapshot) {
+              if (cacheSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                );
+              }
+              
+              final cachedPath = cacheSnapshot.data;
+              if (cachedPath != null) {
+                // Użyj cache'owanego obrazu
+                return PhotoView(
+                  imageProvider: FileImage(File(cachedPath)),
+                  loadingBuilder: (context, event) => const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Nie można załadować obrazu',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-            minScale: PhotoViewComputedScale.contained,
-            maxScale: PhotoViewComputedScale.covered * 2.0,
-            initialScale: PhotoViewComputedScale.contained,
-            heroAttributes: PhotoViewHeroAttributes(tag: imageUrl),
+                  errorBuilder: (context, error, stackTrace) {
+                    // Jeśli cache'owany plik jest uszkodzony, usuń go i pobierz ponownie
+                    CacheService().clearImageCache(imageUrl);
+                    return _buildFullScreenNetworkImage(token);
+                  },
+                  minScale: PhotoViewComputedScale.contained,
+                  maxScale: PhotoViewComputedScale.covered * 2.0,
+                  initialScale: PhotoViewComputedScale.contained,
+                  heroAttributes: PhotoViewHeroAttributes(tag: imageUrl),
+                );
+              } else {
+                // Pobierz z sieci i cache'uj
+                return _buildFullScreenNetworkImage(token);
+              }
+            },
           );
         },
       ),
@@ -207,6 +334,80 @@ class FullScreenImageView extends StatelessWidget {
       const SnackBar(
         content: Text('Funkcja pobierania będzie dostępna wkrótce'),
       ),
+    );
+  }
+
+  /// Buduje widget obrazu z sieci dla pełnego ekranu z cache'owaniem
+  Widget _buildFullScreenNetworkImage(String token) {
+    return FutureBuilder<http.Response>(
+      future: http.get(
+        Uri.parse(imageUrl),
+        headers: {
+          'API_KEY': ApiService.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          );
+        }
+        
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.statusCode != 200) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.broken_image,
+                  color: Colors.white,
+                  size: 64,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Nie można załadować obrazu',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        final response = snapshot.data!;
+        final imageBytes = response.bodyBytes;
+        
+        // Cache'uj obraz
+        CacheService().cacheImage(imageUrl, imageBytes);
+        
+        return PhotoView(
+          imageProvider: MemoryImage(imageBytes),
+          loadingBuilder: (context, event) => const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+          errorBuilder: (context, error, stackTrace) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.broken_image,
+                  color: Colors.white,
+                  size: 64,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Nie można załadować obrazu',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+          minScale: PhotoViewComputedScale.contained,
+          maxScale: PhotoViewComputedScale.covered * 2.0,
+          initialScale: PhotoViewComputedScale.contained,
+          heroAttributes: PhotoViewHeroAttributes(tag: imageUrl),
+        );
+      },
     );
   }
 }
@@ -315,39 +516,38 @@ class _ImageGalleryViewState extends State<ImageGalleryView> {
                     );
                   }
                   
-                  return PhotoView(
-                    imageProvider: CachedNetworkImageProvider(
-                      imageUrl,
-                      headers: {
-                        'API_KEY': ApiService.apiKey,
-                        'Authorization': 'Bearer $token',
-                      },
-                      cacheKey: 'gallery_${currentImage['filename']}',
-                    ),
-                    loadingBuilder: (context, event) => const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    ),
-                    errorBuilder: (context, error, stackTrace) => Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.broken_image,
-                            color: Colors.white,
-                            size: 64,
+                  return FutureBuilder<String?>(
+                    future: Future.value(CacheService().getCachedImagePath(imageUrl)),
+                    builder: (context, cacheSnapshot) {
+                      if (cacheSnapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        );
+                      }
+                      
+                      final cachedPath = cacheSnapshot.data;
+                      if (cachedPath != null) {
+                        // Użyj cache'owanego obrazu
+                        return PhotoView(
+                          imageProvider: FileImage(File(cachedPath)),
+                          loadingBuilder: (context, event) => const Center(
+                            child: CircularProgressIndicator(color: Colors.white),
                           ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Nie można załadować obrazu',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ),
-                    minScale: PhotoViewComputedScale.contained,
-                    maxScale: PhotoViewComputedScale.covered * 2.0,
-                    initialScale: PhotoViewComputedScale.contained,
-                    heroAttributes: PhotoViewHeroAttributes(tag: imageUrl),
+                          errorBuilder: (context, error, stackTrace) {
+                            // Jeśli cache'owany plik jest uszkodzony, usuń go i pobierz ponownie
+                            CacheService().clearImageCache(imageUrl);
+                            return _buildGalleryNetworkImage(token, imageUrl);
+                          },
+                          minScale: PhotoViewComputedScale.contained,
+                          maxScale: PhotoViewComputedScale.covered * 2.0,
+                          initialScale: PhotoViewComputedScale.contained,
+                          heroAttributes: PhotoViewHeroAttributes(tag: imageUrl),
+                        );
+                      } else {
+                        // Pobierz z sieci i cache'uj
+                        return _buildGalleryNetworkImage(token, imageUrl);
+                      }
+                    },
                   );
                 },
               ),
@@ -458,6 +658,80 @@ class _ImageGalleryViewState extends State<ImageGalleryView> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Buduje widget obrazu z sieci dla galerii z cache'owaniem
+  Widget _buildGalleryNetworkImage(String token, String imageUrl) {
+    return FutureBuilder<http.Response>(
+      future: http.get(
+        Uri.parse(imageUrl),
+        headers: {
+          'API_KEY': ApiService.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          );
+        }
+        
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.statusCode != 200) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.broken_image,
+                  color: Colors.white,
+                  size: 64,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Nie można załadować obrazu',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        final response = snapshot.data!;
+        final imageBytes = response.bodyBytes;
+        
+        // Cache'uj obraz
+        CacheService().cacheImage(imageUrl, imageBytes);
+        
+        return PhotoView(
+          imageProvider: MemoryImage(imageBytes),
+          loadingBuilder: (context, event) => const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+          errorBuilder: (context, error, stackTrace) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.broken_image,
+                  color: Colors.white,
+                  size: 64,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Nie można załadować obrazu',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+          minScale: PhotoViewComputedScale.contained,
+          maxScale: PhotoViewComputedScale.covered * 2.0,
+          initialScale: PhotoViewComputedScale.contained,
+          heroAttributes: PhotoViewHeroAttributes(tag: imageUrl),
+        );
+      },
     );
   }
 } 

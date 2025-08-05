@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/custom_widgets.dart';
 import '../utils/token_service.dart';
 import '../utils/app_settings.dart';
+import '../utils/cache_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -30,7 +31,8 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
   // Data & Sync
   bool _autoSync = true;
   bool _wifiOnly = true;
-  double _cacheSize = 42.0; // MB (placeholder)
+  double _cacheSize = 0.0; // MB
+  Map<String, dynamic> _cacheStats = {};
 
 
 
@@ -94,11 +96,56 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
 
   Future<void> _loadAppSettings() async {
     await AppSettings().initialize();
+    await _loadCacheStats();
     setState(() {
       _fontSize = AppSettings().fontSize;
       _defaultView = AppSettings().defaultView;
       _defaultSort = AppSettings().defaultSort;
     });
+  }
+
+  Future<void> _loadCacheStats() async {
+    final stats = CacheService().getCacheStats();
+    setState(() {
+      _cacheStats = stats;
+      _cacheSize = double.tryParse(stats['images_cache_size_mb'] ?? '0.0') ?? 0.0;
+    });
+  }
+
+  Future<void> _clearCache() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('settings.clear_cache_title'.tr()),
+          content: Text('settings.clear_cache_message'.tr()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('settings.cancel'.tr()),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('settings.clear'.tr()),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await CacheService().clearAllCache();
+      await _loadCacheStats();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('settings.cache_cleared'.tr()),
+            backgroundColor: const Color(0xFF667eea),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -651,9 +698,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
         subtitle: Text('${_cacheSize.toStringAsFixed(1)} MB'),
         trailing: IconButton(
           icon: const Icon(Icons.delete, color: Colors.red),
-          onPressed: () {
-            setState(() => _cacheSize = 0);
-          },
+          onPressed: _clearCache,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

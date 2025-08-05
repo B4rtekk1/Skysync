@@ -370,42 +370,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             ),
                           ),
                           
-                          // Password strength indicator
-                          if (_passwordController.text.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Container(
-                              width: width,
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'reset.password_strength'.tr(namedArgs: {'strength': getPasswordStrength(_passwordController.text)}),
-                                    style: TextStyle(
-                                      color: _getPasswordStrengthColor(_passwordController.text),
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  LinearProgressIndicator(
-                                    value: getPasswordStrength(_passwordController.text) == 'Very weak' ? 0.2 :
-                                           getPasswordStrength(_passwordController.text) == 'Weak' ? 0.4 :
-                                           getPasswordStrength(_passwordController.text) == 'Medium' ? 0.6 :
-                                           getPasswordStrength(_passwordController.text) == 'Strong' ? 0.8 : 1.0,
-                                    backgroundColor: Colors.grey.shade300,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      _getPasswordStrengthColor(_passwordController.text),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                          
                           // Password requirements
                           if (_passwordController.text.isNotEmpty) ...[
                             const SizedBox(height: 16),

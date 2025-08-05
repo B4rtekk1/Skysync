@@ -12,6 +12,7 @@ import '../utils/token_service.dart';
 import '../utils/notification_service.dart';
 import '../utils/error_handler.dart';
 import '../utils/activity_service.dart';
+import '../utils/cache_service.dart';
 import 'dart:async';
 import '../widgets/image_preview_widget.dart';
 import '../widgets/text_preview_widget.dart';
@@ -109,9 +110,17 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         return;
       }
 
+      // Sprawdź cache dla listy plików
+      final cachedFiles = CacheService().getCachedFiles(username, _currentPath);
+      if (cachedFiles != null) {
+        print('Używam cache\'owanych plików dla: $username/$_currentPath');
+        _processFilesData(cachedFiles);
+        return;
+      }
+
       // Użyj bieżącej ścieżki lub domyślnie folder użytkownika
       final folderPath = _currentPath.isEmpty ? username : '$username/$_currentPath';
-      print('Loading files from: $folderPath');
+      print('Ładowanie plików z: $folderPath');
       
       final response = await ApiService.listFiles(
         username: username,
@@ -125,52 +134,10 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         final data = jsonDecode(response.body);
         final filesData = data['files'] as List;
         
-        setState(() {
-          _files = filesData.map((fileData) {
-            final filename = fileData['filename'] as String;
-            final sizeBytes = fileData['size_bytes'] as int;
-            final modificationDate = fileData['modification_date'] as String;
-            final type = fileData['type'] as String;
-            final isFavorite = fileData['is_favorite'] as bool? ?? false;
-            
-            // Obsługa nowych pól dla folderów
-            String displaySize;
-            if (type == 'folder') {
-              final fileCount = fileData['file_count'] as int? ?? 0;
-              final folderCount = fileData['folder_count'] as int? ?? 0;
-              
-              final filesLabel = _getPluralLabel(fileCount, 'folder_info.file_singular', 'folder_info.file_plural');
-              final foldersLabel = _getPluralLabel(folderCount, 'folder_info.folder_singular', 'folder_info.folder_plural');
-              
-              if (sizeBytes > 0) {
-                displaySize = '${_formatFileSize(sizeBytes)} (${'folder_info.files_and_folders'.tr(namedArgs: {
-                  'files': fileCount.toString(), 
-                  'folders': folderCount.toString(),
-                  'files_label': filesLabel,
-                  'folders_label': foldersLabel,
-                })})';
-              } else {
-                displaySize = '-- (${'folder_info.files_and_folders'.tr(namedArgs: {
-                  'files': fileCount.toString(), 
-                  'folders': folderCount.toString(),
-                  'files_label': filesLabel,
-                  'folders_label': foldersLabel,
-                })})';
-              }
-            } else {
-              displaySize = _formatFileSize(sizeBytes);
-            }
-            
-            return FileItem(
-              name: filename,
-              size: displaySize,
-              date: _formatDate(modificationDate),
-              type: type == 'folder' ? 'folder' : _getFileType(filename),
-              isFavorite: isFavorite,
-            );
-          }).toList();
-          _isLoading = false;
-        });
+        // Zapisz do cache
+        await CacheService().cacheFiles(username, _currentPath, filesData.cast<Map<String, dynamic>>());
+        
+        _processFilesData(filesData.cast<Map<String, dynamic>>());
       } else {
         // Sprawdź czy to błąd wygasłego tokenu
         if (response.body.toLowerCase().contains('token expired') || 
@@ -194,6 +161,55 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         _isLoading = false;
       });
     }
+  }
+
+  void _processFilesData(List<Map<String, dynamic>> filesData) {
+    setState(() {
+      _files = filesData.map((fileData) {
+        final filename = fileData['filename'] as String;
+        final sizeBytes = fileData['size_bytes'] as int;
+        final modificationDate = fileData['modification_date'] as String;
+        final type = fileData['type'] as String;
+        final isFavorite = fileData['is_favorite'] as bool? ?? false;
+        
+        // Obsługa nowych pól dla folderów
+        String displaySize;
+        if (type == 'folder') {
+          final fileCount = fileData['file_count'] as int? ?? 0;
+          final folderCount = fileData['folder_count'] as int? ?? 0;
+          
+          final filesLabel = _getPluralLabel(fileCount, 'folder_info.file_singular', 'folder_info.file_plural');
+          final foldersLabel = _getPluralLabel(folderCount, 'folder_info.folder_singular', 'folder_info.folder_plural');
+          
+          if (sizeBytes > 0) {
+            displaySize = '${_formatFileSize(sizeBytes)} (${'folder_info.files_and_folders'.tr(namedArgs: {
+              'files': fileCount.toString(), 
+              'folders': folderCount.toString(),
+              'files_label': filesLabel,
+              'folders_label': foldersLabel,
+            })})';
+          } else {
+            displaySize = '-- (${'folder_info.files_and_folders'.tr(namedArgs: {
+              'files': fileCount.toString(), 
+              'folders': folderCount.toString(),
+              'files_label': filesLabel,
+              'folders_label': foldersLabel,
+            })})';
+          }
+        } else {
+          displaySize = _formatFileSize(sizeBytes);
+        }
+        
+        return FileItem(
+          name: filename,
+          size: displaySize,
+          date: _formatDate(modificationDate),
+          type: type == 'folder' ? 'folder' : _getFileType(filename),
+          isFavorite: isFavorite,
+        );
+      }).toList();
+      _isLoading = false;
+    });
   }
 
   String _formatFileSize(int bytes) {
@@ -408,6 +424,8 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         
         // Pokaż ładny dialog potwierdzający
         _showFolderCreatedSuccessDialog(folderName);
+        // Wyczyść cache dla bieżącej ścieżki
+        await CacheService().clearFilesCache(username, _currentPath);
         // Odśwież listę plików
         _loadFiles();
       } else {
@@ -551,6 +569,8 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         _showUploadFailureDialog(failedFiles);
       }
 
+      // Wyczyść cache dla bieżącej ścieżki
+      await CacheService().clearFilesCache(username, _currentPath);
       // Odśwież listę plików
       _loadFiles();
     } catch (e) {
@@ -943,6 +963,9 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
 
       if (!mounted) return;
 
+      // Wyczyść cache dla bieżącej ścieżki
+      await CacheService().clearFilesCache(username, _currentPath);
+      
       // Aktualizuj lokalną listę plików
       setState(() {
         _files.removeWhere((file) => selectedFiles.any((selected) => selected.name == file.name));
@@ -3075,42 +3098,234 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
 
   void _showShareDialog(FileItem file) {
     final TextEditingController emailController = TextEditingController();
+    bool shareWithUser = true;
+    List<Map<String, dynamic>> groups = [];
+    String? selectedGroupName;
+    bool isLoadingGroups = false;
     
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('share.title'.tr()),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('share.enter_email_or_username'.tr()),
-              const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  labelText: 'share.email_or_username'.tr(),
-                  border: OutlineInputBorder(),
-                  hintText: 'share.email_or_username_hint'.tr(),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('share.title'.tr()),
+              content: SizedBox(
+                width: 400,
+                height: 400,
+                child: Column(
+                  children: [
+                    // Toggle buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => shareWithUser = true),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: shareWithUser ? const Color(0xFF667eea) : Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'share.with_user'.tr(),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: shareWithUser ? Colors.white : Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                shareWithUser = false;
+                                selectedGroupName = null;
+                              });
+                              // Załaduj grupy gdy przełączamy na grupy
+                              if (groups.isEmpty && !isLoadingGroups) {
+                                _loadGroupsForSharing(setState, groups, isLoadingGroups);
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: !shareWithUser ? const Color(0xFF667eea) : Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'share.with_group'.tr(),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: !shareWithUser ? Colors.white : Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Content area
+                    if (shareWithUser) ...[
+                      Text('share.enter_email_or_username'.tr()),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: emailController,
+                        decoration: InputDecoration(
+                          labelText: 'share.email_or_username'.tr(),
+                          border: const OutlineInputBorder(),
+                          hintText: 'share.email_or_username_hint'.tr(),
+                        ),
+                      ),
+                    ] else ...[
+                      Text(
+                        'share.select_group'.tr(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (isLoadingGroups)
+                        const Center(
+                          child: CircularProgressIndicator(),
+                        )
+                      else if (groups.isEmpty)
+                        Center(
+                          child: Text(
+                            'share.no_groups_available'.tr(),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: groups.length,
+                            itemBuilder: (context, index) {
+                              final group = groups[index];
+                              final isSelected = selectedGroupName == group['name'];
+                              
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? const Color(0xFF667eea).withOpacity(0.1) : Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFF667eea) : Colors.grey[300]!,
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                ),
+                                child: ListTile(
+                                  leading: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF667eea).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        group['name'][0].toUpperCase(),
+                                        style: const TextStyle(
+                                          color: Color(0xFF667eea),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    group['name'],
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      if (group['description'] != null && group['description'].isNotEmpty)
+                                        Text(
+                                          group['description'],
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 12,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.people,
+                                            size: 14,
+                                            color: Colors.grey[600],
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${group['member_count']} ${'groups.members'.tr()}',
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: isSelected
+                                      ? const Icon(
+                                          Icons.check_circle,
+                                          color: Color(0xFF667eea),
+                                          size: 24,
+                                        )
+                                      : null,
+                                  onTap: () {
+                                    setState(() {
+                                      selectedGroupName = group['name'];
+                                    });
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  ],
                 ),
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('share.cancel'.tr()),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (emailController.text.trim().isNotEmpty) {
-                  Navigator.of(context).pop();
-                  _shareFile(file, emailController.text.trim());
-                }
-              },
-              child: Text('share.share'.tr()),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('share.cancel'.tr()),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (shareWithUser) {
+                      final text = emailController.text.trim();
+                      if (text.isNotEmpty) {
+                        Navigator.of(context).pop();
+                        _shareFile(file, text);
+                      }
+                    } else {
+                      if (selectedGroupName != null) {
+                        Navigator.of(context).pop();
+                        _shareFileWithGroup(file, selectedGroupName!);
+                      }
+                    }
+                  },
+                  child: Text('share.share'.tr()),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -3251,6 +3466,117 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _loadGroupsForSharing(
+    StateSetter setState,
+    List<Map<String, dynamic>> groups,
+    bool isLoadingGroups,
+  ) async {
+    setState(() {
+      isLoadingGroups = true;
+    });
+
+    try {
+      final token = await TokenService.getToken();
+      if (token == null) {
+        setState(() {
+          isLoadingGroups = false;
+        });
+        return;
+      }
+
+      final response = await ApiService.listGroups(token: token);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          groups.clear();
+          groups.addAll(List<Map<String, dynamic>>.from(data['groups']));
+          isLoadingGroups = false;
+        });
+      } else {
+        setState(() {
+          isLoadingGroups = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingGroups = false;
+      });
+    }
+  }
+
+  Future<void> _shareFileWithGroup(FileItem file, String groupName) async {
+    try {
+      // Pokaż dialog z progressem
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return ProgressDialog(
+            message: 'share.sharing_with_group'.tr(namedArgs: {'filename': file.name, 'group': groupName}),
+            color: Colors.blue,
+          );
+        },
+      );
+
+      final token = await TokenService.getToken();
+      final username = await TokenService.getUsername();
+      
+      if (token == null || username == null) {
+        Navigator.pop(context); // Zamknij dialog
+        _showSessionExpiredDialog();
+        return;
+      }
+
+      http.Response response;
+      
+      if (file.type == 'folder') {
+        // Udostępnianie folderu grupie
+        final folderPath = _currentPath.isEmpty ? username : '$username/$_currentPath';
+        final fullFolderPath = '$folderPath/${file.name}';
+        
+        // Dla folderów, file.name to nazwa folderu, więc fullFolderPath to ścieżka do folderu
+        // Ale jeśli _currentPath już zawiera file.name, to nie dodajemy go ponownie
+        final actualFolderPath = _currentPath.endsWith(file.name) 
+            ? '$username/$_currentPath' 
+            : fullFolderPath;
+        
+        response = await ApiService.shareFolderWithGroup(
+          folderPath: actualFolderPath,
+          groupName: groupName,
+          token: token,
+        );
+      } else {
+        // Udostępnianie pliku grupie
+        final folderPath = _currentPath.isEmpty ? username : '$username/$_currentPath';
+        
+        response = await ApiService.shareFileWithGroup(
+          filename: file.name,
+          folderName: folderPath,
+          groupName: groupName,
+          token: token,
+        );
+      }
+
+      Navigator.pop(context); // Zamknij dialog
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        NotificationService.showFileSharedWithGroup(context, file.name, groupName);
+      } else {
+        final data = jsonDecode(response.body);
+        final errorMessage = data['detail'] ?? response.body;
+        NotificationService.showValidationError(context, errorMessage);
+      }
+    } catch (e) {
+      Navigator.pop(context); // Zamknij dialog
+      if (!mounted) return;
+      NotificationService.showValidationError(context, 'Network error: $e');
+    }
+  }
+
   void _showFileInfo(FileItem file) async {
     final email = await TokenService.getEmail();
     final location = _currentPath.isEmpty ? email ?? 'Unknown' : '${email ?? 'Unknown'}/$_currentPath';
@@ -3388,6 +3714,9 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
+        // Wyczyść cache dla bieżącej ścieżki
+        await CacheService().clearFilesCache(username, _currentPath);
+        
         // Usuń plik z lokalnej listy
         setState(() {
           _files.removeWhere((f) => f.name == file.name);
@@ -4503,6 +4832,8 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
           );
         }
         
+        // Wyczyść cache dla bieżącej ścieżki
+        await CacheService().clearFilesCache(username, _currentPath);
         // Odśwież listę plików
         await _loadFiles();
         // Wyjdź z trybu wyboru jeśli przeniesiono wiele plików
@@ -4598,6 +4929,9 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
             _selectedFiles.clear();
           });
         }
+        // Wyczyść cache dla bieżącej ścieżki
+        await CacheService().clearFilesCache(username, _currentPath);
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(isMultipleFiles 
@@ -4693,6 +5027,9 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
             _selectedFiles.clear();
           });
         }
+        // Wyczyść cache dla bieżącej ścieżki
+        await CacheService().clearFilesCache(username, _currentPath);
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(isMultipleFiles 
@@ -4779,6 +5116,9 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
             _selectedFiles.clear();
           });
         }
+        // Wyczyść cache dla bieżącej ścieżki
+        await CacheService().clearFilesCache(username, _currentPath);
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(isMultipleFiles 

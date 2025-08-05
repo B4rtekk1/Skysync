@@ -264,6 +264,15 @@ class NotificationService {
     );
   }
 
+  static void showFileSharedWithGroup(BuildContext context, String fileName, String groupName) {
+    showSuccess(
+      context,
+      'share.share_group_success'.tr(namedArgs: {'filename': fileName, 'group': groupName}),
+      title: 'share.share_group_title'.tr(),
+      icon: Icons.group,
+    );
+  }
+
   static void showFileUnshared(BuildContext context, String fileName) {
     showSuccess(
       context,

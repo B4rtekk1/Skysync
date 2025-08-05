@@ -7,6 +7,11 @@ import '../utils/api_service.dart';
 import '../utils/error_handler.dart';
 import '../utils/error_widgets.dart';
 import '../utils/activity_service.dart';
+import '../utils/file_utils.dart';
+import '../widgets/image_preview_widget.dart';
+import '../widgets/text_preview_widget.dart';
+import '../widgets/spreadsheet_preview_widget.dart';
+import '../widgets/pdf_preview_widget.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class MySharedFilesPage extends StatefulWidget {
@@ -58,113 +63,217 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
         return;
       }
 
-      // Pobierz pliki i foldery udostępnione przez użytkownika
+      // Pobierz pliki i foldery udostępnione przez użytkownika (zarówno użytkownikom jak i grupom)
       final filesResponse = await ApiService.getMySharedFiles(token: token);
       final foldersResponse = await ApiService.getMySharedFolders(token: token);
+      final groupFilesResponse = await ApiService.getGroupSharedFiles(token: token);
+      final groupFoldersResponse = await ApiService.getGroupSharedFolders(token: token);
 
       if (!mounted) return;
 
-      if (filesResponse.statusCode == 200 && foldersResponse.statusCode == 200) {
-        final filesData = jsonDecode(filesResponse.body);
-        final foldersData = jsonDecode(foldersResponse.body);
-        
-        final sharedFilesData = filesData['my_shared_files'] as List;
-        final sharedFoldersData = foldersData['my_shared_folders'] as List;
-        
-        final List<MySharedItem> allItems = [];
-        
-        // Dodaj pliki
-        for (var fileData in sharedFilesData) {
-          final filename = fileData['filename'] as String;
-          final sizeBytes = fileData['size_bytes'] as int;
-          final modificationDate = fileData['modification_date'] as String;
-          final sharedAt = fileData['shared_at'] as String;
-          final folderName = fileData['folder_name'] as String;
-          final sharedWith = fileData['shared_with'] as String;
-          final sharedWithEmail = fileData['shared_with_email'] as String;
-          
-          allItems.add(MySharedItem(
-            name: filename,
-            size: _formatFileSize(sizeBytes),
-            date: _formatDate(modificationDate),
-            sharedDate: _formatDate(sharedAt),
-            type: 'file',
-            fileType: _getFileType(filename),
-            folderName: folderName,
-            sharedWith: sharedWith,
-            sharedWithEmail: sharedWithEmail,
-            fileCount: 0,
-            folderCount: 0,
-          ));
-        }
-        
-        // Dodaj foldery
-        for (var folderData in sharedFoldersData) {
-          final folderName = folderData['folder_name'] as String;
-          final totalSizeBytes = folderData['total_size_bytes'] as int;
-          final modificationDate = folderData['modification_date'] as String;
-          final sharedAt = folderData['shared_at'] as String;
-          final folderPath = folderData['folder_path'] as String;
-          final sharedWith = folderData['shared_with'] as String;
-          final sharedWithEmail = folderData['shared_with_email'] as String;
-          final fileCount = folderData['file_count'] as int;
-          final folderCount = folderData['folder_count'] as int;
-          
-          // Formatuj rozmiar z informacją o liczbie plików i folderów
-          String displaySize;
-          final filesLabel = _getPluralLabel(fileCount, 'folder_info.file_singular', 'folder_info.file_plural');
-          final foldersLabel = _getPluralLabel(folderCount, 'folder_info.folder_singular', 'folder_info.folder_plural');
-          
-          if (totalSizeBytes > 0) {
-            displaySize = '${_formatFileSize(totalSizeBytes)} (${'folder_info.files_and_folders'.tr(namedArgs: {
-              'files': fileCount.toString(), 
-              'folders': folderCount.toString(),
-              'files_label': filesLabel,
-              'folders_label': foldersLabel,
-            })})';
-          } else {
-            displaySize = '-- (${'folder_info.files_and_folders'.tr(namedArgs: {
-              'files': fileCount.toString(), 
-              'folders': folderCount.toString(),
-              'files_label': filesLabel,
-              'folders_label': foldersLabel,
-            })})';
-          }
-          
-          allItems.add(MySharedItem(
-            name: folderName,
-            size: displaySize,
-            date: _formatDate(modificationDate),
-            sharedDate: _formatDate(sharedAt),
-            type: 'folder',
-            fileType: 'folder',
-            folderName: folderPath,
-            sharedWith: sharedWith,
-            sharedWithEmail: sharedWithEmail,
-            fileCount: fileCount,
-            folderCount: folderCount,
-          ));
-        }
-        
+      // Sprawdź czy to błąd wygasłego tokenu
+      if ((filesResponse.statusCode == 401) || (foldersResponse.statusCode == 401) ||
+          (groupFilesResponse.statusCode == 401) || (groupFoldersResponse.statusCode == 401)) {
         setState(() {
-          _sharedItems = allItems;
-          _filteredItems = allItems;
           _isLoading = false;
         });
-      } else {
-        // Sprawdź czy to błąd wygasłego tokenu
-        if ((filesResponse.statusCode == 401) || (foldersResponse.statusCode == 401)) {
-          setState(() {
-            _isLoading = false;
-          });
-          _showSessionExpiredDialog();
-        } else {
-          setState(() {
-            _errorMessage = 'my_shared_files.error_loading'.tr(namedArgs: {'error': 'Failed to load shared items'});
-            _isLoading = false;
-          });
+        _showSessionExpiredDialog();
+        return;
+      }
+
+      final List<MySharedItem> allItems = [];
+      
+      // Przetwórz pliki udostępnione użytkownikom (jeśli sukces)
+      if (filesResponse.statusCode == 200) {
+        try {
+          final filesData = jsonDecode(filesResponse.body);
+          final sharedFilesData = filesData['my_shared_files'] as List;
+          
+          for (var fileData in sharedFilesData) {
+            final filename = fileData['filename'] as String;
+            final sizeBytes = fileData['size_bytes'] as int;
+            final modificationDate = fileData['modification_date'] as String;
+            final sharedAt = fileData['shared_at'] as String;
+            final folderName = fileData['folder_name'] as String;
+            final sharedWith = fileData['shared_with'] as String;
+            final sharedWithEmail = fileData['shared_with_email'] as String;
+            
+            allItems.add(MySharedItem(
+              name: filename,
+              size: _formatFileSize(sizeBytes),
+              date: _formatDate(modificationDate),
+              sharedDate: _formatDate(sharedAt),
+              type: 'file',
+              fileType: _getFileType(filename),
+              folderName: folderName,
+              sharedWith: sharedWith,
+              sharedWithEmail: sharedWithEmail,
+              fileCount: 0,
+              folderCount: 0,
+              isSharedWithGroup: false,
+            ));
+          }
+        } catch (e) {
+          // Handle parsing error silently
         }
       }
+      
+      // Przetwórz foldery udostępnione użytkownikom (jeśli sukces)
+      if (foldersResponse.statusCode == 200) {
+        try {
+          final foldersData = jsonDecode(foldersResponse.body);
+          final sharedFoldersData = foldersData['my_shared_folders'] as List;
+          
+          for (var folderData in sharedFoldersData) {
+            final folderName = folderData['folder_name'] as String;
+            final totalSizeBytes = folderData['total_size_bytes'] as int;
+            final modificationDate = folderData['modification_date'] as String;
+            final sharedAt = folderData['shared_at'] as String;
+            final folderPath = folderData['folder_path'] as String;
+            final sharedWith = folderData['shared_with'] as String;
+            final sharedWithEmail = folderData['shared_with_email'] as String;
+            final fileCount = folderData['file_count'] as int;
+            final folderCount = folderData['folder_count'] as int;
+            
+            // Formatuj rozmiar z informacją o liczbie plików i folderów
+            String displaySize;
+            final filesLabel = _getPluralLabel(fileCount, 'folder_info.file_singular', 'folder_info.file_plural');
+            final foldersLabel = _getPluralLabel(folderCount, 'folder_info.folder_singular', 'folder_info.folder_plural');
+            
+            if (totalSizeBytes > 0) {
+              displaySize = '${_formatFileSize(totalSizeBytes)} (${'folder_info.files_and_folders'.tr(namedArgs: {
+                'files': fileCount.toString(), 
+                'folders': folderCount.toString(),
+                'files_label': filesLabel,
+                'folders_label': foldersLabel,
+              })})';
+            } else {
+              displaySize = '-- (${'folder_info.files_and_folders'.tr(namedArgs: {
+                'files': fileCount.toString(), 
+                'folders': folderCount.toString(),
+                'files_label': filesLabel,
+                'folders_label': foldersLabel,
+              })})';
+            }
+            
+            allItems.add(MySharedItem(
+              name: folderName,
+              size: displaySize,
+              date: _formatDate(modificationDate),
+              sharedDate: _formatDate(sharedAt),
+              type: 'folder',
+              fileType: 'folder',
+              folderName: folderPath,
+              sharedWith: sharedWith,
+              sharedWithEmail: sharedWithEmail,
+              fileCount: fileCount,
+              folderCount: folderCount,
+              isSharedWithGroup: false,
+            ));
+          }
+        } catch (e) {
+          // Handle parsing error silently
+        }
+      }
+      
+      // Przetwórz pliki udostępnione grupie (jeśli sukces)
+      if (groupFilesResponse.statusCode == 200) {
+        try {
+          final groupFilesData = jsonDecode(groupFilesResponse.body);
+          final groupSharedFilesData = groupFilesData['group_shared_files'] as List;
+          
+          for (var fileData in groupSharedFilesData) {
+            final filename = fileData['filename'] as String;
+            final sizeBytes = fileData['size_bytes'] as int;
+            final modificationDate = fileData['modification_date'] as String;
+            final sharedAt = fileData['shared_at'] as String;
+            final folderName = fileData['folder_name'] as String;
+            final groupName = fileData['group_name'] as String;
+            final groupDescription = fileData['group_description'] as String?;
+            
+            allItems.add(MySharedItem(
+              name: filename,
+              size: _formatFileSize(sizeBytes),
+              date: _formatDate(modificationDate),
+              sharedDate: _formatDate(sharedAt),
+              type: 'file',
+              fileType: _getFileType(filename),
+              folderName: folderName,
+              sharedWith: groupName,
+              sharedWithEmail: groupDescription ?? groupName,
+              fileCount: 0,
+              folderCount: 0,
+              isSharedWithGroup: true,
+            ));
+          }
+        } catch (e) {
+          // Handle parsing error silently
+        }
+      }
+      
+      // Przetwórz foldery udostępnione grupie (jeśli sukces)
+      if (groupFoldersResponse.statusCode == 200) {
+        try {
+          final groupFoldersData = jsonDecode(groupFoldersResponse.body);
+          final groupSharedFoldersData = groupFoldersData['group_shared_folders'] as List;
+          
+          for (var folderData in groupSharedFoldersData) {
+            final folderName = folderData['folder_name'] as String;
+            final totalSizeBytes = folderData['total_size_bytes'] as int;
+            final modificationDate = folderData['modification_date'] as String;
+            final sharedAt = folderData['shared_at'] as String;
+            final folderPath = folderData['folder_path'] as String;
+            final groupName = folderData['group_name'] as String;
+            final groupDescription = folderData['group_description'] as String?;
+            final fileCount = folderData['file_count'] as int;
+            final folderCount = folderData['folder_count'] as int;
+            
+            // Formatuj rozmiar z informacją o liczbie plików i folderów
+            String displaySize;
+            final filesLabel = _getPluralLabel(fileCount, 'folder_info.file_singular', 'folder_info.file_plural');
+            final foldersLabel = _getPluralLabel(folderCount, 'folder_info.folder_singular', 'folder_info.folder_plural');
+            
+            if (totalSizeBytes > 0) {
+              displaySize = '${_formatFileSize(totalSizeBytes)} (${'folder_info.files_and_folders'.tr(namedArgs: {
+                'files': fileCount.toString(), 
+                'folders': folderCount.toString(),
+                'files_label': filesLabel,
+                'folders_label': foldersLabel,
+              })})';
+            } else {
+              displaySize = '-- (${'folder_info.files_and_folders'.tr(namedArgs: {
+                'files': fileCount.toString(), 
+                'folders': folderCount.toString(),
+                'files_label': filesLabel,
+                'folders_label': foldersLabel,
+              })})';
+            }
+            
+            allItems.add(MySharedItem(
+              name: folderName,
+              size: displaySize,
+              date: _formatDate(modificationDate),
+              sharedDate: _formatDate(sharedAt),
+              type: 'folder',
+              fileType: 'folder',
+              folderName: folderPath,
+              sharedWith: groupName,
+              sharedWithEmail: groupDescription ?? groupName,
+              fileCount: fileCount,
+              folderCount: folderCount,
+              isSharedWithGroup: true,
+            ));
+          }
+        } catch (e) {
+          // Handle parsing error silently
+        }
+      }
+      
+      setState(() {
+        _sharedItems = allItems;
+        _filteredItems = allItems;
+        _isLoading = false;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -415,19 +524,38 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
       );
 
       http.Response response;
-      if (item.type == 'folder') {
-        response = await ApiService.unshareFolder(
-          token: token,
-          folderPath: '${item.folderName}/${item.name}',
-          sharedWith: item.sharedWithEmail,
-        );
+      if (item.isSharedWithGroup) {
+        // Odusunięcie udostępnienia z grupy
+        if (item.type == 'folder') {
+          response = await ApiService.unshareFolderFromGroup(
+            token: token,
+            folderPath: '${item.folderName}/${item.name}',
+            groupName: item.sharedWith,
+          );
+        } else {
+          response = await ApiService.unshareFileFromGroup(
+            token: token,
+            filename: item.name,
+            folderName: item.folderName,
+            groupName: item.sharedWith,
+          );
+        }
       } else {
-        response = await ApiService.unshareFile(
-          token: token,
-          filename: item.name,
-          folderName: item.folderName,
-          sharedWith: item.sharedWithEmail,
-        );
+        // Odusunięcie udostępnienia użytkownikowi
+        if (item.type == 'folder') {
+          response = await ApiService.unshareFolder(
+            token: token,
+            folderPath: '${item.folderName}/${item.name}',
+            sharedWith: item.sharedWithEmail,
+          );
+        } else {
+          response = await ApiService.unshareFile(
+            token: token,
+            filename: item.name,
+            folderName: item.folderName,
+            sharedWith: item.sharedWithEmail,
+          );
+        }
       }
 
       if (!mounted) return;
@@ -443,7 +571,8 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
           _sharedItems.removeWhere((element) => 
             element.name == item.name && 
             element.folderName == item.folderName &&
-            element.sharedWith == item.sharedWith
+            element.sharedWith == item.sharedWith &&
+            element.isSharedWithGroup == item.isSharedWithGroup
           );
           _filterAndSortItems();
         });
@@ -571,19 +700,48 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [const Color(0xFF667eea), const Color(0xFF764ba2)],
+              colors: [
+                const Color(0xFF667eea), 
+                const Color(0xFF764ba2),
+                const Color(0xFFf093fb)
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
         ),
-        title: Text(
-          'my_shared_files.title'.tr(),
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-          ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.share,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'my_shared_files.title'.tr(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 22,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
@@ -899,49 +1057,332 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
 
   Widget _buildItemsList() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        const Color(0xFF667eea),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'my_shared_files.loading_files'.tr(),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF667eea),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
+
     if (_errorMessage != null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red.shade700),
-            const SizedBox(height: 8),
-            Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600)),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _loadMySharedItems, child: Text('common.retry'.tr())),
-          ],
+        child: Container(
+          margin: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(30),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Icon(
+                  Icons.error_outline,
+                  size: 50,
+                  color: Colors.red.shade400,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Error loading shared files',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red.shade700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _loadMySharedItems,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF667eea),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(
+                  'common.retry'.tr(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
+
     if (_filteredItems.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.share, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            Text(_searchQuery.isEmpty ? 'my_shared_files.no_shared_items'.tr() : 'shared_files.no_files_found'.tr(),
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
-            const SizedBox(height: 8),
-            Text(_searchQuery.isEmpty ? 'my_shared_files.share_files_tip'.tr() : 'shared_files.try_different_search'.tr(),
-                style: TextStyle(color: Colors.grey.shade500)),
-          ],
-        ),
-      );
+      if (_searchQuery.isNotEmpty) {
+        return EmptyStateWidget(
+          icon: Icons.search_off,
+          title: 'No shared files found',
+          subtitle: 'Try adjusting your search terms',
+        );
+      } else {
+        return EmptyStateWidget(
+          icon: Icons.share,
+          title: 'No shared files yet',
+          subtitle: 'Files you share with others will appear here',
+        );
+      }
     }
+
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       itemCount: _filteredItems.length,
       itemBuilder: (context, index) {
         final item = _filteredItems[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8.0),
+        
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16.0),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white,
+                Colors.grey.shade50,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(
+              color: Colors.grey.shade200,
+              width: 1,
+            ),
+          ),
           child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: _getFileColor(item.fileType).withOpacity(0.1),
-              child: Icon(_getFileIcon(item.fileType), color: _getFileColor(item.fileType)),
+            leading: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (FileUtils.isImage(item.name))
+                  // Podgląd zdjęcia
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: FutureBuilder<String?>(
+                        future: TokenService.getUsername(),
+                        builder: (context, snapshot) {
+                          final username = snapshot.data ?? 'unknown';
+                          return ImagePreviewWidget(
+                            filename: item.name,
+                            folderName: item.folderName,
+                            width: 48,
+                            height: 48,
+                            showFullScreenOnTap: false,
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                else if (FileUtils.isTextFile(item.name))
+                  // Podgląd pliku tekstowego
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: FutureBuilder<String?>(
+                        future: TokenService.getUsername(),
+                        builder: (context, snapshot) {
+                          final username = snapshot.data ?? 'unknown';
+                          return TextPreviewWidget(
+                            filename: item.name,
+                            folderName: item.folderName,
+                            width: 48,
+                            height: 48,
+                            showFullScreenOnTap: false,
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                else if (FileUtils.isSpreadsheet(item.name))
+                  // Podgląd arkusza kalkulacyjnego
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: FutureBuilder<String?>(
+                        future: TokenService.getUsername(),
+                        builder: (context, snapshot) {
+                          final username = snapshot.data ?? 'unknown';
+                          return SpreadsheetPreviewWidget(
+                            filename: item.name,
+                            folderName: item.folderName,
+                            width: 48,
+                            height: 48,
+                            showFullScreenOnTap: false,
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                else if (FileUtils.isPdf(item.name))
+                  // Podgląd PDF
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: FutureBuilder<String?>(
+                        future: TokenService.getUsername(),
+                        builder: (context, snapshot) {
+                          final username = snapshot.data ?? 'unknown';
+                          return PdfPreviewWidget(
+                            filename: item.name,
+                            folderName: item.folderName,
+                            width: 48,
+                            height: 48,
+                            showFullScreenOnTap: false,
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: _getFileColor(item.fileType).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _getFileColor(item.fileType).withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      _getFileIcon(item.fileType),
+                      color: _getFileColor(item.fileType),
+                      size: 24,
+                    ),
+                  ),
+              ],
             ),
             title: Row(
               children: [
@@ -976,8 +1417,12 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('${item.size} • ${item.date}'),
-                Text('my_shared_files.shared_with'.tr(namedArgs: {'user': item.sharedWith}) + ' on ${item.sharedDate}',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                Text(
+                  item.isSharedWithGroup 
+                    ? 'my_shared_files.shared_with_group'.tr(namedArgs: {'group': item.sharedWith}) + ' on ${item.sharedDate}'
+                    : 'my_shared_files.shared_with'.tr(namedArgs: {'user': item.sharedWith}) + ' on ${item.sharedDate}',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12)
+                ),
               ],
             ),
             trailing: Row(
@@ -1002,10 +1447,10 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Colors.green.shade50,
+                              color: const Color(0xFF667eea).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(Icons.download_rounded, color: Colors.green.shade600, size: 18),
+                            child: Icon(Icons.download_rounded, color: const Color(0xFF667eea), size: 18),
                           ),
                           const SizedBox(width: 12),
                           Text(
@@ -1132,7 +1577,9 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'my_shared_files.shared_with'.tr(namedArgs: {'user': item.sharedWith}),
+                          item.isSharedWithGroup 
+                            ? 'my_shared_files.shared_with_group'.tr(namedArgs: {'group': item.sharedWith})
+                            : 'my_shared_files.shared_with'.tr(namedArgs: {'user': item.sharedWith}),
                           style: TextStyle(
                             color: Colors.green.shade600,
                             fontSize: 11,
@@ -1232,6 +1679,7 @@ class MySharedItem {
   final String sharedWithEmail;
   final int fileCount;
   final int folderCount;
+  final bool isSharedWithGroup; // true if shared with group, false if shared with user
 
   MySharedItem({
     required this.name,
@@ -1245,5 +1693,6 @@ class MySharedItem {
     required this.sharedWithEmail,
     required this.fileCount,
     required this.folderCount,
+    this.isSharedWithGroup = false,
   });
 } 

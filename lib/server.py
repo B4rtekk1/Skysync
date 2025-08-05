@@ -387,7 +387,7 @@ async def waf_middleware(request: Request, call_next):
     
     # Enhanced SQL Injection detection patterns
     sql_patterns = [
-        r"(\b(union|select|insert|update|delete|drop|create|alter|exec|execute)\b)",
+        r"(\b(union|select|insert|update|delete|drop|alter|exec|execute)\b)",
         r"(\b(or|and)\b\s+\d+\s*=\s*\d+)",
         r"(\b(union|select)\b.*\bfrom\b)",
         r"(--|#|/\*|\*/)",
@@ -451,6 +451,34 @@ async def waf_middleware(request: Request, call_next):
     # Check URL path and query
     url_path = str(request.url.path)
     url_query = str(request.url.query)
+    
+    # Whitelist for legitimate API endpoints that might contain SQL keywords
+    legitimate_endpoints = [
+        "/groups/create",
+        "/groups/add_member", 
+        "/groups/remove_member",
+        "/groups/list",
+        "/groups/share_file",
+        "/groups/share_folder",
+        "/groups/shared_files",
+        "/groups/shared_folders",
+        "/create_user",
+        "/create_folder",
+        "/create_quick_share",
+        "/security/update_config",
+        "/security/audit_log",
+        "/security/block_ip",
+        "/security/unblock_ip",
+        "/security/blocked_ips",
+        "/security/cleanup_sessions",
+        "/security/scan_file",
+        "/security/status"
+    ]
+    
+    # Skip WAF check for legitimate API endpoints
+    if url_path in legitimate_endpoints:
+        response = await call_next(request)
+        return response
     
     # Check for malicious patterns
     all_patterns = sql_patterns + xss_patterns + path_patterns + cmd_patterns
@@ -899,6 +927,91 @@ class AccessLog(Base):
     request_time = Column(Integer, nullable=True)  # in milliseconds
     timestamp = Column(DateTime, default=datetime.utcnow)
 
+class UserGroup(Base):
+    """
+    SQLAlchemy model for user groups.
+    
+    Attributes:
+        id (int): Primary key.
+        name (str): Group name.
+        description (str): Group description.
+        created_by_user_id (int): ID of the user who created the group.
+        created_at (datetime): When the group was created.
+        is_active (bool): Whether the group is active.
+    """
+    __tablename__ = 'user_groups'
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False)
+    description = Column(Text, nullable=True)
+    created_by_user_id = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+
+class UserGroupMember(Base):
+    """
+    SQLAlchemy model for group memberships.
+    
+    Attributes:
+        id (int): Primary key.
+        group_id (int): ID of the group.
+        user_id (int): ID of the user.
+        added_by_user_id (int): ID of the user who added the member.
+        added_at (datetime): When the user was added to the group.
+        is_admin (bool): Whether the user is an admin of the group.
+    """
+    __tablename__ = 'user_group_members'
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, nullable=False)
+    user_id = Column(Integer, nullable=False)
+    added_by_user_id = Column(Integer, nullable=False)
+    added_at = Column(DateTime, default=datetime.utcnow)
+    is_admin = Column(Boolean, default=False)
+    
+    # Unique constraint to prevent duplicate memberships
+    __table_args__ = (UniqueConstraint('group_id', 'user_id', name='unique_group_member'),)
+
+class GroupSharedFile(Base):
+    """
+    SQLAlchemy model for files shared with groups.
+    
+    Attributes:
+        id (int): Primary key.
+        original_file_id (int): ID of the original file.
+        shared_with_group_id (int): ID of the group the file is shared with.
+        shared_by_user_id (int): ID of the user who shared the file.
+        created_at (datetime): When the file was shared.
+    """
+    __tablename__ = 'group_shared_files'
+    id = Column(Integer, primary_key=True, index=True)
+    original_file_id = Column(Integer, nullable=False)
+    shared_with_group_id = Column(Integer, nullable=False)
+    shared_by_user_id = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Unique constraint to prevent duplicate shares
+    __table_args__ = (UniqueConstraint('original_file_id', 'shared_with_group_id', name='unique_group_shared_file'),)
+
+class GroupSharedFolder(Base):
+    """
+    SQLAlchemy model for folders shared with groups.
+    
+    Attributes:
+        id (int): Primary key.
+        folder_path (str): Path to the shared folder.
+        shared_with_group_id (int): ID of the group the folder is shared with.
+        shared_by_user_id (int): ID of the user who shared the folder.
+        created_at (datetime): When the folder was shared.
+    """
+    __tablename__ = 'group_shared_folders'
+    id = Column(Integer, primary_key=True, index=True)
+    folder_path = Column(String, nullable=False)
+    shared_with_group_id = Column(Integer, nullable=False)
+    shared_by_user_id = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Unique constraint to prevent duplicate shares
+    __table_args__ = (UniqueConstraint('folder_path', 'shared_with_group_id', name='unique_group_shared_folder'),)
+
 Base.metadata.create_all(bind=engine)
 
 # Initialize security logging
@@ -921,18 +1034,89 @@ class CreateUserRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9_]+$')
     password: str = Field(..., min_length=12, max_length=128)
     email: str = Field(..., pattern=r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
+
+class CreateGroupRequest(BaseModel):
+    """
+    Pydantic model for group creation request.
     
-    @validator('username')
-    def validate_username(cls, v):
-        if '@' in v:
-            raise ValueError('Username cannot contain @ symbol')
-        return v.lower()
+    Fields:
+        name (str): Group name.
+        description (str): Group description.
+    """
+    name: str = Field(..., min_length=2, max_length=100, pattern=r'^[a-zA-Z0-9_\-\s]+$')
+    description: str = Field(None, max_length=500)
+
+class AddGroupMemberRequest(BaseModel):
+    """
+    Pydantic model for adding member to group.
     
-    @validator('email')
-    def validate_email(cls, v):
-        if not validate_email(v):
-            raise ValueError('Invalid email format')
-        return v.lower()
+    Fields:
+        group_name (str): Group name.
+        user_identifier (str): Username or email to add.
+        is_admin (bool): Whether the user should be admin.
+    """
+    group_name: str = Field(..., min_length=2, max_length=100)
+    user_identifier: str = Field(..., min_length=3, max_length=100)  # Username or email
+    is_admin: bool = Field(False)
+
+class RemoveGroupMemberRequest(BaseModel):
+    """
+    Pydantic model for removing member from group.
+    
+    Fields:
+        group_name (str): Group name.
+        username (str): Username to remove.
+    """
+    group_name: str = Field(..., min_length=2, max_length=100)
+    username: str = Field(..., min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9_]+$')
+
+class ShareFileWithGroupRequest(BaseModel):
+    """
+    Pydantic model for sharing file with group.
+    
+    Fields:
+        filename (str): File name.
+        folder_name (str): Folder name.
+        group_name (str): Group name.
+    """
+    filename: str = Field(..., min_length=1, max_length=255)
+    folder_name: str = Field(..., min_length=1, max_length=255)
+    group_name: str = Field(..., min_length=2, max_length=100)
+
+class ShareFolderWithGroupRequest(BaseModel):
+    """
+    Pydantic model for sharing folder with group.
+    
+    Fields:
+        folder_path (str): Folder path.
+        group_name (str): Group name.
+    """
+    folder_path: str = Field(..., min_length=1, max_length=255)
+    group_name: str = Field(..., min_length=2, max_length=100)
+
+class UnshareFileFromGroupRequest(BaseModel):
+    """
+    Pydantic model for unsharing file from group.
+    
+    Fields:
+        filename (str): File name.
+        folder_name (str): Folder name.
+        group_name (str): Group name.
+    """
+    filename: str = Field(..., min_length=1, max_length=255)
+    folder_name: str = Field(..., min_length=1, max_length=255)
+    group_name: str = Field(..., min_length=2, max_length=100)
+
+class UnshareFolderFromGroupRequest(BaseModel):
+    """
+    Pydantic model for unsharing folder from group.
+    
+    Fields:
+        folder_path (str): Folder path.
+        group_name (str): Group name.
+    """
+    folder_path: str = Field(..., min_length=1, max_length=255)
+    group_name: str = Field(..., min_length=2, max_length=100)
 
 class CreateFolderRequest(BaseModel):
     """
@@ -960,11 +1144,19 @@ class LoginRequest(BaseModel):
     
     @validator('email')
     def validate_email(cls, v):
-        return v.lower()
+        # Only convert to lowercase if it looks like an email (contains @)
+        if '@' in v:
+            return v.lower()
+        # If it's a username, keep the original case
+        return v
 
 class ListFilesRequest(BaseModel):
     folder_name: str = Field(..., min_length=1, max_length=255)
     username: str = Field(..., min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9_]+$')
+
+class ListSharedFolderRequest(BaseModel):
+    folder_path: str = Field(..., min_length=1, max_length=255)
+    shared_by: str = Field(..., min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9_]+$')
 
 class ResetPasswordRequest(BaseModel):
     email: str = Field(..., pattern=r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
@@ -1512,10 +1704,11 @@ async def list_files(
         raise HTTPException(status_code=403, detail="Invalid token")
 
     # Check if the folder belongs to the authenticated user
+    # If folder_name doesn't start with username, construct the full path
     if not request.folder_name.startswith(username):
-        raise HTTPException(status_code=403, detail="You are not authorized to access this folder")
-
-    folder_name = request.folder_name
+        folder_name = f"{username}/{request.folder_name}"
+    else:
+        folder_name = request.folder_name
     folder_path = os.path.join(os.getcwd(), folder_name)
     if not os.path.isdir(folder_path):
         raise HTTPException(status_code=404, detail=f"Folder \"{folder_name}\" does not exist")
@@ -1589,6 +1782,121 @@ async def list_files(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing files: {str(e)}")
 
+@app.post("/list_shared_folder")
+async def list_shared_folder(
+    request: ListSharedFolderRequest, 
+    payload: dict = Depends(require_jwt_token), 
+    db: Session = Depends(get_db)
+):
+    """
+    List all files in a shared folder. Requires JWT token and API key.
+    Args:
+        request (ListSharedFolderRequest): Shared folder data.
+        payload (dict): JWT token payload.
+        db (Session): SQLAlchemy session.
+    Returns:
+        dict: List of files in the shared folder.
+    Raises:
+        HTTPException: 401/403/404 on errors.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+
+    # Get user ID
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check if the folder is shared with this user directly
+    shared_folder = db.query(SharedFolder).filter(
+        SharedFolder.folder_path == request.folder_path,
+        SharedFolder.shared_with_user_id == user.id,
+        SharedFolder.shared_by_user_id == User.id
+    ).join(User, SharedFolder.shared_by_user_id == User.id).filter(
+        User.username == request.shared_by
+    ).first()
+
+    # Check if the folder is shared with this user through groups
+    group_shared_folder = None
+    if not shared_folder:
+        # Get user's groups
+        user_groups = db.query(UserGroupMember).filter(
+            UserGroupMember.user_id == user.id
+        ).all()
+        
+        for membership in user_groups:
+            group = db.query(UserGroup).filter(UserGroup.id == membership.group_id).first()
+            if group and group.is_active:
+                # Check if folder is shared with this group
+                group_share = db.query(GroupSharedFolder).filter(
+                    GroupSharedFolder.folder_path == request.folder_path,
+                    GroupSharedFolder.shared_with_group_id == group.id
+                ).first()
+                
+                if group_share:
+                    # Verify that the folder was shared by the specified user
+                    shared_by_user = db.query(User).filter(User.id == group_share.shared_by_user_id).first()
+                    if shared_by_user and shared_by_user.username == request.shared_by:
+                        group_shared_folder = group_share
+                        break
+
+    if not shared_folder and not group_shared_folder:
+        raise HTTPException(status_code=403, detail="You are not authorized to access this shared folder")
+
+    folder_path = os.path.join(os.getcwd(), request.folder_path)
+    if not os.path.isdir(folder_path):
+        raise HTTPException(status_code=404, detail=f"Shared folder \"{request.folder_path}\" does not exist")
+    
+    try:
+        files = os.listdir(folder_path)
+        file_metadata = []
+        
+        for filename in files:
+            file_path_full = os.path.join(folder_path, filename)
+            modification_time = os.path.getmtime(file_path_full)
+            modification_date = datetime.fromtimestamp(modification_time, tz=timezone.utc).isoformat()
+            
+            if os.path.isfile(file_path_full):
+                file_size = os.path.getsize(file_path_full)
+                
+                file_metadata.append({
+                    "filename": filename,
+                    "type": "file",
+                    "size_bytes": file_size,
+                    "size_mb": round(file_size / (1024 * 1024), 2),
+                    "modification_date": modification_date,
+                    "is_folder": False
+                })
+            elif os.path.isdir(file_path_full):
+                # Recursive counting of files and folders and size
+                file_count = 0
+                folder_count = 0
+                total_size = 0
+                
+                for root, dirs, files_in_folder in os.walk(file_path_full):
+                    file_count += len(files_in_folder)
+                    folder_count += len(dirs)
+                    for file_in_folder in files_in_folder:
+                        file_path_in_folder = os.path.join(root, file_in_folder)
+                        if os.path.isfile(file_path_in_folder):
+                            total_size += os.path.getsize(file_path_in_folder)
+                
+                file_metadata.append({
+                    "filename": filename,
+                    "type": "folder",
+                    "size_bytes": total_size,
+                    "size_mb": round(total_size / (1024 * 1024), 2),
+                    "file_count": file_count,
+                    "folder_count": folder_count,
+                    "modification_date": modification_date,
+                    "is_folder": True
+                })
+        
+        return {"files": file_metadata, "folder": request.folder_path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error listing shared folder files: {str(e)}")
+
 @app.get("/files/{file_path:path}")
 async def get_file(
     file_path: str, 
@@ -1628,9 +1936,90 @@ async def get_file(
     
     user_identifier = path_parts[0]
     
-    # Allow access if the path starts with username or email
-    if user_identifier != username and user_identifier != user.email:
-        raise HTTPException(status_code=403, detail="Access denied to file")
+    # Check if user has direct access (owns the file)
+    has_direct_access = user_identifier == username or user_identifier == user.email
+    
+    # If no direct access, check if file is shared with user
+    if not has_direct_access:
+        # Get the file owner's user ID
+        file_owner = db.query(User).filter(
+            (User.username == user_identifier) | (User.email == user_identifier)
+        ).first()
+        
+        if not file_owner:
+            raise HTTPException(status_code=404, detail="File owner not found")
+        
+        # Check if file is shared with current user
+        filename = os.path.basename(file_path)
+        folder_path = '/'.join(path_parts[1:-1]) if len(path_parts) > 2 else path_parts[1]
+        
+        print(f"DEBUG: Checking access for file_path={file_path}")
+        print(f"DEBUG: username={username}, file_owner.username={file_owner.username}")
+        print(f"DEBUG: filename={filename}, folder_path={folder_path}")
+        print(f"DEBUG: user.id={user.id}, file_owner.id={file_owner.id}")
+        
+        # Check individual file sharing
+        shared_file = db.query(SharedFile).join(File, SharedFile.original_file_id == File.id).filter(
+            File.filename == filename,
+            File.folder_name == folder_path,
+            File.user_id == file_owner.id,
+            SharedFile.shared_with_user_id == user.id
+        ).first()
+        
+        print(f"DEBUG: shared_file found: {shared_file is not None}")
+        
+        # Check group file sharing
+        group_shared_file = db.query(GroupSharedFile).join(File, GroupSharedFile.original_file_id == File.id).join(
+            UserGroupMember, GroupSharedFile.shared_with_group_id == UserGroupMember.group_id
+        ).filter(
+            File.filename == filename,
+            File.folder_name == folder_path,
+            File.user_id == file_owner.id,
+            UserGroupMember.user_id == user.id
+        ).first()
+        
+        print(f"DEBUG: group_shared_file found: {group_shared_file is not None}")
+        
+        # Check folder sharing
+        full_folder_path = f"{username}/{folder_path}"
+        print(f"DEBUG: Checking folder sharing with folder_path='{folder_path}'")
+        print(f"DEBUG: Full folder path for database lookup: '{full_folder_path}'")
+        print(f"DEBUG: Looking for SharedFolder with:")
+        print(f"DEBUG:   - folder_path='{full_folder_path}'")
+        print(f"DEBUG:   - shared_with_user_id={user.id}")
+        print(f"DEBUG:   - shared_by_user_id={file_owner.id}")
+        
+        shared_folder = db.query(SharedFolder).filter(
+            SharedFolder.folder_path == full_folder_path,
+            SharedFolder.shared_with_user_id == user.id,
+            SharedFolder.shared_by_user_id == file_owner.id
+        ).first()
+        
+        print(f"DEBUG: shared_folder found: {shared_folder is not None}")
+        if shared_folder:
+            print(f"DEBUG: shared_folder details: id={shared_folder.id}, folder_path='{shared_folder.folder_path}'")
+        
+        # Check group folder sharing
+        print(f"DEBUG: Checking group folder sharing with folder_path='{folder_path}'")
+        print(f"DEBUG: Full folder path for group database lookup: '{full_folder_path}'")
+        group_shared_folder = db.query(GroupSharedFolder).join(
+            UserGroupMember, GroupSharedFolder.shared_with_group_id == UserGroupMember.group_id
+        ).filter(
+            GroupSharedFolder.folder_path == full_folder_path,
+            UserGroupMember.user_id == user.id,
+            GroupSharedFolder.shared_by_user_id == file_owner.id
+        ).first()
+        
+        print(f"DEBUG: group_shared_folder found: {group_shared_folder is not None}")
+        if group_shared_folder:
+            print(f"DEBUG: group_shared_folder details: id={group_shared_folder.id}, folder_path='{group_shared_folder.folder_path}'")
+        
+        # If no sharing found, deny access
+        if not shared_file and not group_shared_file and not shared_folder and not group_shared_folder:
+            print(f"DEBUG: Access denied - no sharing found")
+            raise HTTPException(status_code=403, detail="Access denied to file")
+        else:
+            print(f"DEBUG: Access granted - sharing found")
     
     full_path = os.path.join(os.getcwd(), file_path)
     
@@ -1846,9 +2235,60 @@ async def download_file(
     
     user_identifier = path_parts[0]
     
-    # Allow access if the path starts with username or email
-    if user_identifier != username and user_identifier != user.email:
-        raise HTTPException(status_code=403, detail="Access denied to file")
+    # Check if user has direct access (owns the file)
+    has_direct_access = user_identifier == username or user_identifier == user.email
+    
+    # If no direct access, check if file is shared with user
+    if not has_direct_access:
+        # Get the file owner's user ID
+        file_owner = db.query(User).filter(
+            (User.username == user_identifier) | (User.email == user_identifier)
+        ).first()
+        
+        if not file_owner:
+            raise HTTPException(status_code=404, detail="File owner not found")
+        
+        # Check if file is shared with current user
+        filename = os.path.basename(file_path)
+        folder_path = '/'.join(path_parts[1:-1]) if len(path_parts) > 2 else path_parts[1]
+        
+        # Check individual file sharing
+        shared_file = db.query(SharedFile).join(File, SharedFile.original_file_id == File.id).filter(
+            File.filename == filename,
+            File.folder_name == folder_path,
+            File.user_id == file_owner.id,
+            SharedFile.shared_with_user_id == user.id
+        ).first()
+        
+        # Check group file sharing
+        group_shared_file = db.query(GroupSharedFile).join(File, GroupSharedFile.original_file_id == File.id).join(
+            UserGroupMember, GroupSharedFile.shared_with_group_id == UserGroupMember.group_id
+        ).filter(
+            File.filename == filename,
+            File.folder_name == folder_path,
+            File.user_id == file_owner.id,
+            UserGroupMember.user_id == user.id
+        ).first()
+        
+        # Check folder sharing
+        shared_folder = db.query(SharedFolder).filter(
+            SharedFolder.folder_path == folder_path,
+            SharedFolder.shared_with_user_id == user.id,
+            SharedFolder.shared_by_user_id == file_owner.id
+        ).first()
+        
+        # Check group folder sharing
+        group_shared_folder = db.query(GroupSharedFolder).join(
+            UserGroupMember, GroupSharedFolder.shared_with_group_id == UserGroupMember.group_id
+        ).filter(
+            GroupSharedFolder.folder_path == folder_path,
+            UserGroupMember.user_id == user.id,
+            GroupSharedFolder.shared_by_user_id == file_owner.id
+        ).first()
+        
+        # If no sharing found, deny access
+        if not shared_file and not group_shared_file and not shared_folder and not group_shared_folder:
+            raise HTTPException(status_code=403, detail="Access denied to file")
     
     full_path = os.path.join(os.getcwd(), file_path)
     
@@ -1955,8 +2395,8 @@ async def move_file(
             print(f"[DEBUG] Updated file record in database: {filename} moved from {old_folder_name} to {destination_folder}")
         else:
             # If file record doesn't exist, create it
-            file_size = os.path.getsize(full_path)
-            with open(full_path, 'rb') as f:
+            file_size = os.path.getsize(new_path)
+            with open(new_path, 'rb') as f:
                 file_content = f.read()
             file_hash = hashlib.sha256(file_content).hexdigest()
             
@@ -3018,9 +3458,60 @@ async def download_files_as_zip(
                 
                 user_identifier = path_parts[0]
                 
-                # Allow access if the path starts with username or email
-                if user_identifier != username and user_identifier != user.email:
-                    raise HTTPException(status_code=403, detail="Access denied to file")
+                # Check if user has direct access (owns the file)
+                has_direct_access = user_identifier == username or user_identifier == user.email
+                
+                # If no direct access, check if file is shared with user
+                if not has_direct_access:
+                    # Get the file owner's user ID
+                    file_owner = db.query(User).filter(
+                        (User.username == user_identifier) | (User.email == user_identifier)
+                    ).first()
+                    
+                    if not file_owner:
+                        raise HTTPException(status_code=404, detail="File owner not found")
+                    
+                    # Check if file is shared with current user
+                    filename = os.path.basename(file_path)
+                    folder_path = '/'.join(path_parts[1:-1]) if len(path_parts) > 2 else path_parts[1]
+                    
+                    # Check individual file sharing
+                    shared_file = db.query(SharedFile).join(File, SharedFile.original_file_id == File.id).filter(
+                        File.filename == filename,
+                        File.folder_name == folder_path,
+                        File.user_id == file_owner.id,
+                        SharedFile.shared_with_user_id == user.id
+                    ).first()
+                    
+                    # Check group file sharing
+                    group_shared_file = db.query(GroupSharedFile).join(File, GroupSharedFile.original_file_id == File.id).join(
+                        UserGroupMember, GroupSharedFile.shared_with_group_id == UserGroupMember.group_id
+                    ).filter(
+                        File.filename == filename,
+                        File.folder_name == folder_path,
+                        File.user_id == file_owner.id,
+                        UserGroupMember.user_id == user.id
+                    ).first()
+                    
+                    # Check folder sharing
+                    shared_folder = db.query(SharedFolder).filter(
+                        SharedFolder.folder_path == folder_path,
+                        SharedFolder.shared_with_user_id == user.id,
+                        SharedFolder.shared_by_user_id == file_owner.id
+                    ).first()
+                    
+                    # Check group folder sharing
+                    group_shared_folder = db.query(GroupSharedFolder).join(
+                        UserGroupMember, GroupSharedFolder.shared_with_group_id == UserGroupMember.group_id
+                    ).filter(
+                        GroupSharedFolder.folder_path == folder_path,
+                        UserGroupMember.user_id == user.id,
+                        GroupSharedFolder.shared_by_user_id == file_owner.id
+                    ).first()
+                    
+                    # If no sharing found, deny access
+                    if not shared_file and not group_shared_file and not shared_folder and not group_shared_folder:
+                        raise HTTPException(status_code=403, detail="Access denied to file")
                 
                 full_path = os.path.join(os.getcwd(), file_path)
                 
@@ -3148,9 +3639,60 @@ async def create_quick_share(
         
         user_identifier = path_parts[0]
         
-        # Allow access if the path starts with username or email
-        if user_identifier != username and user_identifier != user.email:
-            raise HTTPException(status_code=403, detail="Access denied to file")
+        # Check if user has direct access (owns the file)
+        has_direct_access = user_identifier == username or user_identifier == user.email
+        
+        # If no direct access, check if file is shared with user
+        if not has_direct_access:
+            # Get the file owner's user ID
+            file_owner = db.query(User).filter(
+                (User.username == user_identifier) | (User.email == user_identifier)
+            ).first()
+            
+            if not file_owner:
+                raise HTTPException(status_code=404, detail="File owner not found")
+            
+            # Check if file is shared with current user
+            filename = os.path.basename(file_path)
+            folder_path = '/'.join(path_parts[1:-1]) if len(path_parts) > 2 else path_parts[1]
+            
+            # Check individual file sharing
+            shared_file = db.query(SharedFile).join(File, SharedFile.original_file_id == File.id).filter(
+                File.filename == filename,
+                File.folder_name == folder_path,
+                File.user_id == file_owner.id,
+                SharedFile.shared_with_user_id == user.id
+            ).first()
+            
+            # Check group file sharing
+            group_shared_file = db.query(GroupSharedFile).join(File, GroupSharedFile.original_file_id == File.id).join(
+                UserGroupMember, GroupSharedFile.shared_with_group_id == UserGroupMember.group_id
+            ).filter(
+                File.filename == filename,
+                File.folder_name == folder_path,
+                File.user_id == file_owner.id,
+                UserGroupMember.user_id == user.id
+            ).first()
+            
+            # Check folder sharing
+            shared_folder = db.query(SharedFolder).filter(
+                SharedFolder.folder_path == folder_path,
+                SharedFolder.shared_with_user_id == user.id,
+                SharedFolder.shared_by_user_id == file_owner.id
+            ).first()
+            
+            # Check group folder sharing
+            group_shared_folder = db.query(GroupSharedFolder).join(
+                UserGroupMember, GroupSharedFolder.shared_with_group_id == UserGroupMember.group_id
+            ).filter(
+                GroupSharedFolder.folder_path == folder_path,
+                UserGroupMember.user_id == user.id,
+                GroupSharedFolder.shared_by_user_id == file_owner.id
+            ).first()
+            
+            # If no sharing found, deny access
+            if not shared_file and not group_shared_file and not shared_folder and not group_shared_folder:
+                raise HTTPException(status_code=403, detail="Access denied to file")
         
         full_path = os.path.join(os.getcwd(), file_path)
         
@@ -4638,6 +5180,772 @@ async def startup_event():
     """Start background tasks on server startup."""
     asyncio.create_task(periodic_cleanup())
     security_logger.info("Background cleanup task started")
+
+# ============================================================================
+# GROUP MANAGEMENT ENDPOINTS
+# ============================================================================
+
+@app.post("/groups/create")
+async def create_group(
+    request: CreateGroupRequest,
+    payload: dict = Depends(require_jwt_token),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new user group.
+    Args:
+        request (CreateGroupRequest): Group creation data.
+        payload (dict): JWT token payload.
+        db (Session): Database session.
+    Returns:
+        dict: Group creation result.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    
+    # Get user
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if group name already exists
+    existing_group = db.query(UserGroup).filter(UserGroup.name == request.name).first()
+    if existing_group:
+        raise HTTPException(status_code=409, detail="Group name already exists")
+    
+    try:
+        # Create the group
+        new_group = UserGroup(
+            name=request.name,
+            description=request.description,
+            created_by_user_id=user.id
+        )
+        db.add(new_group)
+        db.commit()
+        db.refresh(new_group)
+        
+        # Add creator as admin member
+        member = UserGroupMember(
+            group_id=new_group.id,
+            user_id=user.id,
+            added_by_user_id=user.id,
+            is_admin=True
+        )
+        db.add(member)
+        db.commit()
+        
+        # Log the action
+        log_security_event_enhanced(
+            "group_created",
+            f"Group '{request.name}' created by {username}",
+            severity="low",
+            username=username,
+            db=db
+        )
+        
+        return {
+            "message": f"Group '{request.name}' created successfully",
+            "group": {
+                "id": new_group.id,
+                "name": new_group.name,
+                "description": new_group.description,
+                "created_by": username,
+                "created_at": new_group.created_at.isoformat(),
+                "member_count": 1
+            }
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error creating group: {str(e)}")
+
+@app.post("/groups/add_member")
+async def add_group_member(
+    request: AddGroupMemberRequest,
+    payload: dict = Depends(require_jwt_token),
+    db: Session = Depends(get_db)
+):
+    """
+    Add a member to a group.
+    Args:
+        request (AddGroupMemberRequest): Member addition data.
+        payload (dict): JWT token payload.
+        db (Session): Database session.
+    Returns:
+        dict: Member addition result.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    
+    # Get current user
+    current_user = db.query(User).filter(User.username == username).first()
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get group
+    group = db.query(UserGroup).filter(UserGroup.name == request.group_name).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Check if current user is admin of the group
+    membership = db.query(UserGroupMember).filter(
+        UserGroupMember.group_id == group.id,
+        UserGroupMember.user_id == current_user.id,
+        UserGroupMember.is_admin == True
+    ).first()
+    
+    if not membership:
+        raise HTTPException(status_code=403, detail="Only group admins can add members")
+    
+    # Get user to add (by username or email)
+    try:
+        username_to_add = get_username_from_email_or_username(request.user_identifier, db)
+        user_to_add = db.query(User).filter(User.username == username_to_add).first()
+        if not user_to_add:
+            raise HTTPException(status_code=404, detail="User to add not found")
+    except HTTPException:
+        raise HTTPException(status_code=404, detail="User to add not found")
+    
+    # Check if user is already a member
+    existing_member = db.query(UserGroupMember).filter(
+        UserGroupMember.group_id == group.id,
+        UserGroupMember.user_id == user_to_add.id
+    ).first()
+    
+    if existing_member:
+        raise HTTPException(status_code=409, detail="User is already a member of this group")
+    
+    try:
+        # Add member
+        new_member = UserGroupMember(
+            group_id=group.id,
+            user_id=user_to_add.id,
+            added_by_user_id=current_user.id,
+            is_admin=request.is_admin
+        )
+        db.add(new_member)
+        db.commit()
+        
+        # Log the action
+        log_security_event_enhanced(
+            "group_member_added",
+            f"User '{username_to_add}' added to group '{request.group_name}' by {username}",
+            severity="low",
+            username=username,
+            db=db
+        )
+        
+        return {
+            "message": f"User '{username_to_add}' added to group '{request.group_name}' successfully",
+            "member": {
+                "username": username_to_add,
+                "is_admin": request.is_admin,
+                "added_by": username,
+                "added_at": new_member.added_at.isoformat()
+            }
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error adding member: {str(e)}")
+
+@app.post("/groups/remove_member")
+async def remove_group_member(
+    request: RemoveGroupMemberRequest,
+    payload: dict = Depends(require_jwt_token),
+    db: Session = Depends(get_db)
+):
+    """
+    Remove a member from a group.
+    Args:
+        request (RemoveGroupMemberRequest): Member removal data.
+        payload (dict): JWT token payload.
+        db (Session): Database session.
+    Returns:
+        dict: Member removal result.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    
+    # Get current user
+    current_user = db.query(User).filter(User.username == username).first()
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get group
+    group = db.query(UserGroup).filter(UserGroup.name == request.group_name).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Check if current user is admin of the group
+    membership = db.query(UserGroupMember).filter(
+        UserGroupMember.group_id == group.id,
+        UserGroupMember.user_id == current_user.id,
+        UserGroupMember.is_admin == True
+    ).first()
+    
+    if not membership:
+        raise HTTPException(status_code=403, detail="Only group admins can remove members")
+    
+    # Get user to remove
+    user_to_remove = db.query(User).filter(User.username == request.username).first()
+    if not user_to_remove:
+        raise HTTPException(status_code=404, detail="User to remove not found")
+    
+    # Check if user is a member
+    member_to_remove = db.query(UserGroupMember).filter(
+        UserGroupMember.group_id == group.id,
+        UserGroupMember.user_id == user_to_remove.id
+    ).first()
+    
+    if not member_to_remove:
+        raise HTTPException(status_code=404, detail="User is not a member of this group")
+    
+    # Prevent removing the last admin
+    if member_to_remove.is_admin:
+        admin_count = db.query(UserGroupMember).filter(
+            UserGroupMember.group_id == group.id,
+            UserGroupMember.is_admin == True
+        ).count()
+        
+        if admin_count <= 1:
+            raise HTTPException(status_code=400, detail="Cannot remove the last admin from the group")
+    
+    try:
+        # Remove member
+        db.delete(member_to_remove)
+        db.commit()
+        
+        # Log the action
+        log_security_event_enhanced(
+            "group_member_removed",
+            f"User '{request.username}' removed from group '{request.group_name}' by {username}",
+            severity="low",
+            username=username,
+            db=db
+        )
+        
+        return {
+            "message": f"User '{request.username}' removed from group '{request.group_name}' successfully"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error removing member: {str(e)}")
+
+@app.get("/groups/list")
+async def list_groups(
+    payload: dict = Depends(require_jwt_token),
+    db: Session = Depends(get_db)
+):
+    """
+    List all groups that the user is a member of.
+    Args:
+        payload (dict): JWT token payload.
+        db (Session): Database session.
+    Returns:
+        dict: List of groups.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    
+    # Get user
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    try:
+        # Get user's groups
+        memberships = db.query(UserGroupMember).filter(
+            UserGroupMember.user_id == user.id
+        ).all()
+        
+        groups = []
+        for membership in memberships:
+            group = db.query(UserGroup).filter(UserGroup.id == membership.group_id).first()
+            if group and group.is_active:
+                # Get member count
+                member_count = db.query(UserGroupMember).filter(
+                    UserGroupMember.group_id == group.id
+                ).count()
+                
+                # Get creator info
+                creator = db.query(User).filter(User.id == group.created_by_user_id).first()
+                
+                groups.append({
+                    "id": group.id,
+                    "name": group.name,
+                    "description": group.description,
+                    "created_by": creator.username if creator else "Unknown",
+                    "created_at": group.created_at.isoformat(),
+                    "member_count": member_count,
+                    "is_admin": membership.is_admin
+                })
+        
+        return {
+            "groups": groups,
+            "total": len(groups)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error listing groups: {str(e)}")
+
+@app.get("/groups/{group_name}/members")
+async def list_group_members(
+    group_name: str,
+    payload: dict = Depends(require_jwt_token),
+    db: Session = Depends(get_db)
+):
+    """
+    List all members of a group.
+    Args:
+        group_name (str): Group name.
+        payload (dict): JWT token payload.
+        db (Session): Database session.
+    Returns:
+        dict: List of group members.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    
+    # Get user
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get group
+    group = db.query(UserGroup).filter(UserGroup.name == group_name).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Check if user is a member of the group
+    membership = db.query(UserGroupMember).filter(
+        UserGroupMember.group_id == group.id,
+        UserGroupMember.user_id == user.id
+    ).first()
+    
+    if not membership:
+        raise HTTPException(status_code=403, detail="You are not a member of this group")
+    
+    try:
+        # Get all members
+        memberships = db.query(UserGroupMember).filter(
+            UserGroupMember.group_id == group.id
+        ).all()
+        
+        members = []
+        for member in memberships:
+            member_user = db.query(User).filter(User.id == member.user_id).first()
+            if member_user:
+                members.append({
+                    "username": member_user.username,
+                    "email": member_user.email,
+                    "is_admin": member.is_admin,
+                    "added_at": member.added_at.isoformat()
+                })
+        
+        return {
+            "group_name": group_name,
+            "members": members,
+            "total": len(members)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error listing group members: {str(e)}")
+
+@app.post("/groups/share_file")
+async def share_file_with_group(
+    request: ShareFileWithGroupRequest,
+    payload: dict = Depends(require_jwt_token),
+    db: Session = Depends(get_db)
+):
+    """
+    Share a file with a group.
+    Args:
+        request (ShareFileWithGroupRequest): File sharing data.
+        payload (dict): JWT token payload.
+        db (Session): Database session.
+    Returns:
+        dict: File sharing result.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    
+    # Get user
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get group
+    group = db.query(UserGroup).filter(UserGroup.name == request.group_name).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Check if user is a member of the group
+    membership = db.query(UserGroupMember).filter(
+        UserGroupMember.group_id == group.id,
+        UserGroupMember.user_id == user.id
+    ).first()
+    
+    if not membership:
+        raise HTTPException(status_code=403, detail="You are not a member of this group")
+    
+    # Get file
+    file = db.query(File).filter(
+        File.filename == request.filename,
+        File.folder_name == request.folder_name,
+        File.user_id == user.id
+    ).first()
+    
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Check if already shared with group
+    existing_share = db.query(GroupSharedFile).filter(
+        GroupSharedFile.original_file_id == file.id,
+        GroupSharedFile.shared_with_group_id == group.id
+    ).first()
+    
+    if existing_share:
+        raise HTTPException(status_code=409, detail="File is already shared with this group")
+    
+    try:
+        # Share file with group
+        group_share = GroupSharedFile(
+            original_file_id=file.id,
+            shared_with_group_id=group.id,
+            shared_by_user_id=user.id
+        )
+        db.add(group_share)
+        db.commit()
+        
+        # Log the action
+        log_security_event_enhanced(
+            "file_shared_with_group",
+            f"File '{request.filename}' shared with group '{request.group_name}' by {username}",
+            severity="low",
+            username=username,
+            db=db
+        )
+        
+        return {
+            "message": f"File '{request.filename}' shared with group '{request.group_name}' successfully"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error sharing file: {str(e)}")
+
+@app.post("/groups/share_folder")
+async def share_folder_with_group(
+    request: ShareFolderWithGroupRequest,
+    payload: dict = Depends(require_jwt_token),
+    db: Session = Depends(get_db)
+):
+    """
+    Share a folder with a group.
+    Args:
+        request (ShareFolderWithGroupRequest): Folder sharing data.
+        payload (dict): JWT token payload.
+        db (Session): Database session.
+    Returns:
+        dict: Folder sharing result.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    
+    # Get user
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get group
+    group = db.query(UserGroup).filter(UserGroup.name == request.group_name).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Check if user is a member of the group
+    membership = db.query(UserGroupMember).filter(
+        UserGroupMember.group_id == group.id,
+        UserGroupMember.user_id == user.id
+    ).first()
+    
+    if not membership:
+        raise HTTPException(status_code=403, detail="You are not a member of this group")
+    
+    # Check if folder exists and belongs to user
+    # If folder_path already contains username, use it as is
+    if request.folder_path.startswith(f"{username}/"):
+        folder_path = request.folder_path
+    else:
+        folder_path = f"{username}/{request.folder_path}"
+    
+    if not os.path.exists(folder_path):
+        raise HTTPException(status_code=404, detail="Folder not found")
+    
+    # Check if already shared with group
+    existing_share = db.query(GroupSharedFolder).filter(
+        GroupSharedFolder.folder_path == request.folder_path,
+        GroupSharedFolder.shared_with_group_id == group.id
+    ).first()
+    
+    if existing_share:
+        raise HTTPException(status_code=409, detail="Folder is already shared with this group")
+    
+    try:
+        # Share folder with group
+        group_share = GroupSharedFolder(
+            folder_path=request.folder_path,
+            shared_with_group_id=group.id,
+            shared_by_user_id=user.id
+        )
+        db.add(group_share)
+        db.commit()
+        
+        # Log the action
+        log_security_event_enhanced(
+            "folder_shared_with_group",
+            f"Folder '{request.folder_path}' shared with group '{request.group_name}' by {username}",
+            severity="low",
+            username=username,
+            db=db
+        )
+        
+        return {
+            "message": f"Folder '{request.folder_path}' shared with group '{request.group_name}' successfully"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error sharing folder: {str(e)}")
+
+@app.get("/groups/shared_files")
+async def get_group_shared_files(
+    payload: dict = Depends(require_jwt_token),
+    db: Session = Depends(get_db)
+):
+    """
+    Get files shared with groups that the user is a member of.
+    Args:
+        payload (dict): JWT token payload.
+        db (Session): Database session.
+    Returns:
+        dict: List of shared files.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    
+    # Get user
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    try:
+        # Get user's groups
+        user_groups = db.query(UserGroupMember).filter(
+            UserGroupMember.user_id == user.id
+        ).all()
+        
+        shared_files = []
+        for membership in user_groups:
+            group = db.query(UserGroup).filter(UserGroup.id == membership.group_id).first()
+            if group and group.is_active:
+                # Get files shared with this group
+                group_shares = db.query(GroupSharedFile).filter(
+                    GroupSharedFile.shared_with_group_id == group.id
+                ).all()
+                
+                for share in group_shares:
+                    file = db.query(File).filter(File.id == share.original_file_id).first()
+                    if file:
+                        shared_by = db.query(User).filter(User.id == share.shared_by_user_id).first()
+                        shared_files.append({
+                            "filename": file.filename,
+                            "folder_name": file.folder_name,
+                            "file_size": file.file_size,
+                            "shared_by": shared_by.username if shared_by else "Unknown",
+                            "shared_at": share.created_at.isoformat(),
+                            "group_name": group.name
+                        })
+        
+        return {
+            "shared_files": shared_files,
+            "total": len(shared_files)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting shared files: {str(e)}")
+
+@app.get("/groups/shared_folders")
+async def get_group_shared_folders(
+    payload: dict = Depends(require_jwt_token),
+    db: Session = Depends(get_db)
+):
+    """
+    Get folders shared with groups that the user is a member of.
+    Args:
+        payload (dict): JWT token payload.
+        db (Session): Database session.
+    Returns:
+        dict: List of shared folders.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    
+    # Get user
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    try:
+        # Get user's groups
+        user_groups = db.query(UserGroupMember).filter(
+            UserGroupMember.user_id == user.id
+        ).all()
+        
+        shared_folders = []
+        for membership in user_groups:
+            group = db.query(UserGroup).filter(UserGroup.id == membership.group_id).first()
+            if group and group.is_active:
+                # Get folders shared with this group
+                group_shares = db.query(GroupSharedFolder).filter(
+                    GroupSharedFolder.shared_with_group_id == group.id
+                ).all()
+                
+                for share in group_shares:
+                    shared_by = db.query(User).filter(User.id == share.shared_by_user_id).first()
+                    shared_folders.append({
+                        "folder_path": share.folder_path,
+                        "shared_by": shared_by.username if shared_by else "Unknown",
+                        "shared_at": share.created_at.isoformat(),
+                        "group_name": group.name
+                    })
+        
+        return {
+            "shared_folders": shared_folders,
+            "total": len(shared_folders)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting shared folders: {str(e)}")
+
+@app.get("/groups/my_shared_files")
+async def get_my_group_shared_files(
+    payload: dict = Depends(require_jwt_token),
+    db: Session = Depends(get_db)
+):
+    """
+    Get files that the current user has shared with groups.
+    Args:
+        payload (dict): JWT token payload.
+        db (Session): Database session.
+    Returns:
+        dict: List of files shared by the user with groups.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    
+    # Get user
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    try:
+        # Get files shared by this user with groups
+        group_shares = db.query(GroupSharedFile).filter(
+            GroupSharedFile.shared_by_user_id == user.id
+        ).all()
+        
+        shared_files = []
+        for share in group_shares:
+            file = db.query(File).filter(File.id == share.original_file_id).first()
+            group = db.query(UserGroup).filter(UserGroup.id == share.shared_with_group_id).first()
+            if file and group:
+                shared_files.append({
+                    "filename": file.filename,
+                    "folder_name": file.folder_name,
+                    "size_bytes": file.file_size,
+                    "modification_date": file.uploaded_at.isoformat(),
+                    "shared_at": share.created_at.isoformat(),
+                    "group_name": group.name,
+                    "group_description": group.description
+                })
+        
+        return {
+            "group_shared_files": shared_files,
+            "total": len(shared_files)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting shared files: {str(e)}")
+
+@app.get("/groups/my_shared_folders")
+async def get_my_group_shared_folders(
+    payload: dict = Depends(require_jwt_token),
+    db: Session = Depends(get_db)
+):
+    """
+    Get folders that the current user has shared with groups.
+    Args:
+        payload (dict): JWT token payload.
+        db (Session): Database session.
+    Returns:
+        dict: List of folders shared by the user with groups.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    
+    # Get user
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    try:
+        # Get folders shared by this user with groups
+        group_shares = db.query(GroupSharedFolder).filter(
+            GroupSharedFolder.shared_by_user_id == user.id
+        ).all()
+        
+        shared_folders = []
+        for share in group_shares:
+            group = db.query(UserGroup).filter(UserGroup.id == share.shared_with_group_id).first()
+            if group:
+                # Calculate folder stats (this would need to be implemented based on your folder structure)
+                # For now, we'll use placeholder values
+                file_count = 0
+                folder_count = 0
+                total_size = 0
+                
+                shared_folders.append({
+                    "folder_name": share.folder_path.split('/')[-1],  # Get just the folder name
+                    "folder_path": share.folder_path,
+                    "total_size_bytes": total_size,
+                    "modification_date": share.created_at.isoformat(),
+                    "shared_at": share.created_at.isoformat(),
+                    "group_name": group.name,
+                    "group_description": group.description,
+                    "file_count": file_count,
+                    "folder_count": folder_count
+                })
+        
+        return {
+            "group_shared_folders": shared_folders,
+            "total": len(shared_folders)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting shared folders: {str(e)}")
 
 # Uruchomienie serwera
 if __name__ == "__main__":

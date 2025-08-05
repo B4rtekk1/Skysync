@@ -263,4 +263,15 @@ class ActivityService {
       metadata: {'filename': filename},
     );
   }
+
+  static ActivityItem createFilePreviewActivity(String filename) {
+    return ActivityItem(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      type: ActivityType.fileDownload, // Using download type for preview
+      title: 'activity.file_previewed'.tr(),
+      description: 'activity.previewed'.tr(namedArgs: {'filename': filename}),
+      timestamp: DateTime.now(),
+      metadata: {'filename': filename},
+    );
+  }
 } 

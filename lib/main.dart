@@ -12,12 +12,14 @@ import 'pages/files_page.dart';
 import 'pages/favorites_page.dart';
 import 'pages/shared_files_page.dart';
 import 'pages/my_shared_files_page.dart';
+import 'pages/groups_page.dart';
 import 'pages/forgot_password_page.dart';
 import 'pages/reset_password_page.dart';
 import 'pages/settings_page.dart';
 import 'utils/notification_service.dart';
 import 'utils/app_settings.dart';
 import 'utils/token_service.dart';
+import 'utils/cache_service.dart';
 import 'config/env_mobile.dart';
 import 'config/env_windows.dart';
 import 'config/env_linux.dart';
@@ -67,13 +69,19 @@ class _MyAppState extends State<MyApp> {
   // StreamSubscription? _linkSubscription;
   // final _appLinks = AppLinks();
   late AppSettings _appSettings;
+  bool _showDebugOverlay = false;
 
   @override
   void initState() {
     super.initState();
     _appSettings = AppSettings();
     _appSettings.initialize();
+    _initializeCache();
     // _initDeepLinks();
+  }
+
+  Future<void> _initializeCache() async {
+    await CacheService().initialize();
   }
 
   // void _initDeepLinks() {
@@ -116,6 +124,7 @@ class _MyAppState extends State<MyApp> {
         return MaterialApp(
           title: 'ServApp',
           debugShowCheckedModeBanner: false,
+          showSemanticsDebugger: false, // Włącz to na true aby zobaczyć debug widgetów
           navigatorKey: NotificationService.navigatorKey,
           theme: _appSettings.getThemeData(),
           localizationsDelegates: context.localizationDelegates,
@@ -141,6 +150,7 @@ class _MyAppState extends State<MyApp> {
             '/favorites': (context) => const FavoritesPage(),
             '/shared-files': (context) => const SharedFilesPage(),
             '/my-shared-files': (context) => const MySharedFilesPage(),
+            '/groups': (context) => const GroupsPage(),
             '/forgot-password': (context) => const ForgotPasswordPage(),
             '/reset-password': (context) {
               final args = ModalRoute.of(context)?.settings.arguments;

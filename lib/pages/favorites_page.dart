@@ -5,6 +5,11 @@ import '../utils/custom_widgets.dart';
 import '../utils/api_service.dart';
 import '../utils/token_service.dart';
 import '../utils/activity_service.dart';
+import '../utils/file_utils.dart';
+import '../widgets/image_preview_widget.dart';
+import '../widgets/text_preview_widget.dart';
+import '../widgets/spreadsheet_preview_widget.dart';
+import '../widgets/pdf_preview_widget.dart';
 
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key});
@@ -454,19 +459,48 @@ class _FavoritesPageState extends State<FavoritesPage> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [const Color(0xFF667eea), const Color(0xFF764ba2)],
+              colors: [
+                const Color(0xFF667eea), 
+                const Color(0xFF764ba2),
+                const Color(0xFFf093fb)
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
         ),
-        title: const Text(
-          'Favorites',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-          ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.favorite,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Favorites',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 22,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
@@ -493,38 +527,81 @@ class _FavoritesPageState extends State<FavoritesPage> {
           Container(
             margin: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(25),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
+                  color: const Color(0xFF667eea).withOpacity(0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
             child: TextField(
               controller: _searchController,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
               decoration: InputDecoration(
                 hintText: 'search.favorites'.tr(),
-                hintStyle: TextStyle(color: Colors.grey.shade500),
-                prefixIcon: Icon(Icons.search, color: const Color(0xFF667eea)),
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                ),
+                prefixIcon: Container(
+                  margin: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF667eea).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.search, 
+                    color: const Color(0xFF667eea),
+                    size: 20,
+                  ),
+                ),
                 suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear, color: Colors.grey.shade600),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchQuery = '';
-                          });
-                        },
+                    ? Container(
+                        margin: const EdgeInsets.all(8),
+                        child: IconButton(
+                          icon: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.clear, 
+                              color: Colors.grey.shade600,
+                              size: 16,
+                            ),
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
+                              _searchQuery = '';
+                            });
+                          },
+                        ),
                       )
                     : null,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(25),
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
                 fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
               ),
               onChanged: (value) {
                 setState(() {
@@ -752,99 +829,435 @@ class _FavoritesPageState extends State<FavoritesPage> {
 
   Widget _buildAnimatedFilesList() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_errorMessage != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red.shade700),
-            const SizedBox(height: 8),
-            Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600)),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _loadFavorites, child: Text('favorites.retry'.tr())),
-          ],
-        ),
-      );
-    }
-    if (_filteredFiles.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.favorite_border, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            Text(_searchQuery.isEmpty ? 'favorites.no_files'.tr() : 'favorites.no_files_found'.tr(),
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
-            const SizedBox(height: 8),
-            Text(_searchQuery.isEmpty ? 'favorites.add_files_tip'.tr() : 'favorites.try_different_search'.tr(),
-                style: TextStyle(color: Colors.grey.shade500)),
-          ],
-        ),
-      );
-    }
-    return AnimatedList(
-      key: _listKey,
-      initialItemCount: _filteredFiles.length,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      itemBuilder: (context, index, animation) {
-        final file = _filteredFiles[index];
-        final fileKey = '${file.folderName}/${file.name}';
-        return SlideTransition(
-          position: animation.drive(
-            Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero)
-                .chain(CurveTween(curve: Curves.easeOutCubic)),
-          ),
-          child: FadeTransition(
-            opacity: animation,
-            child: Card(
-              margin: const EdgeInsets.only(bottom: 8.0),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: _getFileColor(file.type).withOpacity(0.1),
-                  child: Icon(_getFileIcon(file.type), color: _getFileColor(file.type)),
-                ),
-                title: Text(file.name, style: const TextStyle(fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis),
-                subtitle: Text('${file.size} • ${file.date} • Favorited: ${file.favoritedDate}'),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        _triggerFavoriteAnim(fileKey);
-                        _removeFromFavoritesAnimated(file, index);
-                      },
-                      child: AnimatedScale(
-                        scale: _favoriteAnim[fileKey] == true ? 1.4 : 1.0,
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeOutBack,
-                        child: Icon(Icons.favorite, color: Colors.red, size: 24),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        const Color(0xFF667eea),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    PopupMenuButton<String>(
-                      onSelected: (value) {
-                        _handleFileAction(value, file);
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem(value: 'download', child: Text('favorites.download'.tr())),
-                        PopupMenuItem(value: 'share', child: Text('favorites.share'.tr())),
-                        PopupMenuItem(value: 'rename', child: Text('favorites.rename'.tr())),
-                        PopupMenuItem(value: 'delete', child: Text('favorites.delete'.tr())),
-                        PopupMenuItem(value: 'info', child: Text('Info')),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'favorites.loading_files'.tr(),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF667eea),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Container(
+          margin: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(30),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Icon(
+                  Icons.error_outline,
+                  size: 50,
+                  color: Colors.red.shade400,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Error loading favorites',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red.shade700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _loadFavorites,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF667eea),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(
+                  'favorites.retry'.tr(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_filteredFiles.isEmpty) {
+      if (_searchQuery.isNotEmpty) {
+        return EmptyStateWidget(
+          icon: Icons.search_off,
+          title: 'No favorites found',
+          subtitle: 'Try adjusting your search terms',
+        );
+      } else {
+        return EmptyStateWidget(
+          icon: Icons.favorite_border,
+          title: 'No favorites yet',
+          subtitle: 'Files you mark as favorite will appear here',
+        );
+      }
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      itemCount: _filteredFiles.length,
+      itemBuilder: (context, index) {
+        final file = _filteredFiles[index];
+        final fileKey = '${file.folderName}/${file.name}';
+        
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16.0),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white,
+                Colors.grey.shade50,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(
+              color: Colors.grey.shade200,
+              width: 1,
+            ),
+          ),
+          child: ListTile(
+            leading: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (FileUtils.isImage(file.name))
+                  // Podgląd zdjęcia
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
                       ],
-                      child: const Icon(Icons.more_vert),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: FutureBuilder<String?>(
+                        future: TokenService.getUsername(),
+                        builder: (context, snapshot) {
+                          final username = snapshot.data ?? 'unknown';
+                          return ImagePreviewWidget(
+                            filename: file.name,
+                            folderName: file.folderName,
+                            width: 48,
+                            height: 48,
+                            showFullScreenOnTap: false,
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                else if (FileUtils.isTextFile(file.name))
+                  // Podgląd pliku tekstowego
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: FutureBuilder<String?>(
+                        future: TokenService.getUsername(),
+                        builder: (context, snapshot) {
+                          final username = snapshot.data ?? 'unknown';
+                          return TextPreviewWidget(
+                            filename: file.name,
+                            folderName: file.folderName,
+                            width: 48,
+                            height: 48,
+                            showFullScreenOnTap: false,
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                else if (FileUtils.isSpreadsheet(file.name))
+                  // Podgląd arkusza kalkulacyjnego
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: FutureBuilder<String?>(
+                        future: TokenService.getUsername(),
+                        builder: (context, snapshot) {
+                          final username = snapshot.data ?? 'unknown';
+                          return SpreadsheetPreviewWidget(
+                            filename: file.name,
+                            folderName: file.folderName,
+                            width: 48,
+                            height: 48,
+                            showFullScreenOnTap: false,
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                else if (FileUtils.isPdf(file.name))
+                  // Podgląd PDF
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: FutureBuilder<String?>(
+                        future: TokenService.getUsername(),
+                        builder: (context, snapshot) {
+                          final username = snapshot.data ?? 'unknown';
+                          return PdfPreviewWidget(
+                            filename: file.name,
+                            folderName: file.folderName,
+                            width: 48,
+                            height: 48,
+                            showFullScreenOnTap: false,
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: _getFileColor(file.type).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _getFileColor(file.type).withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      _getFileIcon(file.type),
+                      color: _getFileColor(file.type),
+                      size: 24,
+                    ),
+                  ),
+              ],
+            ),
+            title: Text(
+              file.name, 
+              style: const TextStyle(fontWeight: FontWeight.w500),
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text('${file.size} • ${file.date} • Favorited: ${file.favoritedDate}'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    _triggerFavoriteAnim(fileKey);
+                    _removeFromFavoritesAnimated(file, index);
+                  },
+                  child: AnimatedScale(
+                    scale: _favoriteAnim[fileKey] == true ? 1.4 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutBack,
+                    child: Icon(Icons.favorite, color: Colors.red, size: 24),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    _handleFileAction(value, file);
+                  },
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 8,
+                  offset: const Offset(0, 8),
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'download',
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF667eea).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(Icons.download_rounded, color: const Color(0xFF667eea), size: 18),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'favorites.download'.tr(),
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'share',
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(Icons.share, color: Colors.blue.shade600, size: 18),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'favorites.share'.tr(),
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'info',
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(Icons.info_outline, color: Colors.grey.shade600, size: 18),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Info',
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('favorites.opening_file'.tr(namedArgs: {'filename': file.name}))),
-                  );
-                },
-              ),
+              ],
             ),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('favorites.opening_file'.tr(namedArgs: {'filename': file.name}))),
+              );
+            },
           ),
         );
       },

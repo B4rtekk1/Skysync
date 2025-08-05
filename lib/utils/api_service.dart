@@ -97,6 +97,30 @@ class ApiService {
     return response;
   }
 
+  static Future<http.Response> listSharedFolder({
+    required String folderPath,
+    required String sharedBy,
+    required String token,
+  }) async {
+    print('Connecting to: $baseUrl');
+    print('API Key: ${apiKey.isNotEmpty ? "Set" : "Not set"}');
+    final url = Uri.parse('$baseUrl/list_shared_folder');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'folder_path': folderPath,
+        'shared_by': sharedBy,
+      }),
+    );
+    print(response.body);
+    return response;
+  }
+
   static Future<http.Response> uploadFile({
     required String username,
     required String folderName,
@@ -451,25 +475,33 @@ class ApiService {
   static Future<http.Response> getMySharedFiles({
     required String token,
   }) async {
-    return await http.get(
-      Uri.parse('$baseUrl/get_my_shared_files'),
+    final url = Uri.parse('$baseUrl/get_my_shared_files');
+    
+    final response = await http.get(
+      url,
       headers: {
         'Authorization': 'Bearer $token',
         'API_KEY': apiKey,
       },
     );
+    
+    return response;
   }
 
   static Future<http.Response> getMySharedFolders({
     required String token,
   }) async {
-    return await http.get(
-      Uri.parse('$baseUrl/get_my_shared_folders'),
+    final url = Uri.parse('$baseUrl/get_my_shared_folders');
+    
+    final response = await http.get(
+      url,
       headers: {
         'Authorization': 'Bearer $token',
         'API_KEY': apiKey,
       },
     );
+    
+    return response;
   }
 
   static Future<http.Response> unshareFile({
@@ -508,6 +540,265 @@ class ApiService {
       body: jsonEncode({
         'folder_path': folderPath,
         'shared_with': sharedWith,
+      }),
+    );
+  }
+
+  /// Tworzy nową grupę użytkowników
+  static Future<http.Response> createGroup({
+    required String name,
+    String? description,
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/create');
+    
+    return await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'name': name,
+        'description': description,
+      }),
+    );
+  }
+
+  /// Dodaje użytkownika do grupy (po nazwie użytkownika lub emailu)
+  static Future<http.Response> addGroupMember({
+    required String groupName,
+    required String userIdentifier, // username or email
+    bool isAdmin = false,
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/add_member');
+    
+    return await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'group_name': groupName,
+        'user_identifier': userIdentifier,
+        'is_admin': isAdmin,
+      }),
+    );
+  }
+
+  /// Usuwa użytkownika z grupy
+  static Future<http.Response> removeGroupMember({
+    required String groupName,
+    required String username,
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/remove_member');
+    
+    return await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'group_name': groupName,
+        'username': username,
+      }),
+    );
+  }
+
+  /// Pobiera listę grup użytkownika
+  static Future<http.Response> listGroups({
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/list');
+    
+    return await http.get(
+      url,
+      headers: {
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
+
+  /// Pobiera listę członków grupy
+  static Future<http.Response> listGroupMembers({
+    required String groupName,
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/$groupName/members');
+    
+    return await http.get(
+      url,
+      headers: {
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
+
+  /// Udostępnia plik grupie
+  static Future<http.Response> shareFileWithGroup({
+    required String filename,
+    required String folderName,
+    required String groupName,
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/share_file');
+    
+    return await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'filename': filename,
+        'folder_name': folderName,
+        'group_name': groupName,
+      }),
+    );
+  }
+
+  /// Udostępnia folder grupie
+  static Future<http.Response> shareFolderWithGroup({
+    required String folderPath,
+    required String groupName,
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/share_folder');
+    
+    return await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'folder_path': folderPath,
+        'group_name': groupName,
+      }),
+    );
+  }
+
+  /// Pobiera pliki udostępnione z grupami (przez użytkownika)
+  static Future<http.Response> getGroupSharedFiles({
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/my_shared_files');
+    
+    final response = await http.get(
+      url,
+      headers: {
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+    );
+    
+    return response;
+  }
+
+  /// Pobiera foldery udostępnione z grupami (przez użytkownika)
+  static Future<http.Response> getGroupSharedFolders({
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/my_shared_folders');
+    
+    final response = await http.get(
+      url,
+      headers: {
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+    );
+    
+    return response;
+  }
+
+  /// Pobiera pliki udostępnione użytkownikowi przez grupy
+  static Future<http.Response> getFilesSharedWithMeByGroups({
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/shared_files');
+    
+    final response = await http.get(
+      url,
+      headers: {
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+    );
+    
+    return response;
+  }
+
+  /// Pobiera foldery udostępnione użytkownikowi przez grupy
+  static Future<http.Response> getFoldersSharedWithMeByGroups({
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/shared_folders');
+    
+    final response = await http.get(
+      url,
+      headers: {
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+    );
+    
+    return response;
+  }
+
+  /// Odusunięcie udostępnienia pliku z grupy
+  static Future<http.Response> unshareFileFromGroup({
+    required String filename,
+    required String folderName,
+    required String groupName,
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/unshare_file');
+    
+    return await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'filename': filename,
+        'folder_name': folderName,
+        'group_name': groupName,
+      }),
+    );
+  }
+
+  /// Odusunięcie udostępnienia folderu z grupy
+  static Future<http.Response> unshareFolderFromGroup({
+    required String folderPath,
+    required String groupName,
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/groups/unshare_folder');
+    
+    return await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'folder_path': folderPath,
+        'group_name': groupName,
       }),
     );
   }

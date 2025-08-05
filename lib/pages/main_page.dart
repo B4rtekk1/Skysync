@@ -297,6 +297,20 @@ class _MainPageState extends State<MainPage> {
                 children: [
                   Expanded(
                     child: _QuickActionCard(
+                      icon: Icons.group,
+                      title: 'main.groups'.tr(),
+                      subtitle: 'main.groups_desc'.tr(),
+                      color: Colors.teal,
+                      onTap: () {
+                        Navigator.pushNamed(context, '/groups');
+                      },
+                    ),
+                  ),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.03,
+                  ), // Responsywny odstęp
+                  Expanded(
+                    child: _QuickActionCard(
                       icon: Icons.settings,
                       title: 'main.settings'.tr(),
                       subtitle: 'main.settings_desc'.tr(),
@@ -306,9 +320,15 @@ class _MainPageState extends State<MainPage> {
                       },
                     ),
                   ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.03,
-                  ), // Responsywny odstęp
+                ],
+              ),
+
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.03,
+              ), // Responsywny odstęp
+
+              Row(
+                children: [
                   Expanded(
                     child: _QuickActionCard(
                       icon: Icons.help,
@@ -316,6 +336,20 @@ class _MainPageState extends State<MainPage> {
                       subtitle: 'main.help_desc'.tr(),
                       color: Colors.purple,
                       onTap: () {},
+                    ),
+                  ),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.03,
+                  ), // Responsywny odstęp
+                  Expanded(
+                    child: _QuickActionCard(
+                      icon: Icons.people,
+                      title: 'main.my_shared'.tr(),
+                      subtitle: 'main.my_shared_desc'.tr(),
+                      color: Colors.indigo,
+                      onTap: () {
+                        Navigator.pushNamed(context, '/my-shared-files');
+                      },
                     ),
                   ),
                 ],
