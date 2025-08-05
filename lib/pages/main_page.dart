@@ -308,39 +308,7 @@ class _MainPageState extends State<MainPage> {
                   ),
                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.03,
-                  ), // Responsywny odstęp
-                  Expanded(
-                    child: _QuickActionCard(
-                      icon: Icons.settings,
-                      title: 'main.settings'.tr(),
-                      subtitle: 'main.settings_desc'.tr(),
-                      color: Colors.orange,
-                      onTap: () {
-                        Navigator.pushNamed(context, '/settings');
-                      },
-                    ),
                   ),
-                ],
-              ),
-
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.03,
-              ), // Responsywny odstęp
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _QuickActionCard(
-                      icon: Icons.help,
-                      title: 'main.help'.tr(),
-                      subtitle: 'main.help_desc'.tr(),
-                      color: Colors.purple,
-                      onTap: () {},
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.03,
-                  ), // Responsywny odstęp
                   Expanded(
                     child: _QuickActionCard(
                       icon: Icons.people,
@@ -351,13 +319,34 @@ class _MainPageState extends State<MainPage> {
                         Navigator.pushNamed(context, '/my-shared-files');
                       },
                     ),
-                  ),
+                  ), // Responsywny odstęp
                 ],
               ),
 
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.03,
               ), // Responsywny odstęp
+
+              _QuickActionCard(
+                    icon: Icons.help,
+                    title: 'main.help'.tr(),
+                    subtitle: 'main.help_desc'.tr(),
+                    color: Colors.purple,
+                    onTap: () {},
+                  ),
+
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.03,
+              ), // Responsywny odstęp
+              _QuickActionCard(
+                    icon: Icons.settings,
+                    title: 'main.settings'.tr(),
+                    subtitle: 'main.settings_desc'.tr(),
+                    color: Colors.orange,
+                    onTap: () {
+                      Navigator.pushNamed(context, '/settings');
+                    },
+                  ),
             ],
           ),
         ),
@@ -423,16 +412,14 @@ class _QuickActionCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: cardHeight * 0.03), // Responsywny odstęp
-            Expanded(
-              child: Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: cardHeight * 0.09, // Responsywny rozmiar tekstu
-                  color: Colors.grey.shade600,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: cardHeight * 0.09, // Responsywny rozmiar tekstu
+                color: Colors.grey.shade600,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

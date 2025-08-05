@@ -1032,10 +1032,26 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
   }
 
   double _parseSize(String size) {
-    if (size.contains('MB')) {
-      return double.parse(size.replaceAll(' MB', ''));
-    } else if (size.contains('KB')) {
-      return double.parse(size.replaceAll(' KB', '')) / 1024;
+    // Dla folderów, rozmiar ma format "34.6 (2 files, 0 folders)"
+    // Wyciągamy tylko część z rozmiarem
+    if (size.contains('(')) {
+      String sizePart = size.split('(')[0].trim();
+      if (sizePart.contains('MB')) {
+        return double.parse(sizePart.replaceAll(' MB', ''));
+      } else if (sizePart.contains('KB')) {
+        return double.parse(sizePart.replaceAll(' KB', '')) / 1024;
+      } else if (sizePart.contains('B')) {
+        return double.parse(sizePart.replaceAll(' B', '')) / (1024 * 1024);
+      }
+    } else {
+      // Dla plików, rozmiar ma format "34.6 MB" lub "1.2 KB"
+      if (size.contains('MB')) {
+        return double.parse(size.replaceAll(' MB', ''));
+      } else if (size.contains('KB')) {
+        return double.parse(size.replaceAll(' KB', '')) / 1024;
+      } else if (size.contains('B')) {
+        return double.parse(size.replaceAll(' B', '')) / (1024 * 1024);
+      }
     }
     return 0;
   }
@@ -1852,19 +1868,24 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                         ),
                         child: GestureDetector(
                           onTap: () {
-                            if (_isSelectionMode) {
-                              _toggleFileSelection(file.name);
-                            } else if (file.type == 'folder') {
-                              _navigateToFolder(file.name);
-                            } else if (FileUtils.isTextFile(file.name)) {
-                              _showTextFullScreen(file.name);
-                            } else if (FileUtils.isSpreadsheet(file.name)) {
-                              _showSpreadsheetFullScreen(file.name);
-                            } else if (FileUtils.isPdf(file.name)) {
-                              _showPdfFullScreen(file.name);
-                            } else if (FileUtils.isImage(file.name)) {
-                              _showImageFullScreen(file);
-                            }
+                            // Dodajemy małe opóźnienie aby uniknąć konfliktu z double tap
+                            Future.delayed(const Duration(milliseconds: 200), () {
+                              if (mounted) {
+                                if (_isSelectionMode) {
+                                  _toggleFileSelection(file.name);
+                                } else if (file.type == 'folder') {
+                                  _navigateToFolder(file.name);
+                                } else if (FileUtils.isTextFile(file.name)) {
+                                  _showTextFullScreen(file.name);
+                                } else if (FileUtils.isSpreadsheet(file.name)) {
+                                  _showSpreadsheetFullScreen(file.name);
+                                } else if (FileUtils.isPdf(file.name)) {
+                                  _showPdfFullScreen(file.name);
+                                } else if (FileUtils.isImage(file.name)) {
+                                  _showImageFullScreen(file);
+                                }
+                              }
+                            });
                           },
                           onDoubleTap: () {
                             if (!_isSelectionMode) {
@@ -2602,19 +2623,24 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                   )
                 : GestureDetector(
                     onTap: () {
-                      if (_isSelectionMode) {
-                        _toggleFileSelection(file.name);
-                      } else if (file.type == 'folder') {
-                        _navigateToFolder(file.name);
-                      } else if (FileUtils.isTextFile(file.name)) {
-                        _showTextFullScreen(file.name);
-                      } else if (FileUtils.isSpreadsheet(file.name)) {
-                        _showSpreadsheetFullScreen(file.name);
-                      } else if (FileUtils.isPdf(file.name)) {
-                        _showPdfFullScreen(file.name);
-                      } else if (FileUtils.isImage(file.name)) {
-                        _showImageFullScreen(file);
-                      }
+                      // Dodajemy małe opóźnienie aby uniknąć konfliktu z double tap
+                      Future.delayed(const Duration(milliseconds: 200), () {
+                        if (mounted) {
+                          if (_isSelectionMode) {
+                            _toggleFileSelection(file.name);
+                          } else if (file.type == 'folder') {
+                            _navigateToFolder(file.name);
+                          } else if (FileUtils.isTextFile(file.name)) {
+                            _showTextFullScreen(file.name);
+                          } else if (FileUtils.isSpreadsheet(file.name)) {
+                            _showSpreadsheetFullScreen(file.name);
+                          } else if (FileUtils.isPdf(file.name)) {
+                            _showPdfFullScreen(file.name);
+                          } else if (FileUtils.isImage(file.name)) {
+                            _showImageFullScreen(file);
+                          }
+                        }
+                      });
                     },
                     onDoubleTap: () {
                       if (!_isSelectionMode) {

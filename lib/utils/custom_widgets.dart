@@ -360,7 +360,7 @@ class CustomDrawer extends StatelessWidget {
                     route: '/my-shared-files',
                     isSelected: currentRoute == '/my-shared-files',
                   ),
-                  const Divider(height: 1, color: Colors.grey),
+                  const SizedBox(height: 8),
                   _buildDrawerItem(
                     context,
                     icon: Icons.group,
