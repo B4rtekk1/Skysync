@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -2205,6 +2204,26 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                       ),
                                     ),
                                     PopupMenuItem(
+                                      value: 'rename',
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.shade50,
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Icon(Icons.edit, color: Colors.green.shade600, size: 18),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            'Rename',
+                                            style: TextStyle(fontWeight: FontWeight.w500, color: Colors.green.shade600),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem(
                                       value: 'info',
                                       child: Row(
                                         children: [
@@ -2816,6 +2835,26 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                         ),
                       ),
                       PopupMenuItem(
+                        value: 'rename',
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.edit, color: Colors.green.shade600, size: 18),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Rename',
+                              style: TextStyle(fontWeight: FontWeight.w500, color: Colors.green.shade600),
+                            ),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
                         value: 'info',
                         child: Row(
                           children: [
@@ -3009,10 +3048,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         _showShareDialog(file);
         break;
       case 'rename':
-        // TODO: Implement rename
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Renaming ${file.name}...')),
-        );
+        _showRenameDialog(file);
         break;
       case 'delete':
         _showDeleteConfirmationDialog(file);
@@ -5533,6 +5569,321 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
               child: Text('common.ok'.tr()),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _showRenameDialog(FileItem file) {
+    final TextEditingController nameController = TextEditingController();
+    
+    // Wypełnij pole tekstowe aktualną nazwą pliku
+    nameController.text = file.name;
+    
+    // Jeśli to plik (nie folder), zaznacz nazwę bez rozszerzenia
+    if (file.type != 'folder' && file.name.contains('.')) {
+      final lastDotIndex = file.name.lastIndexOf('.');
+      nameController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: lastDotIndex,
+      );
+    } else {
+      // Dla folderów zaznacz całą nazwę
+      nameController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: file.name.length,
+      );
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.edit,
+                  color: Colors.green.shade600,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  file.type == 'folder' ? 'Rename Folder' : 'Rename File',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter new name for "${file.name}":',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: nameController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: file.type == 'folder' ? 'Folder name' : 'File name',
+                  hintText: 'Enter new name...',
+                  prefixIcon: Icon(
+                    file.type == 'folder' ? Icons.folder : Icons.insert_drive_file,
+                    color: Colors.grey.shade600,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.green.shade600,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                onSubmitted: (value) {
+                  if (value.trim().isNotEmpty && value.trim() != file.name) {
+                    Navigator.pop(context);
+                    _renameFile(file, value.trim());
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final newName = nameController.text.trim();
+                if (newName.isNotEmpty && newName != file.name) {
+                  Navigator.pop(context);
+                  _renameFile(file, newName);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade600,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
+              child: const Text(
+                'Rename',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _renameFile(FileItem file, String newName) async {
+    try {
+      // Pokaż dialog z progressem
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 16),
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Renaming ${file.type == 'folder' ? 'folder' : 'file'}...',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      );
+
+      final token = await TokenService.getToken();
+      final username = await TokenService.getUsername();
+      
+      if (token == null || username == null) {
+        Navigator.pop(context); // Zamknij dialog
+        NotificationService.showAuthError(context);
+        return;
+      }
+
+      // Przygotuj ścieżkę folderu
+      final folderPath = _currentPath.isEmpty ? username : '$username/$_currentPath';
+      
+      // Wywołaj API do zmiany nazwy
+      final response = await ApiService.renameFile(
+        oldFilename: file.name,
+        newFilename: newName,
+        folderName: folderPath,
+        token: token,
+      );
+
+      Navigator.pop(context); // Zamknij dialog
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        // Dodaj aktywność
+        await ActivityService.addActivity(
+          ActivityService.createFileRenameActivity(file.name, newName),
+        );
+        
+        // Pokaż dialog sukcesu
+        _showRenameSuccessDialog(file.name, newName);
+        
+        // Wyczyść cache dla bieżącej ścieżki
+        await CacheService().clearFilesCache(username, _currentPath);
+        
+        // Odśwież listę plików
+        _loadFiles();
+      } else {
+        final errorData = jsonDecode(response.body);
+        final errorMessage = errorData['detail'] ?? response.body;
+        NotificationService.showValidationError(context, errorMessage);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Zamknij dialog jeśli jest otwarty
+        final error = ErrorHandler.handleError(e, null);
+        NotificationService.showEnhancedError(context, error);
+      }
+    }
+  }
+
+  void _showRenameSuccessDialog(String oldName, String newName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Icon(
+                  Icons.check_circle,
+                  size: 48,
+                  color: Colors.green.shade600,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Renamed Successfully!',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green.shade700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                  children: [
+                    const TextSpan(text: '"'),
+                    TextSpan(
+                      text: oldName,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const TextSpan(text: '" has been renamed to "'),
+                    TextSpan(
+                      text: newName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green.shade600,
+                      ),
+                    ),
+                    const TextSpan(text: '"'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade600,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'OK',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
         );
       },
     );

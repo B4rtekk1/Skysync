@@ -133,18 +133,18 @@ class _GroupsPageState extends State<GroupsPage> {
     final description = _descriptionController.text.trim();
 
     if (groupName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('groups.name_required'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('groups.name_required'.tr())));
       return;
     }
 
     try {
       final token = await TokenService.getToken();
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('groups.not_logged_in'.tr())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('groups.not_logged_in'.tr())));
         return;
       }
 
@@ -187,9 +187,7 @@ class _GroupsPageState extends State<GroupsPage> {
 
   void _showGroupDetails(Map<String, dynamic> group) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => GroupDetailsPage(group: group),
-      ),
+      MaterialPageRoute(builder: (context) => GroupDetailsPage(group: group)),
     );
   }
 
@@ -212,7 +210,10 @@ class _GroupsPageState extends State<GroupsPage> {
               ),
               if (group['is_admin'] == true) ...[
                 ListTile(
-                  leading: const Icon(Icons.person_add, color: Color(0xFF667eea)),
+                  leading: const Icon(
+                    Icons.person_add,
+                    color: Color(0xFF667eea),
+                  ),
                   title: Text('groups.add_member'.tr()),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -257,7 +258,7 @@ class _GroupsPageState extends State<GroupsPage> {
 
   void _showAddMemberDialog(Map<String, dynamic> group) {
     final TextEditingController usernameController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -286,7 +287,9 @@ class _GroupsPageState extends State<GroupsPage> {
                 final username = usernameController.text.trim();
                 if (username.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('groups.username_or_email_required'.tr())),
+                    SnackBar(
+                      content: Text('groups.username_or_email_required'.tr()),
+                    ),
                   );
                   return;
                 }
@@ -320,7 +323,9 @@ class _GroupsPageState extends State<GroupsPage> {
                     final errorData = jsonDecode(response.body);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(errorData['detail'] ?? 'groups.add_member_error'.tr()),
+                        content: Text(
+                          errorData['detail'] ?? 'groups.add_member_error'.tr(),
+                        ),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -329,7 +334,9 @@ class _GroupsPageState extends State<GroupsPage> {
                   if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('groups.network_error'.tr(args: [e.toString()])),
+                      content: Text(
+                        'groups.network_error'.tr(args: [e.toString()]),
+                      ),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -345,9 +352,9 @@ class _GroupsPageState extends State<GroupsPage> {
 
   void _showEditGroupDialog(Map<String, dynamic> group) {
     // TODO: Implement edit group functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('groups.edit_not_implemented'.tr())),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('groups.edit_not_implemented'.tr())));
   }
 
   void _showDeleteGroupDialog(Map<String, dynamic> group) {
@@ -374,9 +381,9 @@ class _GroupsPageState extends State<GroupsPage> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                const Color(0xFF667eea), 
+                const Color(0xFF667eea),
                 const Color(0xFF764ba2),
-                const Color(0xFFf093fb)
+                const Color(0xFFf093fb),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -398,11 +405,7 @@ class _GroupsPageState extends State<GroupsPage> {
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
-                Icons.group,
-                color: Colors.white,
-                size: 24,
-              ),
+              child: const Icon(Icons.group, color: Colors.white, size: 24),
             ),
             const SizedBox(width: 12),
             Text(
@@ -525,10 +528,7 @@ class _GroupsPageState extends State<GroupsPage> {
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -547,9 +547,7 @@ class _GroupsPageState extends State<GroupsPage> {
                 icon: const Icon(Icons.refresh, size: 18),
                 label: Text(
                   'groups.retry'.tr(),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -573,15 +571,12 @@ class _GroupsPageState extends State<GroupsPage> {
       itemCount: _groups.length,
       itemBuilder: (context, index) {
         final group = _groups[index];
-        
+
         return Container(
           margin: const EdgeInsets.only(bottom: 16.0),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Colors.white,
-                Colors.grey.shade50,
-              ],
+              colors: [Colors.white, Colors.grey.shade50],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -593,10 +588,7 @@ class _GroupsPageState extends State<GroupsPage> {
                 offset: const Offset(0, 4),
               ),
             ],
-            border: Border.all(
-              color: Colors.grey.shade200,
-              width: 1,
-            ),
+            border: Border.all(color: Colors.grey.shade200, width: 1),
           ),
           child: ListTile(
             leading: Container(
@@ -628,22 +620,16 @@ class _GroupsPageState extends State<GroupsPage> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (group['description'] != null && group['description'].isNotEmpty)
+                if (group['description'] != null &&
+                    group['description'].isNotEmpty)
                   Text(
                     group['description'],
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                   ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(
-                      Icons.people,
-                      size: 16,
-                      color: Colors.grey.shade600,
-                    ),
+                    Icon(Icons.people, size: 16, color: Colors.grey.shade600),
                     const SizedBox(width: 4),
                     Text(
                       '${group['member_count']} ${'groups.members'.tr()}',
@@ -709,93 +695,114 @@ class _GroupsPageState extends State<GroupsPage> {
               ),
               elevation: 8,
               offset: const Offset(0, 8),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'details',
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF667eea).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(Icons.info_outline, color: const Color(0xFF667eea), size: 18),
+              itemBuilder:
+                  (context) => [
+                    PopupMenuItem(
+                      value: 'details',
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF667eea).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.info_outline,
+                              color: const Color(0xFF667eea),
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'groups.view_details'.tr(),
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'groups.view_details'.tr(),
-                        style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    if (group['is_admin'] == true) ...[
+                      PopupMenuItem(
+                        value: 'add_member',
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.person_add,
+                                color: Colors.green.shade600,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'groups.add_member'.tr(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.edit,
+                                color: Colors.blue.shade600,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'groups.edit_group'.tr(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.delete,
+                                color: Colors.red.shade600,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'groups.delete_group'.tr(),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.red.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                  ),
-                ),
-                if (group['is_admin'] == true) ...[
-                  PopupMenuItem(
-                    value: 'add_member',
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(Icons.person_add, color: Colors.green.shade600, size: 18),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'groups.add_member'.tr(),
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(Icons.edit, color: Colors.blue.shade600, size: 18),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'groups.edit_group'.tr(),
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(Icons.delete, color: Colors.red.shade600, size: 18),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'groups.delete_group'.tr(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: Colors.red.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
+                  ],
             ),
             onTap: () => _showGroupDetails(group),
           ),
@@ -808,10 +815,7 @@ class _GroupsPageState extends State<GroupsPage> {
 class GroupDetailsPage extends StatefulWidget {
   final Map<String, dynamic> group;
 
-  const GroupDetailsPage({
-    Key? key,
-    required this.group,
-  }) : super(key: key);
+  const GroupDetailsPage({Key? key, required this.group}) : super(key: key);
 
   @override
   State<GroupDetailsPage> createState() => _GroupDetailsPageState();
@@ -928,9 +932,9 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
     try {
       final token = await TokenService.getToken();
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('groups.not_logged_in'.tr())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('groups.not_logged_in'.tr())));
         return;
       }
 
@@ -955,7 +959,9 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
         final errorData = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorData['detail'] ?? 'groups.add_member_error'.tr()),
+            content: Text(
+              errorData['detail'] ?? 'groups.add_member_error'.tr(),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -998,9 +1004,9 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
     try {
       final token = await TokenService.getToken();
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('groups.not_logged_in'.tr())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('groups.not_logged_in'.tr())));
         return;
       }
 
@@ -1024,7 +1030,9 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
         final errorData = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorData['detail'] ?? 'groups.remove_member_error'.tr()),
+            content: Text(
+              errorData['detail'] ?? 'groups.remove_member_error'.tr(),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -1067,9 +1075,9 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
     try {
       final token = await TokenService.getToken();
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('groups.not_logged_in'.tr())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('groups.not_logged_in'.tr())));
         return;
       }
 
@@ -1116,7 +1124,9 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('groups.demote_from_admin'.tr()),
-          content: Text('groups.demote_from_admin_confirm'.tr(args: [username])),
+          content: Text(
+            'groups.demote_from_admin_confirm'.tr(args: [username]),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -1137,9 +1147,9 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
     try {
       final token = await TokenService.getToken();
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('groups.not_logged_in'.tr())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('groups.not_logged_in'.tr())));
         return;
       }
 
@@ -1200,7 +1210,8 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
   void _showUserActionMenu(BuildContext context, Map<String, dynamic> member) {
     final isCurrentUserAdmin = widget.group['is_admin'] == true;
     final isMemberAdmin = member['is_admin'] == true;
-    final isCurrentUser = member['username'] == 'admin'; // Assuming current user is 'admin'
+    final isCurrentUser =
+        member['username'] == 'admin'; // Assuming current user is 'admin'
 
     showModalBottomSheet(
       context: context,
@@ -1212,9 +1223,8 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
             children: [
               // User info header
               Container(
-                padding: const EdgeInsets.all(16),
+                //padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -1230,25 +1240,37 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            member['username'],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                    Container(
+                      margin: const EdgeInsets.symmetric(
+                        vertical: 4,
+                        horizontal: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(
+                          10,
+                        ),
+                      ),
+                      child: Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              member['username'],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
-                          ),
-                          Text(
-                            member['email'],
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 14,
+                            Text(
+                              member['email'],
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 14,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     if (isMemberAdmin)
@@ -1260,10 +1282,6 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                         decoration: BoxDecoration(
                           color: Colors.orange.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.orange.withOpacity(0.3),
-                            width: 1,
-                          ),
                         ),
                         child: Text(
                           'groups.admin'.tr(),
@@ -1278,7 +1296,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Action buttons
               if (isCurrentUserAdmin && !isCurrentUser) ...[
                 ListTile(
@@ -1289,25 +1307,24 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      isMemberAdmin ? Icons.admin_panel_settings : Icons.admin_panel_settings_outlined,
+                      isMemberAdmin
+                          ? Icons.admin_panel_settings
+                          : Icons.admin_panel_settings_outlined,
                       color: Colors.orange.shade600,
                       size: 20,
                     ),
                   ),
                   title: Text(
-                    isMemberAdmin 
-                      ? 'groups.demote_from_admin'.tr()
-                      : 'groups.promote_to_admin'.tr(),
+                    isMemberAdmin
+                        ? 'groups.demote_from_admin'.tr()
+                        : 'groups.promote_to_admin'.tr(),
                     style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                   subtitle: Text(
-                    isMemberAdmin 
-                      ? 'groups.demote_from_admin_desc'.tr()
-                      : 'groups.promote_to_admin_desc'.tr(),
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                    ),
+                    isMemberAdmin
+                        ? 'groups.demote_from_admin_desc'.tr()
+                        : 'groups.promote_to_admin_desc'.tr(),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -1337,10 +1354,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                   ),
                   subtitle: Text(
                     'groups.remove_member_desc'.tr(),
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -1366,10 +1380,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                   ),
                   subtitle: Text(
                     'groups.grant_sharing_desc'.tr(),
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -1377,7 +1388,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                   },
                 ),
               ],
-              
+
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
@@ -1408,11 +1419,10 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'groups.sharing_permissions_desc'.tr(args: [member['username']]),
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 14,
+                'groups.sharing_permissions_desc'.tr(
+                  args: [member['username']],
                 ),
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
               ),
               const SizedBox(height: 16),
               Row(
@@ -1494,17 +1504,18 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
         ],
       ),
       body: _buildBody(),
-      floatingActionButton: widget.group['is_admin'] == true
-          ? FloatingActionButton.extended(
-              onPressed: _showAddMemberDialog,
-              backgroundColor: const Color(0xFF667eea),
-              icon: const Icon(Icons.person_add, color: Colors.white),
-              label: Text(
-                'groups.add_member'.tr(),
-                style: const TextStyle(color: Colors.white),
-              ),
-            )
-          : null,
+      floatingActionButton:
+          widget.group['is_admin'] == true
+              ? FloatingActionButton.extended(
+                onPressed: _showAddMemberDialog,
+                backgroundColor: const Color(0xFF667eea),
+                icon: const Icon(Icons.person_add, color: Colors.white),
+                label: Text(
+                  'groups.add_member'.tr(),
+                  style: const TextStyle(color: Colors.white),
+                ),
+              )
+              : null,
     );
   }
 
@@ -1518,18 +1529,11 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               _errorMessage!,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -1559,14 +1563,12 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                if (widget.group['description'] != null && widget.group['description'].isNotEmpty) ...[
+                if (widget.group['description'] != null &&
+                    widget.group['description'].isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(
                     widget.group['description'],
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
                   ),
                 ],
                 const SizedBox(height: 16),
@@ -1576,10 +1578,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                     const SizedBox(width: 8),
                     Text(
                       '${_members.length} ${'groups.members'.tr()}',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
                     ),
                   ],
                 ),
@@ -1587,218 +1586,273 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
             ),
           ),
         ),
-        
+
         // Members list
         Expanded(
-          child: _members.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.people_outline,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'groups.no_members'.tr(),
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
+          child:
+              _members.isEmpty
+                  ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.people_outline,
+                          size: 64,
+                          color: Colors.grey[400],
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      if (widget.group['is_admin'] == true) ...[
                         const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: _showAddMemberDialog,
-                          icon: const Icon(Icons.person_add),
-                          label: Text('groups.add_first_member'.tr()),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF667eea),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        Text(
+                          'groups.no_members'.tr(),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
                           ),
+                          textAlign: TextAlign.center,
                         ),
-                      ],
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _members.length,
-                  itemBuilder: (context, index) {
-                    final member = _members[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: const Color(0xFF667eea),
-                          child: Text(
-                            member['username'][0].toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                        if (widget.group['is_admin'] == true) ...[
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: _showAddMemberDialog,
+                            icon: const Icon(Icons.person_add),
+                            label: Text('groups.add_first_member'.tr()),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF667eea),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
                             ),
                           ),
-                        ),
-                        title: Text(member['username']),
-                        subtitle: Text(member['email']),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (member['is_admin'] == true)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.orange.withOpacity(0.3),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  'groups.admin'.tr(),
-                                  style: TextStyle(
-                                    color: Colors.orange.shade700,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                        ],
+                      ],
+                    ),
+                  )
+                  : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _members.length,
+                    itemBuilder: (context, index) {
+                      final member = _members[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: const Color(0xFF667eea),
+                            child: Text(
+                              member['username'][0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
                               ),
-                            if (widget.group['is_admin'] == true && member['username'] != 'admin')
-                              PopupMenuButton<String>(
-                                onSelected: (value) {
-                                  switch (value) {
-                                    case 'promote':
-                                      if (!member['is_admin']) {
-                                        _promoteToAdmin(member['username']);
-                                      }
-                                      break;
-                                    case 'demote':
-                                      if (member['is_admin']) {
-                                        _demoteFromAdmin(member['username']);
-                                      }
-                                      break;
-                                    case 'remove':
-                                      _removeMember(member['username']);
-                                      break;
-                                    case 'share':
-                                      _showSharingPermissionsDialog(member);
-                                      break;
-                                  }
-                                },
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          title: Text(member['username']),
+                          subtitle: Text(member['email']),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (member['is_admin'] == true)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.orange.withOpacity(0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'groups.admin'.tr(),
+                                    style: TextStyle(
+                                      color: Colors.orange.shade700,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
-                                elevation: 8,
-                                offset: const Offset(0, 8),
-                                itemBuilder: (context) => [
-                                  if (!member['is_admin'])
-                                    PopupMenuItem(
-                                      value: 'promote',
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(6),
-                                            decoration: BoxDecoration(
-                                              color: Colors.orange.withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(8),
+                              if (widget.group['is_admin'] == true &&
+                                  member['username'] != 'admin')
+                                PopupMenuButton<String>(
+                                  onSelected: (value) {
+                                    switch (value) {
+                                      case 'promote':
+                                        if (!member['is_admin']) {
+                                          _promoteToAdmin(member['username']);
+                                        }
+                                        break;
+                                      case 'demote':
+                                        if (member['is_admin']) {
+                                          _demoteFromAdmin(member['username']);
+                                        }
+                                        break;
+                                      case 'remove':
+                                        _removeMember(member['username']);
+                                        break;
+                                      case 'share':
+                                        _showSharingPermissionsDialog(member);
+                                        break;
+                                    }
+                                  },
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 8,
+                                  offset: const Offset(0, 8),
+                                  itemBuilder:
+                                      (context) => [
+                                        if (!member['is_admin'])
+                                          PopupMenuItem(
+                                            value: 'promote',
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.all(
+                                                    6,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.orange
+                                                        .withOpacity(0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.admin_panel_settings,
+                                                    color:
+                                                        Colors.orange.shade600,
+                                                    size: 18,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Text(
+                                                  'groups.promote_to_admin'
+                                                      .tr(),
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            child: Icon(Icons.admin_panel_settings, color: Colors.orange.shade600, size: 18),
                                           ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            'groups.promote_to_admin'.tr(),
-                                            style: const TextStyle(fontWeight: FontWeight.w500),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  if (member['is_admin'])
-                                    PopupMenuItem(
-                                      value: 'demote',
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(6),
-                                            decoration: BoxDecoration(
-                                              color: Colors.orange.withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(8),
+                                        if (member['is_admin'])
+                                          PopupMenuItem(
+                                            value: 'demote',
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.all(
+                                                    6,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.orange
+                                                        .withOpacity(0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons
+                                                        .admin_panel_settings_outlined,
+                                                    color:
+                                                        Colors.orange.shade600,
+                                                    size: 18,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Text(
+                                                  'groups.demote_from_admin'
+                                                      .tr(),
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            child: Icon(Icons.admin_panel_settings_outlined, color: Colors.orange.shade600, size: 18),
                                           ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            'groups.demote_from_admin'.tr(),
-                                            style: const TextStyle(fontWeight: FontWeight.w500),
+                                        PopupMenuItem(
+                                          value: 'remove',
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(
+                                                  6,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red.withOpacity(
+                                                    0.1,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Icon(
+                                                  Icons.remove_circle_outline,
+                                                  color: Colors.red.shade600,
+                                                  size: 18,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text(
+                                                'groups.remove_member'.tr(),
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.red.shade600,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                  PopupMenuItem(
-                                    value: 'remove',
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Icon(Icons.remove_circle_outline, color: Colors.red.shade600, size: 18),
                                         ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          'groups.remove_member'.tr(),
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.red.shade600,
+                                        PopupMenuItem(
+                                          value: 'share',
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(
+                                                  6,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.blue
+                                                      .withOpacity(0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Icon(
+                                                  Icons.share,
+                                                  color: Colors.blue.shade600,
+                                                  size: 18,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text(
+                                                'groups.grant_sharing'.tr(),
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
-                                    ),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'share',
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: Colors.blue.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Icon(Icons.share, color: Colors.blue.shade600, size: 18),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          'groups.grant_sharing'.tr(),
-                                          style: const TextStyle(fontWeight: FontWeight.w500),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          ],
+                                ),
+                            ],
+                          ),
+                          onTap: () {
+                            if (widget.group['is_admin'] == true &&
+                                member['username'] != 'admin') {
+                              _showUserActionMenu(context, member);
+                            }
+                          },
                         ),
-                        onTap: () {
-                          if (widget.group['is_admin'] == true && member['username'] != 'admin') {
-                            _showUserActionMenu(context, member);
-                          }
-                        },
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  ),
         ),
       ],
     );
   }
-} 
+}

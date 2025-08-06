@@ -69,7 +69,6 @@ class _MyAppState extends State<MyApp> {
   // StreamSubscription? _linkSubscription;
   // final _appLinks = AppLinks();
   late AppSettings _appSettings;
-  bool _showDebugOverlay = false;
 
   @override
   void initState() {
@@ -192,17 +191,11 @@ class _SplashScreenState extends State<SplashScreen> {
       if (!mounted) return;
       
       if (isLoggedIn) {
-        // Token jest ważny - użytkownik jest zalogowany
-        print('DEBUG: Token is valid, navigating to main page');
         Navigator.pushReplacementNamed(context, '/main');
       } else {
-        // Token jest nieprawidłowy lub wygasł
-        print('DEBUG: Token is invalid or expired, navigating to login page');
         Navigator.pushReplacementNamed(context, '/login');
       }
     } catch (e) {
-      print('DEBUG: Error checking login status: $e');
-      // W przypadku błędu, przekieruj do logowania
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/login');
       }
@@ -217,8 +210,8 @@ class _SplashScreenState extends State<SplashScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF667eea).withOpacity(0.1),
-              const Color(0xFF764ba2).withOpacity(0.1),
+              const Color(0xFF667eea).withValues(alpha: 0.1),
+              const Color(0xFF764ba2).withValues(alpha: 0.1),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

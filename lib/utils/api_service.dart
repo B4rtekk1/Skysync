@@ -97,6 +97,33 @@ class ApiService {
     return response;
   }
 
+  static Future<http.Response> renameFile({
+    required String oldFilename,
+    required String newFilename,
+    required String folderName,
+    required String token,
+  }) async {
+    print('Connecting to: $baseUrl');
+    print('API Key: ${apiKey.isNotEmpty ? "Set" : "Not set"}');
+    final url = Uri.parse('$baseUrl/rename_file');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'API_KEY': apiKey,
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'old_filename': oldFilename,
+        'new_filename': newFilename,
+        'folder_name': folderName,
+      }),
+    );
+
+    print(response.body);
+    return response;
+  }
+
   static Future<http.Response> listSharedFolder({
     required String folderPath,
     required String sharedBy,

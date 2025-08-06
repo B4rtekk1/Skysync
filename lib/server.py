@@ -834,6 +834,26 @@ class SecurityEvent(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     resolved = Column(Boolean, default=False)
     resolution_notes = Column(Text, nullable=True)
+    
+class RenameFile(Base):
+    """
+    SQLAlchemy model for file renaming history.
+    
+    Attributes:
+        id (int): Primary key.
+        file_id (int): ID of the file that was renamed.
+        old_filename (str): Previous file name.
+        new_filename (str): New file name.
+        renamed_by_user_id (int): ID of the user who renamed the file.
+        renamed_at (datetime): When the file was renamed.
+    """
+    __tablename__ = 'rename_history'
+    id = Column(Integer, primary_key=True, index=True)
+    file_id = Column(Integer, nullable=False)
+    old_filename = Column(String, nullable=False)
+    new_filename = Column(String, nullable=False)
+    renamed_by_user_id = Column(Integer, nullable=False)
+    renamed_at = Column(DateTime, default=datetime.utcnow)
 
 class PasswordHistory(Base):
     """
@@ -1069,6 +1089,19 @@ class RemoveGroupMemberRequest(BaseModel):
     """
     group_name: str = Field(..., min_length=2, max_length=100)
     username: str = Field(..., min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9_]+$')
+    
+class RenameFileRequest(BaseModel):
+    """
+    Pydantic model for renaming a file.
+    
+    Fields:
+        old_filename (str): Current file name.
+        new_filename (str): New file name.
+        folder_name (str): Folder where the file is located.
+    """
+    old_filename: str = Field(..., min_length=1, max_length=255)
+    new_filename: str = Field(..., min_length=1, max_length=255)
+    folder_name: str = Field(..., min_length=1, max_length=255)
 
 class ShareFileWithGroupRequest(BaseModel):
     """
@@ -1681,6 +1714,63 @@ async def upload_file(
             "file_hash": file_hash
         }
     }
+    
+@app.post("/rename_file")
+async def rename_file(
+    request: ShareFileRequest, 
+    payload: dict = Depends(require_jwt_token), 
+    db: Session = Depends(get_db)
+):
+    """
+    Rename a file in a user's folder. Requires JWT token and API key.
+    Args:
+        request (ShareFileRequest): File data.
+        payload (dict): JWT token payload.
+        db (Session): SQLAlchemy session.
+    Returns:
+        dict: Message about renaming result.
+    Raises:
+        HTTPException: 401/403/404/409 on errors.
+    """
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=403, detail="Invalid token")
+
+    # Check if the folder belongs to the authenticated user
+    if not request.folder_name.startswith(username):
+        raise HTTPException(status_code=403, detail="You are not authorized to rename files in this folder")
+    
+    folder_path = os.path.join(os.getcwd(), request.folder_name)
+    if not os.path.isdir(folder_path):
+        raise HTTPException(status_code=404, detail=f"Folder \"{request.folder_name}\" does not exist")
+
+    old_file_path = os.path.join(folder_path, request.filename)
+    if not os.path.isfile(old_file_path):
+        raise HTTPException(status_code=404, detail=f"File \"{request.filename}\" does not exist in {request.folder_name}")
+
+    new_file_path = os.path.join(folder_path, request.new_filename)
+    
+    if os.path.exists(new_file_path):
+        raise HTTPException(status_code=409, detail=f"File \"{request.new_filename}\" already exists in {request.folder_name}")
+
+    try:
+        os.rename(old_file_path, new_file_path)
+        
+        # Update file record in database
+        file_record = db.query(File).filter(
+            File.filename == request.filename,
+            File.folder_name == request.folder_name,
+            File.user_id == payload.get("user_id")
+        ).first()
+        
+        if file_record:
+            file_record.filename = request.new_filename
+            db.commit()
+        
+        return {"message": f"File renamed from {request.filename} to {request.new_filename} successfully"}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error renaming file: {str(e)}")
 
 @app.post("/list_files")
 async def list_files(
