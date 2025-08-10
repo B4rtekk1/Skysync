@@ -783,7 +783,7 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -795,7 +795,7 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
@@ -857,7 +857,7 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
               borderRadius: BorderRadius.circular(25),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF667eea).withOpacity(0.15),
+                  color: const Color(0xFF667eea).withValues(alpha: 0.15),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -880,7 +880,7 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
                   margin: const EdgeInsets.all(12),
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF667eea).withOpacity(0.1),
+                    color: const Color(0xFF667eea).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -955,7 +955,7 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -1001,7 +1001,7 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -1108,7 +1108,7 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1123,10 +1123,10 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: _getFileColor(item.fileType).withOpacity(0.1),
+                color: _getFileColor(item.fileType).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: _getFileColor(item.fileType).withOpacity(0.3),
+                  color: _getFileColor(item.fileType).withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -1171,7 +1171,7 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF667eea).withOpacity(0.1),
+                          color: const Color(0xFF667eea).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(Icons.download_rounded, color: const Color(0xFF667eea), size: 18),
@@ -1191,7 +1191,7 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: Colors.purple.withOpacity(0.1),
+                          color: Colors.purple.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(Icons.visibility, color: Colors.purple, size: 18),
@@ -1258,7 +1258,7 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1293,7 +1293,7 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF667eea).withOpacity(0.1),
+                                  color: const Color(0xFF667eea).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(Icons.download_rounded, color: const Color(0xFF667eea), size: 18),
@@ -1313,7 +1313,7 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: Colors.purple.withOpacity(0.1),
+                                  color: Colors.purple.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(Icons.visibility, color: Colors.purple, size: 18),
@@ -1358,10 +1358,10 @@ class _SharedFolderContentsPageState extends State<SharedFolderContentsPage> {
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: _getFileColor(item.fileType).withOpacity(0.1),
+                          color: _getFileColor(item.fileType).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: _getFileColor(item.fileType).withOpacity(0.3),
+                            color: _getFileColor(item.fileType).withValues(alpha: 0.3),
                             width: 1,
                           ),
                         ),

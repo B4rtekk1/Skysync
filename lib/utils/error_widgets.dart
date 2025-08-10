@@ -287,14 +287,14 @@ class EnhancedErrorNotification extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: ErrorHandler.getErrorColor(error.type).withOpacity(0.3),
+            color: ErrorHandler.getErrorColor(error.type).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
             spreadRadius: 2,
           ),
         ],
         border: Border.all(
-          color: ErrorHandler.getErrorColor(error.type).withOpacity(0.2),
+          color: ErrorHandler.getErrorColor(error.type).withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -310,7 +310,7 @@ class EnhancedErrorNotification extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: ErrorHandler.getErrorColor(error.type).withOpacity(0.1),
+                      color: ErrorHandler.getErrorColor(error.type).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -486,7 +486,7 @@ class _FloatingErrorBannerState extends State<FloatingErrorBanner>
                 gradient: LinearGradient(
                   colors: [
                     ErrorHandler.getErrorColor(widget.error.type),
-                    ErrorHandler.getErrorColor(widget.error.type).withOpacity(0.8),
+                    ErrorHandler.getErrorColor(widget.error.type).withValues(alpha: 0.8),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -494,7 +494,7 @@ class _FloatingErrorBannerState extends State<FloatingErrorBanner>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: ErrorHandler.getErrorColor(widget.error.type).withOpacity(0.4),
+                    color: ErrorHandler.getErrorColor(widget.error.type).withValues(alpha: 0.4),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                     spreadRadius: 2,
@@ -510,7 +510,7 @@ class _FloatingErrorBannerState extends State<FloatingErrorBanner>
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -538,7 +538,7 @@ class _FloatingErrorBannerState extends State<FloatingErrorBanner>
                               Text(
                                 'error.code'.tr(args: [widget.error.code!]),
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withValues(alpha: 0.8),
                                   fontSize: 12,
                                 ),
                               ),
@@ -604,14 +604,14 @@ class SuccessNotification extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF667eea).withOpacity(0.3),
+            color: const Color(0xFF667eea).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
             spreadRadius: 2,
           ),
         ],
         border: Border.all(
-          color: const Color(0xFF667eea).withOpacity(0.2),
+          color: const Color(0xFF667eea).withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -624,7 +624,7 @@ class SuccessNotification extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF667eea).withOpacity(0.1),
+                  color: const Color(0xFF667eea).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -702,14 +702,14 @@ class InfoNotification extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
+            color: Colors.blue.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
             spreadRadius: 2,
           ),
         ],
         border: Border.all(
-          color: Colors.blue.withOpacity(0.2),
+          color: Colors.blue.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -722,7 +722,7 @@ class InfoNotification extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(

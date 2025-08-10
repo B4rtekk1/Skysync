@@ -282,7 +282,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF667eea).withOpacity(0.1),
+                    color: const Color(0xFF667eea).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(Icons.upload_file, color: const Color(0xFF667eea)),
@@ -633,7 +633,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, -5),
               ),
@@ -661,7 +661,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -708,7 +708,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                     _buildActionTile(
                       icon: Icons.download_rounded,
                       iconColor: const Color(0xFF667eea),
-                      iconBgColor: const Color(0xFF667eea).withOpacity(0.1),
+                      iconBgColor: const Color(0xFF667eea).withValues(alpha: 0.1),
                       title: selectedFiles.any((file) => file.type == 'folder') 
                         ? 'Download as ZIP'
                         : selectedFiles.length == 1 
@@ -1089,7 +1089,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -1103,7 +1103,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -1193,12 +1193,12 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(25),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF667eea).withOpacity(0.15),
+                  color: const Color(0xFF667eea).withValues(alpha: 0.15),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -1221,7 +1221,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                   margin: const EdgeInsets.all(12),
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF667eea).withOpacity(0.1),
+                    color: const Color(0xFF667eea).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -1418,7 +1418,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                             border: Border.all(color: Colors.grey.shade200),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -1474,9 +1474,9 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF667eea).withOpacity(0.1),
+                        color: const Color(0xFF667eea).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF667eea).withOpacity(0.3)),
+                        border: Border.all(color: const Color(0xFF667eea).withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         _searchQuery.isNotEmpty 
@@ -1532,7 +1532,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF667eea).withOpacity(0.3),
+              color: const Color(0xFF667eea).withValues(alpha: 0.3),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -1571,7 +1571,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -1617,7 +1617,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -1721,8 +1721,8 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
             gradient: isSelected 
               ? LinearGradient(
                   colors: [
-                    const Color(0xFF667eea).withOpacity(0.15),
-                    const Color(0xFF764ba2).withOpacity(0.1),
+                    const Color(0xFF667eea).withValues(alpha: 0.15),
+                    const Color(0xFF764ba2).withValues(alpha: 0.1),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -1739,8 +1739,8 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
             boxShadow: [
               BoxShadow(
                 color: isSelected 
-                  ? const Color(0xFF667eea).withOpacity(0.2)
-                  : Colors.black.withOpacity(0.08),
+                  ? const Color(0xFF667eea).withValues(alpha: 0.2)
+                  : Colors.black.withValues(alpha: 0.08),
                 blurRadius: isSelected ? 15 : 10,
                 offset: const Offset(0, 4),
               ),
@@ -1784,7 +1784,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                   border: Border.all(color: const Color(0xFF667eea), width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF667eea).withOpacity(0.3),
+                      color: const Color(0xFF667eea).withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -1826,9 +1826,9 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                       return Container(
                         decoration: BoxDecoration(
                           color: isActive
-                              ? Colors.blue.withOpacity(0.15)
+                              ? Colors.blue.withValues(alpha: 0.15)
                               : isSelected
-                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
                                   : null,
                           borderRadius: BorderRadius.circular(8),
                           border: isActive
@@ -1891,7 +1891,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                       borderRadius: BorderRadius.circular(8),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
+                                          color: Colors.black.withValues(alpha: 0.1),
                                           blurRadius: 2,
                                           offset: const Offset(0, 1),
                                         ),
@@ -1924,7 +1924,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                       borderRadius: BorderRadius.circular(8),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
+                                          color: Colors.black.withValues(alpha: 0.1),
                                           blurRadius: 2,
                                           offset: const Offset(0, 1),
                                         ),
@@ -1957,7 +1957,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 2,
                                   offset: const Offset(0, 1),
                                 ),
@@ -1990,7 +1990,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 2,
                                   offset: const Offset(0, 1),
                                 ),
@@ -2019,10 +2019,10 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                     width: 48,
                                     height: 48,
                                     decoration: BoxDecoration(
-                                      color: _getFileColor(file.type).withOpacity(0.1),
+                                      color: _getFileColor(file.type).withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
-                                        color: _getFileColor(file.type).withOpacity(0.3),
+                                        color: _getFileColor(file.type).withValues(alpha: 0.3),
                                         width: 1,
                                       ),
                                     ),
@@ -2078,7 +2078,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                             Container(
                                               padding: const EdgeInsets.all(6),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFF667eea).withOpacity(0.1),
+                                                color: const Color(0xFF667eea).withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(8),
                                               ),
                                               child: Icon(Icons.download_rounded, color: const Color(0xFF667eea), size: 18),
@@ -2099,7 +2099,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                             Container(
                                               padding: const EdgeInsets.all(6),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFF667eea).withOpacity(0.1),
+                                                color: const Color(0xFF667eea).withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(8),
                                               ),
                                               child: Icon(Icons.download_rounded, color: const Color(0xFF667eea), size: 18),
@@ -2268,10 +2268,10 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: _getFileColor(file.type).withOpacity(0.1),
+                              color: _getFileColor(file.type).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: _getFileColor(file.type).withOpacity(0.3),
+                                color: _getFileColor(file.type).withValues(alpha: 0.3),
                                 width: 1,
                               ),
                             ),
@@ -2327,7 +2327,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                       Container(
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF667eea).withOpacity(0.1),
+                                          color: const Color(0xFF667eea).withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Icon(Icons.download_rounded, color: const Color(0xFF667eea), size: 18),
@@ -2348,7 +2348,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                       Container(
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF667eea).withOpacity(0.1),
+                                          color: const Color(0xFF667eea).withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Icon(Icons.download_rounded, color: const Color(0xFF667eea), size: 18),
@@ -2495,8 +2495,8 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
             gradient: isSelected 
               ? LinearGradient(
                   colors: [
-                    const Color(0xFF667eea).withOpacity(0.15),
-                    const Color(0xFF764ba2).withOpacity(0.1),
+                    const Color(0xFF667eea).withValues(alpha: 0.15),
+                    const Color(0xFF764ba2).withValues(alpha: 0.1),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -2513,8 +2513,8 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
             boxShadow: [
               BoxShadow(
                 color: isSelected 
-                  ? const Color(0xFF667eea).withOpacity(0.2)
-                  : Colors.black.withOpacity(0.08),
+                  ? const Color(0xFF667eea).withValues(alpha: 0.2)
+                  : Colors.black.withValues(alpha: 0.08),
                 blurRadius: isSelected ? 15 : 10,
                 offset: const Offset(0, 4),
               ),
@@ -2592,9 +2592,9 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                       return Container(
                         decoration: BoxDecoration(
                           color: isActive
-                              ? Colors.blue.withOpacity(0.15)
+                              ? Colors.blue.withValues(alpha: 0.15)
                               : isSelected
-                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
                                   : null,
                           borderRadius: BorderRadius.circular(8),
                           border: isActive
@@ -2729,7 +2729,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF667eea).withOpacity(0.1),
+                                  color: const Color(0xFF667eea).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(Icons.download_rounded, color: const Color(0xFF667eea), size: 18),
@@ -2750,7 +2750,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF667eea).withOpacity(0.1),
+                                  color: const Color(0xFF667eea).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(Icons.download_rounded, color: const Color(0xFF667eea), size: 18),
@@ -2885,7 +2885,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -2915,10 +2915,10 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: _getFileColor(file.type).withOpacity(0.1),
+                      color: _getFileColor(file.type).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _getFileColor(file.type).withOpacity(0.3),
+                        color: _getFileColor(file.type).withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -2934,10 +2934,10 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                             width: 80,
                             height: 80,
                             decoration: BoxDecoration(
-                              color: _getFileColor(file.type).withOpacity(0.1),
+                              color: _getFileColor(file.type).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: _getFileColor(file.type).withOpacity(0.3),
+                                color: _getFileColor(file.type).withValues(alpha: 0.3),
                                 width: 1,
                               ),
                             ),
@@ -2953,10 +2953,10 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                             width: 80,
                             height: 80,
                             decoration: BoxDecoration(
-                              color: _getFileColor(file.type).withOpacity(0.1),
+                              color: _getFileColor(file.type).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: _getFileColor(file.type).withOpacity(0.3),
+                                color: _getFileColor(file.type).withValues(alpha: 0.3),
                                 width: 1,
                               ),
                             ),
@@ -2972,10 +2972,10 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: _getFileColor(file.type).withOpacity(0.1),
+                      color: _getFileColor(file.type).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _getFileColor(file.type).withOpacity(0.3),
+                        color: _getFileColor(file.type).withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -3269,7 +3269,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 8),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFF667eea).withOpacity(0.1) : Colors.grey[50],
+                                  color: isSelected ? const Color(0xFF667eea).withValues(alpha: 0.1) : Colors.grey[50],
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: isSelected ? const Color(0xFF667eea) : Colors.grey[300]!,
@@ -3281,7 +3281,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                     width: 40,
                                     height: 40,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF667eea).withOpacity(0.1),
+                                      color: const Color(0xFF667eea).withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Center(
@@ -3939,7 +3939,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -3953,7 +3953,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF667eea).withOpacity(0.1),
+                    color: const Color(0xFF667eea).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -4044,7 +4044,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -4058,7 +4058,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF667eea).withOpacity(0.1),
+                    color: const Color(0xFF667eea).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -4149,7 +4149,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -4254,7 +4254,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -4383,7 +4383,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -4701,7 +4701,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -5257,16 +5257,16 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                 gradient: isActive 
                   ? LinearGradient(
                       colors: [
-                        const Color(0xFF667eea).withOpacity(0.2),
-                        const Color(0xFF764ba2).withOpacity(0.1),
+                        const Color(0xFF667eea).withValues(alpha: 0.2),
+                        const Color(0xFF764ba2).withValues(alpha: 0.1),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
                   : LinearGradient(
                       colors: [
-                        const Color(0xFF667eea).withOpacity(0.1),
-                        const Color(0xFF764ba2).withOpacity(0.05),
+                        const Color(0xFF667eea).withValues(alpha: 0.1),
+                        const Color(0xFF764ba2).withValues(alpha: 0.05),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -5274,10 +5274,10 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(12),
                 border: isActive 
                   ? Border.all(color: const Color(0xFF667eea), width: 2)
-                  : Border.all(color: const Color(0xFF667eea).withOpacity(0.3), width: 1),
+                  : Border.all(color: const Color(0xFF667eea).withValues(alpha: 0.3), width: 1),
                 boxShadow: isActive ? [
                   BoxShadow(
-                    color: const Color(0xFF667eea).withOpacity(0.2),
+                    color: const Color(0xFF667eea).withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -5296,7 +5296,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF667eea).withOpacity(0.2),
+                        color: const Color(0xFF667eea).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Icon(
@@ -5329,15 +5329,15 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                const Color(0xFF667eea).withOpacity(0.15),
-                const Color(0xFF764ba2).withOpacity(0.08),
+                const Color(0xFF667eea).withValues(alpha: 0.15),
+                const Color(0xFF764ba2).withValues(alpha: 0.08),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: const Color(0xFF667eea).withOpacity(0.4), 
+              color: const Color(0xFF667eea).withValues(alpha: 0.4), 
               width: 1,
             ),
           ),
@@ -5354,7 +5354,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF667eea).withOpacity(0.2),
+                    color: const Color(0xFF667eea).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(
@@ -5402,7 +5402,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isActive ? Colors.blue.withOpacity(0.15) : Colors.transparent,
+                  color: isActive ? Colors.blue.withValues(alpha: 0.15) : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                   border: isActive ? Border.all(color: Colors.blue, width: 2) : null,
                 ),
@@ -5433,15 +5433,15 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF667eea).withOpacity(0.15),
-                  const Color(0xFF764ba2).withOpacity(0.08),
+                  const Color(0xFF667eea).withValues(alpha: 0.15),
+                  const Color(0xFF764ba2).withValues(alpha: 0.08),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: const Color(0xFF667eea).withOpacity(0.4), 
+                color: const Color(0xFF667eea).withValues(alpha: 0.4), 
                 width: 1,
               ),
             ),
@@ -5458,7 +5458,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF667eea).withOpacity(0.2),
+                      color: const Color(0xFF667eea).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Icon(

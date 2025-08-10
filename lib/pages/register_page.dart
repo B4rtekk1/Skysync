@@ -279,7 +279,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                             'register.subtitle'.tr(),
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               letterSpacing: 0.5,
                             ),
                             textAlign: TextAlign.center,
@@ -302,7 +302,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 30,
                                 offset: const Offset(0, 15),
                               ),
@@ -575,7 +575,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF764ba2).withOpacity(0.3),
+                                      color: const Color(0xFF764ba2).withValues(alpha: 0.3),
                                       blurRadius: 15,
                                       offset: const Offset(0, 8),
                                     ),
@@ -637,7 +637,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                           Text(
                             'register.already_account'.tr(),
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 16,
                               fontWeight: FontWeight.w400,
                             ),
@@ -658,7 +658,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                                 horizontal: 16,
                                 vertical: 12,
                               ),
-                              backgroundColor: Colors.white.withOpacity(0.15),
+                              backgroundColor: Colors.white.withValues(alpha: 0.15),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(25),
                               ),
@@ -701,7 +701,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF764ba2).withOpacity(0.15),
+            color: const Color(0xFF764ba2).withValues(alpha: 0.15),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -726,7 +726,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
              margin: const EdgeInsets.all(12),
              padding: const EdgeInsets.all(8),
              decoration: BoxDecoration(
-               color: const Color(0xFF764ba2).withOpacity(0.1),
+               color: const Color(0xFF764ba2).withValues(alpha: 0.1),
                borderRadius: BorderRadius.circular(12),
              ),
              child: Icon(

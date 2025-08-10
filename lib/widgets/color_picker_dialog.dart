@@ -23,7 +23,7 @@ class ColorPickerDialog extends StatelessWidget {
                  borderRadius: BorderRadius.circular(20),
                  boxShadow: [
                    BoxShadow(
-                     color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
+                     color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.1),
                      blurRadius: 20,
                      offset: const Offset(0, 10),
                    ),
@@ -137,7 +137,7 @@ class ColorPickerDialog extends StatelessWidget {
                              ),
                       boxShadow: isSelected ? [
                         BoxShadow(
-                          color: color.withOpacity(0.3),
+                          color: color.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),

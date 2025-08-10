@@ -84,11 +84,9 @@ class AppSettings extends ChangeNotifier {
       primary: _accentColor,
       secondary: _accentColor,
       surface: Colors.white,
-      background: const Color(0xFFF5F5F5),
       onPrimary: Colors.white,
       onSecondary: Colors.white,
       onSurface: Colors.black87,
-      onBackground: Colors.black87,
       error: Colors.red,
       onError: Colors.white,
     );
@@ -98,7 +96,7 @@ class AppSettings extends ChangeNotifier {
       primarySwatch: _createMaterialColor(_accentColor),
       primaryColor: _accentColor,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: colorScheme.background,
+      scaffoldBackgroundColor: colorScheme.surface,
       cardTheme: CardTheme(
         color: colorScheme.surface,
         elevation: 2,
@@ -200,63 +198,63 @@ class AppSettings extends ChangeNotifier {
     return TextTheme(
       displayLarge: TextStyle(
         fontSize: baseSize * 3.5,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       displayMedium: TextStyle(
         fontSize: baseSize * 3.0,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       displaySmall: TextStyle(
         fontSize: baseSize * 2.5,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       headlineLarge: TextStyle(
         fontSize: baseSize * 2.0,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       headlineMedium: TextStyle(
         fontSize: baseSize * 1.75,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       headlineSmall: TextStyle(
         fontSize: baseSize * 1.5,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       titleLarge: TextStyle(
         fontSize: baseSize * 1.25,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       titleMedium: TextStyle(
         fontSize: baseSize * 1.125,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       titleSmall: TextStyle(
         fontSize: baseSize,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       bodyLarge: TextStyle(
         fontSize: baseSize,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       bodyMedium: TextStyle(
         fontSize: baseSize * 0.875,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       bodySmall: TextStyle(
         fontSize: baseSize * 0.75,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       labelLarge: TextStyle(
         fontSize: baseSize * 0.875,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       labelMedium: TextStyle(
         fontSize: baseSize * 0.75,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
       labelSmall: TextStyle(
         fontSize: baseSize * 0.625,
-        color: colorScheme.onBackground,
+        color: colorScheme.onSurface,
       ),
     );
   }

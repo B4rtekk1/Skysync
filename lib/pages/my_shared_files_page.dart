@@ -710,7 +710,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -722,7 +722,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
@@ -771,7 +771,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
                 ),
@@ -981,7 +981,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                         border: Border.all(color: Colors.grey.shade300),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 5,
                             offset: const Offset(0, 2),
                           ),
@@ -1025,9 +1025,9 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF667eea).withOpacity(0.1),
+                    color: const Color(0xFF667eea).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF667eea).withOpacity(0.3)),
+                    border: Border.all(color: const Color(0xFF667eea).withValues(alpha: 0.3)),
                   ),
                   child: Text(
                     _searchQuery.isNotEmpty 
@@ -1068,7 +1068,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -1114,7 +1114,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -1217,7 +1217,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1241,7 +1241,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 2,
                           offset: const Offset(0, 1),
                         ),
@@ -1274,7 +1274,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 2,
                           offset: const Offset(0, 1),
                         ),
@@ -1307,7 +1307,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 2,
                           offset: const Offset(0, 1),
                         ),
@@ -1340,7 +1340,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 2,
                           offset: const Offset(0, 1),
                         ),
@@ -1369,10 +1369,10 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: _getFileColor(item.fileType).withOpacity(0.1),
+                      color: _getFileColor(item.fileType).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: _getFileColor(item.fileType).withOpacity(0.3),
+                        color: _getFileColor(item.fileType).withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -1398,7 +1398,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: Colors.blue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -1447,7 +1447,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF667eea).withOpacity(0.1),
+                              color: const Color(0xFF667eea).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(Icons.download_rounded, color: const Color(0xFF667eea), size: 18),
@@ -1540,7 +1540,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: _getFileColor(item.fileType).withOpacity(0.1),
+                  backgroundColor: _getFileColor(item.fileType).withValues(alpha: 0.1),
                   child: Icon(
                     _getFileIcon(item.fileType),
                     color: _getFileColor(item.fileType),

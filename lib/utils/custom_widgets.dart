@@ -178,14 +178,14 @@ class _AnimatedButtonState extends State<AnimatedButton>
                     _isPressed
                         ? [
                           BoxShadow(
-                            color: Colors.blue.withOpacity(0.3),
+                            color: Colors.blue.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
                         ]
                         : [
                           BoxShadow(
-                            color: Colors.blue.withOpacity(0.4),
+                            color: Colors.blue.withValues(alpha: 0.4),
                             blurRadius: 12,
                             offset: const Offset(0, 6),
                           ),
@@ -239,8 +239,8 @@ class CustomDrawer extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF667eea).withOpacity(0.1),
-              const Color(0xFF764ba2).withOpacity(0.05),
+              const Color(0xFF667eea).withValues(alpha: 0.1),
+              const Color(0xFF764ba2).withValues(alpha: 0.05),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -264,7 +264,7 @@ class CustomDrawer extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF667eea).withOpacity(0.3),
+                      color: const Color(0xFF667eea).withValues(alpha: 0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -286,7 +286,7 @@ class CustomDrawer extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.shadow.withOpacity(0.2),
+                          color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.2),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -392,7 +392,7 @@ class CustomDrawer extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -402,7 +402,7 @@ class CustomDrawer extends StatelessWidget {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(Icons.logout, color: Colors.red, size: 20),
@@ -440,13 +440,13 @@ class CustomDrawer extends StatelessWidget {
       decoration: BoxDecoration(
         color:
             isSelected
-                ? const Color(0xFF667eea).withOpacity(0.1)
+                ? const Color(0xFF667eea).withValues(alpha: 0.1)
                 : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border:
             isSelected
                 ? Border.all(
-                  color: const Color(0xFF667eea).withOpacity(0.3),
+                  color: const Color(0xFF667eea).withValues(alpha: 0.3),
                   width: 1,
                 )
                 : null,
@@ -458,7 +458,7 @@ class CustomDrawer extends StatelessWidget {
             color:
                 isSelected
                     ? const Color(0xFF667eea)
-                    : Colors.grey.withOpacity(0.1),
+                    : Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
@@ -649,7 +649,7 @@ class FileItemCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8.0),
       color:
           isSelected
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
               : null,
       child: GestureDetector(
         onTap: onTap,
@@ -660,7 +660,7 @@ class FileItemCard extends StatelessWidget {
               isSelectionMode
                   ? Checkbox(value: isSelected, onChanged: onSelectionChanged)
                   : CircleAvatar(
-                    backgroundColor: _getFileColor(type).withOpacity(0.1),
+                    backgroundColor: _getFileColor(type).withValues(alpha: 0.1),
                     child: Icon(_getFileIcon(type), color: _getFileColor(type)),
                   ),
           title: Text(
@@ -816,7 +816,7 @@ class SuccessDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -829,7 +829,7 @@ class SuccessDialog extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFF667eea).withOpacity(0.1),
+                color: const Color(0xFF667eea).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -912,7 +912,7 @@ class ErrorDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -1055,7 +1055,7 @@ class QRCodeDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -1159,7 +1159,7 @@ class SessionExpiredDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),

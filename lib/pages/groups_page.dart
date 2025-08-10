@@ -390,7 +390,7 @@ class _GroupsPageState extends State<GroupsPage> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -402,7 +402,7 @@ class _GroupsPageState extends State<GroupsPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.group, color: Colors.white, size: 24),
@@ -448,7 +448,7 @@ class _GroupsPageState extends State<GroupsPage> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -494,7 +494,7 @@ class _GroupsPageState extends State<GroupsPage> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -583,7 +583,7 @@ class _GroupsPageState extends State<GroupsPage> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -595,10 +595,10 @@ class _GroupsPageState extends State<GroupsPage> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFF667eea).withOpacity(0.1),
+                color: const Color(0xFF667eea).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF667eea).withOpacity(0.3),
+                  color: const Color(0xFF667eea).withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -646,10 +646,10 @@ class _GroupsPageState extends State<GroupsPage> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
+                          color: Colors.orange.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: Colors.orange.withOpacity(0.3),
+                            color: Colors.orange.withValues(alpha: 0.3),
                             width: 1,
                           ),
                         ),
@@ -704,7 +704,7 @@ class _GroupsPageState extends State<GroupsPage> {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF667eea).withOpacity(0.1),
+                              color: const Color(0xFF667eea).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(
@@ -1280,7 +1280,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
+                          color: Colors.orange.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -1303,7 +1303,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
+                      color: Colors.orange.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -1339,7 +1339,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
+                      color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -1365,7 +1365,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: Colors.blue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -1658,10 +1658,10 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.orange.withOpacity(0.1),
+                                    color: Colors.orange.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: Colors.orange.withOpacity(0.3),
+                                      color: Colors.orange.withValues(alpha: 0.3),
                                       width: 1,
                                     ),
                                   ),
@@ -1715,7 +1715,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                                                   ),
                                                   decoration: BoxDecoration(
                                                     color: Colors.orange
-                                                        .withOpacity(0.1),
+                                                        .withValues(alpha: 0.1),
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                           8,
@@ -1750,7 +1750,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                                                   ),
                                                   decoration: BoxDecoration(
                                                     color: Colors.orange
-                                                        .withOpacity(0.1),
+                                                        .withValues(alpha: 0.1),
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                           8,
@@ -1817,7 +1817,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                                                 ),
                                                 decoration: BoxDecoration(
                                                   color: Colors.blue
-                                                      .withOpacity(0.1),
+                                                      .withValues(alpha: 0.1),
                                                   borderRadius:
                                                       BorderRadius.circular(8),
                                                 ),

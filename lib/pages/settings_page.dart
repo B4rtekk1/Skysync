@@ -379,7 +379,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF667eea).withOpacity(0.3),
+            color: const Color(0xFF667eea).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -393,7 +393,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -419,7 +419,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
                   Text(
                     _username,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 14,
                     ),
                   ),
@@ -428,7 +428,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
             ),
             Icon(
               Icons.edit,
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
               size: 20,
             ),
           ],
@@ -449,7 +449,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -461,7 +461,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),

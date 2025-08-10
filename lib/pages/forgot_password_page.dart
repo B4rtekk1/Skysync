@@ -155,8 +155,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF667eea).withOpacity(0.1),
-              const Color(0xFF764ba2).withOpacity(0.1),
+              const Color(0xFF667eea).withValues(alpha: 0.1),
+              const Color(0xFF764ba2).withValues(alpha: 0.1),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

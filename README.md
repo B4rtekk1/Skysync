@@ -1,231 +1,234 @@
-# ServApp - Aplikacja do Zarządzania Plikami
+# ServApp - File Management Application
 
-## Przegląd
+## Overview
 
-ServApp to nowoczesna aplikacja do zarządzania plikami zbudowana w Flutter, która zapewnia bezpieczne przechowywanie, udostępnianie i zarządzanie plikami. Aplikacja zawiera zaawansowany system obsługi błędów, obsługę wielu języków i intuicyjny interfejs użytkownika.
+ServApp is a modern file management application built with Flutter that provides secure file storage, sharing, and management capabilities. The application features a comprehensive error handling system, multi-language support, and an intuitive user interface.
 
-## Funkcje
+## Features
 
-### 🔐 **Uwierzytelnianie i Bezpieczeństwo**
+### 🔐 **Authentication & Security**
 
-- Rejestracja i logowanie użytkowników z weryfikacją e-mail
-- Uwierzytelnianie oparte na tokenach JWT
-- Funkcjonalność resetowania hasła
-- Bezpieczna kontrola dostępu do plików
+- User registration and login with email verification
+- JWT token-based authentication
+- Password reset functionality
+- Secure file access control
 
-### 📁 **Zarządzanie Plikami**
+### 📁 **File Management**
 
-- Przesyłanie i pobieranie plików
-- Tworzenie i zarządzanie folderami
-- Organizacja i nawigacja plików
-- Operacje na wielu plikach (wybór, usuwanie, przenoszenie)
-- Wyszukiwanie i filtrowanie plików
+- Upload and download files
+- Create and manage folders
+- Rename files
+- Share files with other
+- File organization and navigation
+- Bulk file operations (select, delete, move)
+- File search and filtering
+- Files preview
 
-### ⭐ **System Ulubionych**
+### ⭐ **Favorites System**
 
-- Oznaczanie plików jako ulubione dla szybkiego dostępu
-- Dedykowana strona ulubionych
-- Łatwe zarządzanie ulubionymi plikami
+- Mark files as favorites for quick access
+- Dedicated favorites page
+- Easy management of favorite files
 
-### 🔗 **Udostępnianie Plików**
+### 🔗 **File Sharing**
 
-- Udostępnianie plików innym użytkownikom
-- Udostępnianie całych folderów
-- Funkcjonalność szybkiego udostępniania
-- Przeglądanie udostępnionych plików i folderów
+- Share files with other users
+- Share entire folders
+- Share with groups
+- Quick share functionality via QR code
+- View shared files and folders
 
-### 🌐 **Obsługa Wiele Języków**
+### 🌐 **Multi-language Support**
 
-- Lokalizacja polska i angielska
-- Automatyczne wykrywanie języka
-- Łatwe rozszerzanie o nowe języki
+- Polish and English localization
+- Automatic language detection
+- Easy to extend with new languages
 
-### 🛡️ **Zaawansowana Obsługa Błędów**
+### 🛡️ **Advanced Error Handling**
 
-- Kompleksowy system zarządzania błędami
-- Przyjazne dla użytkownika komunikaty błędów
-- Funkcjonalność ponowienia dla błędów tymczasowych
-- Różne metody wyświetlania błędów (dialogi, snackbary, bannery)
+- Comprehensive error management system
+- User-friendly error messages
+- Retry functionality for recoverable errors
+- Different error display methods (dialogs, snackbars, banners)
 
-## Technologie
+## Technology Stack
 
 - **Frontend**: Flutter 3.7.2+
-- **Zarządzanie Stanem**: Provider
-- **Klient HTTP**: pakiet http
-- **Lokalne Przechowywanie**: SharedPreferences
-- **Obsługa Plików**: file_picker, path_provider
-- **Lokalizacja**: easy_localization
-- **Kody QR**: qr_flutter
+- **State Management**: Provider
+- **HTTP Client**: http package
+- **Local Storage**: SharedPreferences
+- **File Handling**: file_picker, path_provider
+- **Localization**: easy_localization
+- **QR Code**: qr_flutter
 
-## Rozpoczęcie Pracy
+## Getting Started
 
-### Wymagania
+### Prerequisites
 
-- Flutter SDK 3.7.2 lub wyższy
+- Flutter SDK 3.7.2 or higher
 - Dart SDK
 - Android Studio / VS Code
-- Serwer API backend (patrz dokumentacja backend)
+- Backend API server (see backend documentation)
 
-### Instalacja
+### Installation
 
-1. **Sklonuj repozytorium**
+1. **Clone the repository**
 
    ```bash
-   git clone <url-repozytorium>
+   git clone <repository-url>
    cd fileserver
    ```
 
-2. **Zainstaluj zależności**
+2. **Install dependencies**
 
    ```bash
    flutter pub get
    ```
 
-3. **Skonfiguruj środowisko**
-
-   - Utwórz plik `.env` w katalogu głównym
-   - Dodaj konfigurację API:
-
+3. **Configure environment**
+   - Create a `.env` file in the root directory
+   - Add your API configuration:
+   ```
+   API_KEY=your_api_key_here
+   BASE_URL=http://your-backend-url:8000
    ```
 
-   API_KEY=twój_klucz_api
-   BASE_URL=http://url-backend:8000
-   ```
-
-4. **Uruchom aplikację**
+4. **Run the application**
 
    ```bash
    flutter run
    ```
 
-## Struktura Projektu
+## Project Structure
 
 ```
-
 lib/
-├── main.dart                 # Punkt wejścia aplikacji
-├── pages/                    # Strony aplikacji
-│   ├── login_page.dart       # Ekran logowania
-│   ├── register_page.dart    # Ekran rejestracji
-│   ├── main_page.dart        # Główny dashboard
-│   ├── files_page.dart       # Zarządzanie plikami
-│   ├── favorites_page.dart   # Ulubione
-│   ├── shared_files_page.dart # Udostępnione pliki
-│   └── settings_page.dart    # Ustawienia
-├── utils/                    # Klasy narzędziowe
-│   ├── api_service.dart      # Komunikacja z API
-│   ├── token_service.dart    # Zarządzanie tokenami
-│   ├── custom_widgets.dart   # Widgety wielokrotnego użytku
-│   ├── error_handler.dart    # System obsługi błędów
-│   └── error_widgets.dart    # Widgety wyświetlania błędów
+├── main.dart                 # Application entry point
+├── pages/                    # Application pages
+│   ├── login_page.dart       # Login screen
+│   ├── register_page.dart    # Registration screen
+│   ├── main_page.dart        # Main dashboard
+│   ├── files_page.dart       # File management
+│   ├── favorites_page.dart   # Favorites
+│   ├── shared_files_page.dart # Shared files
+│   └── settings_page.dart    # Settings
+├── utils/                    # Utility classes
+│   ├── api_service.dart      # API communication
+│   ├── token_service.dart    # Token management
+│   ├── custom_widgets.dart   # Reusable widgets
+│   ├── error_handler.dart    # Error handling system
+│   └── error_widgets.dart    # Error display widgets
 └── assets/
-    └── lang/                 # Pliki lokalizacji
-        ├── en.json          # Tłumaczenia angielskie
-        └── pl.json          # Tłumaczenia polskie
+    └── lang/                 # Localization files
+        ├── en.json          # English translations
+        └── pl.json          # Polish translations
 ```
 
-## System Obsługi Błędów
+## Error Handling System
 
-Aplikacja zawiera kompleksowy system obsługi błędów, który zapewnia:
+The application includes a comprehensive error handling system that provides:
 
-- **Centralne Zarządzanie Błędami**: Wszystkie błędy są obsługiwane przez jeden system
-- **Klasyfikacja Błędów**: Błędy są kategoryzowane według typu (sieć, uwierzytelnianie, walidacja, itp.)
-- **Przyjazne Komunikaty**: Jasne, zlokalizowane komunikaty błędów
-- **Funkcjonalność Ponowienia**: Automatyczne ponowienie dla błędów tymczasowych
-- **Różne Metody Wyświetlania**: Dialogi, snackbary, bannery i widgety
+- **Centralized Error Management**: All errors are handled through a single system
+- **Error Classification**: Errors are categorized by type (network, authentication, validation, etc.)
+- **User-Friendly Messages**: Clear, localized error messages
+- **Retry Functionality**: Automatic retry for recoverable errors
+- **Multiple Display Methods**: Dialogs, snackbars, banners, and widgets
 
-### Typy Błędów
+### Error Types
 
-- `network` - Problemy z połączeniem sieciowym
-- `authentication` - Błędy logowania/autoryzacji
-- `authorization` - Błędy uprawnień
-- `validation` - Błędy walidacji danych
-- `server` - Błędy serwera backend
-- `file` - Błędy operacji na plikach
-- `unknown` - Błędy niesklasyfikowane
+- `network` - Network connection issues
+- `authentication` - Login/authorization errors
+- `authorization` - Permission errors
+- `validation` - Data validation errors
+- `server` - Backend server errors
+- `file` - File operation errors
+- `unknown` - Unclassified errors
 
-### Przykłady Użycia
+### Usage Examples
 
 ```dart
-// W wywołaniach API
+// In API calls
 try {
   final response = await ApiService.loginUser(email, password);
-  // Obsługa sukcesu
+  // Handle success
 } catch (e) {
   final appError = e is AppError ? e : ErrorHandler.handleError(e, null);
   ErrorHandler.showErrorSnackBar(context, appError);
 }
 
-// Używanie widgetów błędów
+// Using error widgets
 RetryableErrorWidget(
   error: appError,
   onRetry: () => _retryOperation(),
 )
 ```
 
-## Integracja z API
+## API Integration
 
-Aplikacja komunikuje się z API backend dla wszystkich operacji na plikach. Kluczowe endpointy obejmują:
+The application communicates with a backend API for all file operations. Key endpoints include:
 
-- `POST /create_user` - Rejestracja użytkownika
-- `POST /login` - Uwierzytelnianie użytkownika
-- `POST /list_files` - Pobieranie listy plików
-- `POST /upload_file` - Przesyłanie plików
-- `DELETE /delete_file/{path}` - Usuwanie plików
-- `GET /download_file/{path}` - Pobieranie plików
-- `POST /share_file` - Udostępnianie plików
-- `GET /get_shared_files` - Pobieranie udostępnionych plików
+- `POST /create_user` - User registration
+- `POST /login` - User authentication
+- `POST /list_files` - Get file list
+- `POST /upload_file` - Upload files
+- `DELETE /delete_file/{path}` - Delete files
+- `GET /download_file/{path}` - Download files
+- `POST /share_file` - Share files
+- `GET /get_shared_files` - Get shared files
 
-## Lokalizacja
+## Localization
 
-Aplikacja obsługuje wiele języków przez pakiet `easy_localization`. Aby dodać nowy język:
+The application supports multiple languages through the `easy_localization` package. To add a new language:
 
-1. Utwórz nowy plik JSON w `assets/lang/`
-2. Dodaj wszystkie wymagane klucze tłumaczeń
-3. Zaktualizuj obsługiwane lokalizacje w `main.dart`
+1. Create a new JSON file in `assets/lang/`
+2. Add all required translation keys
+3. Update the supported locales in `main.dart`
 
-## Budowanie dla Produkcji
+## Building for Production
 
 ### Android
+
 ```bash
 flutter build apk --release
 ```
 
 ### iOS
+
 ```bash
 flutter build ios --release
 ```
 
 ### Web
+
 ```bash
 flutter build web --release
 ```
 
-## Dokumentacja
+## Contributing
 
-- **[README_EN.md](README_EN.md)** - English documentation
-- **[ERROR_HANDLING.md](ERROR_HANDLING.md)** - System obsługi błędów (EN)
-- **[ERROR_HANDLING_PL.md](ERROR_HANDLING_PL.md)** - System obsługi błędów (PL)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-## Demo
+## License
 
-- **Strona demo błędów**: `/error-demo` - pokazuje wszystkie typy błędów i sposoby ich wyświetlania
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Wsparcie
+## Support
 
-W przypadku pytań i problemów:
+For support and questions:
 
-- Utwórz issue w repozytorium
-- Sprawdź dokumentację w folderze `docs/`
-- Przejrzyj demo obsługi błędów pod trasą `/error-demo`
+- Create an issue in the repository
+- Check the documentation in the `docs/` folder
+- Review the error handling demo at `/error-demo` route
 
 ## Roadmap
 
-- [ ] Obsługa trybu offline
-- [ ] Funkcjonalność podglądu plików
-- [ ] Zaawansowane filtry wyszukiwania
-- [ ] Wersjonowanie plików
-- [ ] Współpraca w czasie rzeczywistym
-- [ ] Powiadomienia push na urządzeniach mobilnych
-- [ ] Integracja z chmurą
-- [ ] Zaawansowane funkcje bezpieczeństwa (2FA, szyfrowanie)
+- [ ] Offline mode support
+- [ ] Advanced search filters
+- [ ] File versioning
+- [ ] Real-time collaboration
+- [ ] Cloud storage integration
+- [ ] Advanced security features (2FA, encryption) 
