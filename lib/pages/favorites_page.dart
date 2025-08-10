@@ -466,7 +466,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -478,7 +478,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
@@ -527,12 +527,12 @@ class _FavoritesPageState extends State<FavoritesPage> {
               borderRadius: BorderRadius.circular(25),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF667eea).withOpacity(0.15),
+                  color: const Color(0xFF667eea).withValues(alpha: 0.15),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: .05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -555,7 +555,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                   margin: const EdgeInsets.all(12),
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF667eea).withOpacity(0.1),
+                    color: const Color(0xFF667eea).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -751,7 +751,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         border: Border.all(color: Colors.grey.shade200),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -794,9 +794,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF667eea).withOpacity(0.1),
+                    color: const Color(0xFF667eea).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF667eea).withOpacity(0.3)),
+                    border: Border.all(color: const Color(0xFF667eea).withValues(alpha: 0.3)),
                   ),
                   child: Text(
                     _searchQuery.isNotEmpty 
@@ -837,7 +837,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -883,7 +883,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -987,7 +987,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1011,7 +1011,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 2,
                           offset: const Offset(0, 1),
                         ),
@@ -1044,7 +1044,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 2,
                           offset: const Offset(0, 1),
                         ),
@@ -1077,7 +1077,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 2,
                           offset: const Offset(0, 1),
                         ),
@@ -1110,7 +1110,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 2,
                           offset: const Offset(0, 1),
                         ),
@@ -1139,10 +1139,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: _getFileColor(file.type).withOpacity(0.1),
+                      color: _getFileColor(file.type).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: _getFileColor(file.type).withOpacity(0.3),
+                        color: _getFileColor(file.type).withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -1193,7 +1193,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF667eea).withOpacity(0.1),
+                              color: const Color(0xFF667eea).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(Icons.download_rounded, color: const Color(0xFF667eea), size: 18),
@@ -1277,7 +1277,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
               margin: const EdgeInsets.only(bottom: 8.0),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: _getFileColor(file.type).withOpacity(0.1),
+                  backgroundColor: _getFileColor(file.type).withValues(alpha: 0.1),
                   child: Icon(_getFileIcon(file.type), color: _getFileColor(file.type)),
                 ),
                 title: Text(file.name, style: const TextStyle(fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis),
@@ -1360,7 +1360,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: _getFileColor(file.type).withOpacity(0.1),
+                  backgroundColor: _getFileColor(file.type).withValues(alpha: 0.1),
                   child: Icon(
                     _getFileIcon(file.type),
                     color: _getFileColor(file.type),
