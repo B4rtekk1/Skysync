@@ -21,7 +21,11 @@ The server runs on port 8000 and supports CORS for all origins.
 
 - **Python Standard Libraries**: `os`, `json`, `random`, `re`, `time`, `secrets`, `zipfile`, `shutil`, `hashlib`, `logging`, `smtplib`, `ssl`, `hmac`, `uuid`, `datetime`, `typing`, `collections`, `email`.
 - **Third-Party Libraries**: `fastapi`, `sqlalchemy`, `bcrypt`, `jose` (JWT), `cryptography`, `asyncio`, `aiofiles`, `dotenv`, `uvicorn` (for running).
-- **Note**: No internet access for package installation; assumes pre-installed libraries.
+
+```bash
+# Run this command to auto instllation of packages
+pip install -r requirements.txt
+```
 
 ### Security Configuration
 
@@ -175,12 +179,126 @@ All endpoints require appropriate authentication (API key or JWT where specified
 - Creates database tables on startup using SQLAlchemy's `Base.metadata.create_all`.
 - Runs a periodic background task (`periodic_cleanup`) to clean expired sessions every hour.
 
-## Running the Server
+## Instalation
 
-The server is run using Uvicorn with the command:
+### 1. Install Dependencies
 
 ```bash
-uvicorn server:app --host 0.0.0.0 --port 8000
+# Install core security dependencies
+pip install -r requirements_backend.txt
+
 ```
 
-Alternatively, it runs automatically via the `if __name__ == "__main__"` block.
+### 2. Configure Enviroment Variables
+
+Create the `.env` file:
+
+```env
+API_KEY="<your_api_key>"
+EMAIL="<your_email>"
+PASSWORD="<app_password_gmail>"
+SECRET_KEY="<your_secret_key>"
+ENCRYPTION_KEY="<your_encryption_key>"
+BASE_URL="<your domain>"
+SECURITY_LOG_LEVEL=INFO
+ENABLE_VIRUS_SCANNING=true
+ENABLE_ENCRYPTION=true
+MAX_FILE_SIZE=104857600
+SESSION_TIMEOUT_MINUTES=30
+RATE_LIMIT_MAX_REQUESTS=100
+RATE_LIMIT_WINDOW=60
+```
+
+### Note
+
+- **In password field do not put your gmail password. It must be app password more information [here](https://www.hostpapa.com/knowledgebase/how-to-create-and-use-google-app-passwords/)**
+- **Highly recommend using [ngrok](https://ngrok.com/) for tunneling
+
+### 3. Start the server
+
+```bash
+uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+
+# Or optionally you can run it using
+python server.py
+```
+
+## 🔧 Detailed Configuration
+
+### Security Configuration
+
+All security settings are available in the `SECURITY_CONFIG` dictionary in `server.py`:
+
+```python
+SECURITY_CONFIG = {
+    'max_request_size': 100 * 1024 * 1024,  # 100MB
+    'max_files_per_upload': 10,
+    'session_timeout_minutes': 30,
+    'password_history_size': 5,
+    'max_failed_attempts_per_hour': 10,
+    'account_lockout_threshold': 5,
+    'account_lockout_duration': 30,  # minutes
+    'session_inactivity_timeout': 15,  # minutes
+    'max_concurrent_sessions': 3,
+    'file_scan_timeout': 30,  # seconds
+    'encryption_key_rotation_days': 90,
+    'audit_log_retention_days': 365,
+    'backup_retention_days': 30,
+    'max_file_name_length': 255,
+    'max_folder_depth': 10,
+    'rate_limit_window': 60,  # seconds
+    'rate_limit_max_requests': 100,
+    'csrf_protection': True,
+    'xss_protection': True,
+    'sql_injection_protection': True,
+    'path_traversal_protection': True,
+    'file_upload_validation': True,
+    'content_type_validation': True,
+    'virus_scanning': True,
+    'encryption_at_rest': True,
+    'encryption_in_transit': True,
+    'session_fixation_protection': True,
+    'clickjacking_protection': True,
+    'mime_sniffing_protection': True,
+    'referrer_policy': 'strict-origin-when-cross-origin',
+    'content_security_policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'",
+    'permissions_policy': "geolocation=(), microphone=(), camera=()",
+    'hsts_max_age': 31536000,
+    'hsts_include_subdomains': True,
+    'hsts_preload': True
+}
+```
+
+### Logging Configuration
+
+Security logs are stored in `security.log` with the following format:
+
+```
+2024-01-15 10:30:00 - INFO - [192.168.1.100] [testuser] SECURITY_EVENT: {"event_type": "failed_login", "details": "Invalid password", "severity": "medium"}
+```
+
+## 🧪 Security Testing
+
+### Run Tests
+
+```python
+# Test all security features
+python test_security.py
+
+# Test with custom parameters
+python test_security.py --url http://localhost:8000 --api-key your_api_key
+```
+
+### Tests to Perform
+
+1. **Rate Limiting** - Check blocking after exceeding limits
+2. **File Upload Validation** - Test file validation
+3. **Path Traversal** - Check path traversal protection
+4. **SQL Injection** - Test SQL injection protection
+5. **XSS Protection** - Check XSS protection
+6. **Password Validation** - Test password validation
+7. **File Encryption** - Check file encryption
+8. **Security Headers** - Test security headers
+9. **Admin Endpoints** - Check admin endpoints
+10. **Session Management** - Test session management
+11. **Audit Logging** - Check audit logging

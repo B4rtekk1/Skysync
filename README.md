@@ -1,8 +1,8 @@
-# ServApp - File Management Application
+# SkySync - File Management Application
 
 ## Overview
 
-ServApp is a modern file management application built with Flutter that provides secure file storage, sharing, and management capabilities. The application features a comprehensive error handling system, multi-language support, and an intuitive user interface.
+SkySync is a modern file management application built with Flutter that provides secure file storage, sharing and management capabilities. The application features a comprehensive error handling system, multi-language support, and an intuitive user interface.
 
 ## Features
 
@@ -23,6 +23,7 @@ ServApp is a modern file management application built with Flutter that provides
 - Bulk file operations (select, delete, move)
 - File search and filtering
 - Files preview
+- Favorites system
 
 ### ⭐ **Favorites System**
 
@@ -68,7 +69,7 @@ ServApp is a modern file management application built with Flutter that provides
 - Flutter SDK 3.7.2 or higher
 - Dart SDK
 - Android Studio / VS Code
-- Backend API server (see backend documentation)
+- Backend API server ([see backend documentation](SERVER_DOCUMENTATION.md))
 
 ### Installation
 

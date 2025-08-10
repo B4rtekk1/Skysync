@@ -209,7 +209,7 @@ SECURITY_CONFIG = {
     'max_files_per_upload': 100,
     'session_timeout_minutes': 30,
     'password_history_size': 5,
-    'max_failed_attempts_per_hour': 4,
+    'max_failed_attempts_per_hour': 10,
     'account_lockout_threshold': 5,
     'account_lockout_duration': 30,  # minutes
     'session_inactivity_timeout': 10,  # minutes

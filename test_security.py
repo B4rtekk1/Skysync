@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Skrypt testowy dla funkcji bezpieczeństwa ServApp
-Testuje wszystkie nowe funkcje bezpieczeństwa wprowadzone do serwera.
-"""
-
 import requests
 import json
 import time
@@ -24,7 +18,7 @@ class SecurityTester:
         self.test_results = []
         
     def log_test(self, test_name, success, details=""):
-        """Loguje wynik testu"""
+        """Logs test result"""
         result = {
             "test": test_name,
             "success": success,
@@ -36,10 +30,9 @@ class SecurityTester:
         print(f"{status} {test_name}: {details}")
         
     def test_rate_limiting(self):
-        """Testuje rate limiting"""
-        print("\n🔒 Testowanie Rate Limiting...")
+        """Tests rate limiting"""
+        print("\n🔒 Testing Rate Limiting...")
         
-        # Test prób logowania
         for i in range(15):
             response = self.session.post(f"{self.base_url}/login", json={
                 "email": "test@test.com",
@@ -47,19 +40,17 @@ class SecurityTester:
             })
             
             if response.status_code == 429:
-                self.log_test("Rate Limiting - Login", True, f"Zablokowano po {i+1} próbach")
+                self.log_test("Rate Limiting - Login", True, f"Blocked after {i+1} attempts")
                 break
         else:
-            self.log_test("Rate Limiting - Login", False, "Nie zablokowano po 15 próbach")
+            self.log_test("Rate Limiting - Login", False, "Not blocked after 15 attempts")
             
-        # Czekaj na odblokowanie
         time.sleep(2)
         
     def test_file_upload_validation(self):
-        """Testuje walidację uploadu plików"""
-        print("\n📁 Testowanie Walidacji Plików...")
+        """Tests file upload validation"""
+        print("\n📁 Testing File Validation...")
         
-        # Test zabronionego rozszerzenia
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as f:
             f.write(b"fake executable content")
             temp_file = f.name
@@ -72,7 +63,7 @@ class SecurityTester:
                 )
                 
             if response.status_code == 415:
-                self.log_test("File Upload - Blocked Extension", True, "Zablokowano plik .exe")
+                self.log_test("File Upload - Blocked Extension", True, "Blocked .exe file")
             else:
                 self.log_test("File Upload - Blocked Extension", False, f"Status: {response.status_code}")
                 
@@ -80,8 +71,8 @@ class SecurityTester:
             os.unlink(temp_file)
             
     def test_path_traversal(self):
-        """Testuje ochronę przed path traversal"""
-        print("\n🛡️ Testowanie Path Traversal...")
+        """Tests path traversal protection"""
+        print("\n🛡️ Testing Path Traversal...")
         
         malicious_paths = [
             "../../../etc/passwd",
@@ -93,13 +84,13 @@ class SecurityTester:
         for path in malicious_paths:
             response = self.session.get(f"{self.base_url}/download_file/{path}")
             if response.status_code in [403, 404, 400]:
-                self.log_test(f"Path Traversal - {path}", True, f"Zablokowano: {path}")
+                self.log_test(f"Path Traversal - {path}", True, f"Blocked: {path}")
             else:
                 self.log_test(f"Path Traversal - {path}", False, f"Status: {response.status_code}")
                 
     def test_sql_injection(self):
-        """Testuje ochronę przed SQL injection"""
-        print("\n💉 Testowanie SQL Injection...")
+        """Tests SQL injection protection"""
+        print("\n💉 Testing SQL Injection...")
         
         sql_payloads = [
             "admin' OR '1'='1",
@@ -116,13 +107,13 @@ class SecurityTester:
             })
             
             if response.status_code == 403:
-                self.log_test(f"SQL Injection - {payload[:20]}...", True, "Zablokowano przez WAF")
+                self.log_test(f"SQL Injection - {payload[:20]}...", True, "Blocked by WAF")
             else:
                 self.log_test(f"SQL Injection - {payload[:20]}...", False, f"Status: {response.status_code}")
                 
     def test_xss_protection(self):
-        """Testuje ochronę przed XSS"""
-        print("\n🕷️ Testowanie XSS Protection...")
+        """Tests XSS protection"""
+        print("\n🕷️ Testing XSS Protection...")
         
         xss_payloads = [
             "<script>alert('xss')</script>",
@@ -139,13 +130,13 @@ class SecurityTester:
             })
             
             if response.status_code == 403:
-                self.log_test(f"XSS Protection - {payload[:20]}...", True, "Zablokowano przez WAF")
+                self.log_test(f"XSS Protection - {payload[:20]}...", True, "Blocked by WAF")
             else:
                 self.log_test(f"XSS Protection - {payload[:20]}...", False, f"Status: {response.status_code}")
                 
     def test_password_validation(self):
-        """Testuje walidację haseł"""
-        print("\n🔐 Testowanie Walidacji Haseł...")
+        """Tests password validation"""
+        print("\n🔐 Testing Password Validation...")
         
         weak_passwords = [
             "123456",
@@ -168,17 +159,16 @@ class SecurityTester:
             })
             
             if response.status_code == 400:
-                self.log_test(f"Password Validation - {password}", True, "Odrzucono słabe hasło")
+                self.log_test(f"Password Validation - {password}", True, "Rejected weak password")
             else:
                 self.log_test(f"Password Validation - {password}", False, f"Status: {response.status_code}")
                 
     def test_file_encryption(self):
-        """Testuje szyfrowanie plików"""
-        print("\n🔒 Testowanie Szyfrowania Plików...")
+        """Tests file encryption"""
+        print("\n🔒 Testing File Encryption...")
         
-        # Najpierw musimy się zalogować
         login_response = self.session.post(f"{self.base_url}/login", json={
-            "email": "admin",  # Zakładamy, że admin istnieje
+            "email": "admin",
             "password": "admin_password"
         })
         
@@ -186,13 +176,11 @@ class SecurityTester:
             token = login_response.json().get("access_token")
             self.session.headers.update({"Authorization": f"Bearer {token}"})
             
-            # Utwórz testowy plik
             with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
                 f.write("Test content for encryption")
                 temp_file = f.name
                 
             try:
-                # Upload pliku
                 with open(temp_file, 'rb') as file:
                     upload_response = self.session.post(f"{self.base_url}/upload_file",
                         files={"file": file},
@@ -200,7 +188,6 @@ class SecurityTester:
                     )
                     
                 if upload_response.status_code == 200:
-                    # Test szyfrowania
                     encrypt_response = self.session.post(f"{self.base_url}/encrypt_file", json={
                         "filename": os.path.basename(temp_file),
                         "folder_name": "admin",
@@ -208,7 +195,7 @@ class SecurityTester:
                     })
                     
                     if encrypt_response.status_code == 200:
-                        self.log_test("File Encryption", True, "Plik został zaszyfrowany")
+                        self.log_test("File Encryption", True, "File encrypted successfully")
                     else:
                         self.log_test("File Encryption", False, f"Status: {encrypt_response.status_code}")
                 else:
@@ -217,11 +204,11 @@ class SecurityTester:
             finally:
                 os.unlink(temp_file)
         else:
-            self.log_test("File Encryption", False, "Nie można się zalogować")
+            self.log_test("File Encryption", False, "Unable to log in")
             
     def test_security_headers(self):
-        """Testuje nagłówki bezpieczeństwa"""
-        print("\n🛡️ Testowanie Nagłówków Bezpieczeństwa...")
+        """Tests security headers"""
+        print("\n🛡️ Testing Security Headers...")
         
         response = self.session.get(f"{self.base_url}/security/status")
         headers = response.headers
@@ -239,58 +226,54 @@ class SecurityTester:
             if header in headers:
                 header_value = headers[header]
                 if expected_value in header_value:
-                    self.log_test(f"Security Header - {header}", True, f"Obecny: {header_value[:50]}...")
+                    self.log_test(f"Security Header - {header}", True, f"Present: {header_value[:50]}...")
                 else:
-                    self.log_test(f"Security Header - {header}", False, f"Nieprawidłowa wartość: {header_value}")
+                    self.log_test(f"Security Header - {header}", False, f"Invalid value: {header_value}")
             else:
-                self.log_test(f"Security Header - {header}", False, "Brak nagłówka")
+                self.log_test(f"Security Header - {header}", False, "Header missing")
                 
     def test_admin_endpoints(self):
-        """Testuje endpointy administracyjne"""
-        print("\n👨‍💼 Testowanie Endpointów Administracyjnych...")
+        """Tests administrative endpoints"""
+        print("\n👨‍💼 Testing Administrative Endpoints...")
         
-        # Test statusu bezpieczeństwa
         response = self.session.get(f"{self.base_url}/security/status")
         if response.status_code == 200:
             data = response.json()
             if "security_features" in data:
-                self.log_test("Admin Endpoint - Security Status", True, "Dostępny status bezpieczeństwa")
+                self.log_test("Admin Endpoint - Security Status", True, "Security status available")
             else:
-                self.log_test("Admin Endpoint - Security Status", False, "Brak danych bezpieczeństwa")
+                self.log_test("Admin Endpoint - Security Status", False, "No security data")
         else:
             self.log_test("Admin Endpoint - Security Status", False, f"Status: {response.status_code}")
             
     def test_session_management(self):
-        """Testuje zarządzanie sesjami"""
-        print("\n⏰ Testowanie Zarządzania Sesjami...")
+        """Tests session management"""
+        print("\n⏰ Testing Session Management...")
         
-        # Test wygaśnięcia tokenu
         response = self.session.get(f"{self.base_url}/validate_token")
         if response.status_code == 401:
-            self.log_test("Session Management - Token Expiry", True, "Token wygasł prawidłowo")
+            self.log_test("Session Management - Token Expiry", True, "Token expired correctly")
         else:
             self.log_test("Session Management - Token Expiry", False, f"Status: {response.status_code}")
             
     def test_audit_logging(self):
-        """Testuje logowanie audytu"""
-        print("\n📝 Testowanie Logowania Audytu...")
+        """Tests audit logging"""
+        print("\n📝 Testing Audit Logging...")
         
-        # Sprawdź czy logi są generowane
         log_file = "security.log"
         if os.path.exists(log_file):
-            # Sprawdź ostatnie wpisy
             with open(log_file, 'r') as f:
                 lines = f.readlines()
                 if len(lines) > 0:
-                    self.log_test("Audit Logging", True, f"Znaleziono {len(lines)} wpisów w logu")
+                    self.log_test("Audit Logging", True, f"Found {len(lines)} log entries")
                 else:
-                    self.log_test("Audit Logging", False, "Log jest pusty")
+                    self.log_test("Audit Logging", False, "Log is empty")
         else:
-            self.log_test("Audit Logging", False, "Plik logu nie istnieje")
+            self.log_test("Audit Logging", False, "Log file does not exist")
             
     def run_all_tests(self):
-        """Uruchamia wszystkie testy"""
-        print("🚀 Rozpoczynanie testów bezpieczeństwa ServApp")
+        """Runs all tests"""
+        print("🚀 Starting ServApp security tests")
         print("=" * 60)
         
         self.test_rate_limiting()
@@ -305,38 +288,36 @@ class SecurityTester:
         self.test_session_management()
         self.test_audit_logging()
         
-        # Podsumowanie
+        # Summary
         print("\n" + "=" * 60)
-        print("📊 PODSUMOWANIE TESTÓW")
+        print("📊 TEST SUMMARY")
         print("=" * 60)
         
         passed = sum(1 for result in self.test_results if result["success"])
         total = len(self.test_results)
         
-        print(f"✅ Testy zaliczone: {passed}/{total}")
-        print(f"❌ Testy niezaliczone: {total - passed}/{total}")
-        print(f"📈 Procent sukcesu: {(passed/total)*100:.1f}%")
+        print(f"✅ Tests passed: {passed}/{total}")
+        print(f"❌ Tests failed: {total - passed}/{total}")
+        print(f"📈 Success rate: {(passed/total)*100:.1f}%")
         
-        # Szczegółowe wyniki
-        print("\n📋 SZCZEGÓŁOWE WYNIKI:")
+        print("\n📋 DETAILED RESULTS:")
         for result in self.test_results:
             status = "✅" if result["success"] else "❌"
             print(f"{status} {result['test']}: {result['details']}")
             
-        # Zapisz wyniki do pliku
         with open("security_test_results.json", "w") as f:
             json.dump(self.test_results, f, indent=2)
             
-        print(f"\n💾 Wyniki zapisane w: security_test_results.json")
+        print(f"\n💾 Results saved to: security_test_results.json")
         
         return passed, total
 
 def main():
-    """Główna funkcja"""
+    """Main function"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="Test funkcji bezpieczeństwa ServApp")
-    parser.add_argument("--url", default="http://localhost:8000", help="URL serwera")
+    parser = argparse.ArgumentParser(description="Test ServApp security features")
+    parser.add_argument("--url", default="http://localhost:8000", help="Server URL")
     parser.add_argument("--api-key", default="test_key", help="API Key")
     
     args = parser.parse_args()
@@ -344,8 +325,7 @@ def main():
     tester = SecurityTester(args.url, args.api_key)
     passed, total = tester.run_all_tests()
     
-    # Zwróć kod wyjścia
     exit(0 if passed == total else 1)
 
 if __name__ == "__main__":
-    main() 
+    main()
