@@ -95,7 +95,6 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 email = os.getenv("EMAIL")
 password = os.getenv("PASSWORD")
 
-# Email functions moved from Emails.py
 def send_verification_email(to_email, verification_code):
     """
     Sends a verification email to the user.
@@ -140,9 +139,7 @@ def send_reset_password_email(to_email, reset_token, base_url=os.getenv("BASE_UR
     print(f"[DEBUG] Preparing to send password reset email to {to_email}")
     if email and password:
         subject = "Password Reset Request"
-        
-        # Tworzymy link do resetowania hasła
-        # Używamy web URL z tokenem - użytkownik skopiuje token
+
         reset_link = f"{base_url}/reset-password?token={reset_token}"
         
         body = f"""
@@ -152,7 +149,7 @@ def send_reset_password_email(to_email, reset_token, base_url=os.getenv("BASE_UR
 
         To reset your password, please follow these steps:
 
-        1. Open your ServApp mobile application
+        1. Open your Skysync application
         2. Go to "Forgot Password" page
         3. Enter the following reset token:
            {reset_token}
@@ -314,13 +311,11 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
     response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
     
-    # Remove server information
     if "Server" in response.headers:
         del response.headers["Server"]
     
     return response
 
-# Enhanced rate limiting middleware
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     client_ip = get_real_ip(request)
@@ -343,13 +338,11 @@ async def rate_limit_middleware(request: Request, call_next):
             )
         else:
             del blocked_ips[client_ip]
-    
-    # Enhanced rate limiting for sensitive endpoints
+
     sensitive_endpoints = ["/login", "/create_user", "/reset_password", "/upload_file"]
     if request.url.path in sensitive_endpoints:
         current_time = datetime.now()
         if client_ip in login_attempts:
-            # Remove old attempts
             login_attempts[client_ip] = [
                 attempt for attempt in login_attempts[client_ip]
                 if current_time - attempt < timedelta(minutes=1)
@@ -376,7 +369,6 @@ async def rate_limit_middleware(request: Request, call_next):
     response = await call_next(request)
     return response
 
-# Enhanced Web Application Firewall (WAF) middleware
 @app.middleware("http")
 async def waf_middleware(request: Request, call_next):
     """
@@ -475,7 +467,6 @@ async def waf_middleware(request: Request, call_next):
         "/security/status"
     ]
     
-    # Skip WAF check for legitimate API endpoints
     if url_path in legitimate_endpoints:
         response = await call_next(request)
         return response

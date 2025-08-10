@@ -185,7 +185,7 @@ All endpoints require appropriate authentication (API key or JWT where specified
 
 ```bash
 # Install core security dependencies
-pip install -r requirements_backend.txt
+pip install -r requirements.txt
 
 ```
 
@@ -212,12 +212,15 @@ RATE_LIMIT_WINDOW=60
 ### Note
 
 - **In password field do not put your gmail password. It must be app password more information [here](https://www.hostpapa.com/knowledgebase/how-to-create-and-use-google-app-passwords/)**
-- **Highly recommend using [ngrok](https://ngrok.com/) for tunneling
+- **Highly recommend using [ngrok](https://ngrok.com/) for tunneling**
 
 ### 3. Start the server
 
 ```bash
+# Hot reload start
 uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+# Normal start
+uvicorn server:app --host 0.0.0.0 --port 8000
 
 # Or optionally you can run it using
 python server.py
