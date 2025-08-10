@@ -64,9 +64,12 @@ SkySync is a modern file management application built with Flutter that provides
 
 ## First look
 
-| ![img1](rdAssets/2.png) | ![img2](rdAssets/3.png)|
-| ![img1](rdAssets/4.png) | ![img2](rdAssets/5.png)|
-| ![img1](rdAssets/6.png) | ![img2](rdAssets/7.png)|
+| imgdemo               | imgdemo               |
+|-----------------------|-----------------------|
+| ![img1](rdAssets/2.png) | ![img2](rdAssets/3.png) |
+| ![img3](rdAssets/4.png) | ![img4](rdAssets/5.png) |
+| ![img5](rdAssets/6.png) | ![img6](rdAssets/7.png) |
+
 
 ## Getting Started
 
