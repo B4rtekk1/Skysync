@@ -205,14 +205,14 @@ BLOCKED_FILE_EXTENSIONS = {
 
 # Enhanced security configuration
 SECURITY_CONFIG = {
-    'max_request_size': 100 * 1024 * 1024,  # 100MB
-    'max_files_per_upload': 10,
+    'max_request_size': 25 * 1024 * 1024,  # 25MB
+    'max_files_per_upload': 100,
     'session_timeout_minutes': 30,
     'password_history_size': 5,
-    'max_failed_attempts_per_hour': 10,
+    'max_failed_attempts_per_hour': 4,
     'account_lockout_threshold': 5,
     'account_lockout_duration': 30,  # minutes
-    'session_inactivity_timeout': 15,  # minutes
+    'session_inactivity_timeout': 10,  # minutes
     'max_concurrent_sessions': 3,
     'file_scan_timeout': 30,  # seconds
     'encryption_key_rotation_days': 90,
@@ -1717,7 +1717,7 @@ async def upload_file(
     
 @app.post("/rename_file")
 async def rename_file(
-    request: ShareFileRequest, 
+    request: RenameFileRequest, 
     payload: dict = Depends(require_jwt_token), 
     db: Session = Depends(get_db)
 ):
@@ -1744,9 +1744,9 @@ async def rename_file(
     if not os.path.isdir(folder_path):
         raise HTTPException(status_code=404, detail=f"Folder \"{request.folder_name}\" does not exist")
 
-    old_file_path = os.path.join(folder_path, request.filename)
+    old_file_path = os.path.join(folder_path, request.old_filename)
     if not os.path.isfile(old_file_path):
-        raise HTTPException(status_code=404, detail=f"File \"{request.filename}\" does not exist in {request.folder_name}")
+        raise HTTPException(status_code=404, detail=f"File \"{request.old_filename}\" does not exist in {request.folder_name}")
 
     new_file_path = os.path.join(folder_path, request.new_filename)
     
@@ -1756,9 +1756,8 @@ async def rename_file(
     try:
         os.rename(old_file_path, new_file_path)
         
-        # Update file record in database
         file_record = db.query(File).filter(
-            File.filename == request.filename,
+            File.filename == request.old_filename,
             File.folder_name == request.folder_name,
             File.user_id == payload.get("user_id")
         ).first()
@@ -1767,7 +1766,7 @@ async def rename_file(
             file_record.filename = request.new_filename
             db.commit()
         
-        return {"message": f"File renamed from {request.filename} to {request.new_filename} successfully"}
+        return {"message": f"File renamed from {request.old_filename} to {request.new_filename} successfully"}
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error renaming file: {str(e)}")
@@ -5821,20 +5820,14 @@ async def get_group_shared_files(
     payload: dict = Depends(require_jwt_token),
     db: Session = Depends(get_db)
 ):
-    """
-    Get files shared with groups that the user is a member of.
-    Args:
-        payload (dict): JWT token payload.
-        db (Session): Database session.
-    Returns:
-        dict: List of shared files.
-    """
     username = payload.get("sub")
+    print(f"[DEBUG] Username from JWT: {username}")
     if not username:
         raise HTTPException(status_code=403, detail="Invalid token")
     
     # Get user
     user = db.query(User).filter(User.username == username).first()
+    print(f"[DEBUG] User found: {user.username if user else 'None'}")
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -5843,35 +5836,44 @@ async def get_group_shared_files(
         user_groups = db.query(UserGroupMember).filter(
             UserGroupMember.user_id == user.id
         ).all()
+        print(f"[DEBUG] User groups count: {len(user_groups)}")
         
         shared_files = []
         for membership in user_groups:
             group = db.query(UserGroup).filter(UserGroup.id == membership.group_id).first()
+            print(f"[DEBUG] Group: {group.name if group else 'None'}, Active: {group.is_active if group else 'N/A'}")
             if group and group.is_active:
                 # Get files shared with this group
                 group_shares = db.query(GroupSharedFile).filter(
                     GroupSharedFile.shared_with_group_id == group.id
                 ).all()
+                print(f"[DEBUG] Group shares count: {len(group_shares)}")
                 
                 for share in group_shares:
-                    file = db.query(File).filter(File.id == share.original_file_id).first()
-                    if file:
-                        shared_by = db.query(User).filter(User.id == share.shared_by_user_id).first()
-                        shared_files.append({
-                            "filename": file.filename,
-                            "folder_name": file.folder_name,
-                            "file_size": file.file_size,
-                            "shared_by": shared_by.username if shared_by else "Unknown",
-                            "shared_at": share.created_at.isoformat(),
-                            "group_name": group.name
-                        })
+                    print(f"[DEBUG] Checking share by user_id: {share.shared_by_user_id}")
+                    if share.shared_by_user_id != user.id:
+                        file = db.query(File).filter(File.id == share.original_file_id).first()
+                        print(f"[DEBUG] File found: {file.filename if file else 'None'}")
+                        if file:
+                            shared_by = db.query(User).filter(User.id == share.shared_by_user_id).first()
+                            print(f"[DEBUG] Shared by: {shared_by.username if shared_by else 'None'}")
+                            shared_files.append({
+                                "filename": file.filename,
+                                "folder_name": file.folder_name,
+                                "file_size": file.file_size,
+                                "shared_by": shared_by.username if shared_by else "Unknown",
+                                "shared_at": share.created_at.isoformat(),
+                                "group_name": group.name
+                            })
         
+        print(f"[DEBUG] Total shared files: {len(shared_files)}")
         return {
             "shared_files": shared_files,
             "total": len(shared_files)
         }
         
     except Exception as e:
+        print(f"[ERROR] Exception in get_group_shared_files: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting shared files: {str(e)}")
 
 @app.get("/groups/shared_folders")
@@ -5912,13 +5914,14 @@ async def get_group_shared_folders(
                 ).all()
                 
                 for share in group_shares:
-                    shared_by = db.query(User).filter(User.id == share.shared_by_user_id).first()
-                    shared_folders.append({
-                        "folder_path": share.folder_path,
-                        "shared_by": shared_by.username if shared_by else "Unknown",
-                        "shared_at": share.created_at.isoformat(),
-                        "group_name": group.name
-                    })
+                    if share.shared_by_user_id != user.id:
+                        shared_by = db.query(User).filter(User.id == share.shared_by_user_id).first()
+                        shared_folders.append({
+                            "folder_path": share.folder_path,
+                            "shared_by": shared_by.username if shared_by else "Unknown",
+                            "shared_at": share.created_at.isoformat(),
+                            "group_name": group.name
+                        })
         
         return {
             "shared_folders": shared_folders,

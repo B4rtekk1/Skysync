@@ -327,19 +327,16 @@ class _FavoritesPageState extends State<FavoritesPage> {
         );
         break;
       case 'share':
-        // TODO: Implement share
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('favorites.sharing_file'.tr(namedArgs: {'filename': file.name}))),
         );
         break;
       case 'rename':
-        // TODO: Implement rename
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('favorites.renaming_file'.tr(namedArgs: {'filename': file.name}))),
         );
         break;
       case 'delete':
-        // TODO: Implement delete
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('favorites.deleting_file'.tr(namedArgs: {'filename': file.name}))),
         );

@@ -100,7 +100,8 @@
     "ok": "OK",
     "promote_to_admin_desc": "Grant full admin privileges",
     "demote_from_admin_desc": "Remove admin privileges",
-    "remove_member_desc": "Remove user from group"
+    "remove_member_desc": "Remove user from group",
+    "loading_groups": "Loading groups..."
   },
   "total": "Total",
   "used": "Used",
@@ -363,10 +364,7 @@
   "shared_files.loading_preview": "Loading preview for {args}...",
   "shared_files.preview_error": "Error loading preview",
   "shared_files.file_info": "File Information",
-  "shared_files.shared_by": "Shared by {username}",
   "shared_files.sort_sharer": "Sort by sharer",
-  "shared_files.loading_files": "Loading shared files...",
-  "shared_files.retry": "Retry",
   "shared_files.share": "Share",
   "shared_files.opening_folder": "Opening folder: {foldername}",
   "shared_files.opening_file": "Opening file: {filename}",
@@ -522,7 +520,6 @@
   "restart_message": "Some changes require a restart of the app to take effect. Please restart the app to see the changes.",
   "common.ok": "OK",
   "current_color": "Current Color",
-  "cancel": "Cancel",
   "reset.validating": "Validating token...",
   "reset.invalid_link": "Invalid link",
   "reset.invalid_link_desc": "The password reset link is invalid or expired. Please request a new link.",

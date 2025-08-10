@@ -271,7 +271,7 @@ class _MainPageState extends State<MainPage> {
                   ),
                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.03,
-                  ), // Responsywny odstęp
+                  ),
                   Expanded(
                     child: _QuickActionCard(
                       icon: Icons.people,
@@ -287,10 +287,6 @@ class _MainPageState extends State<MainPage> {
               ),
 
                             SizedBox(
-                height: MediaQuery.of(context).size.height * 0.03,
-              ), // Responsywny odstęp
-
-              SizedBox(
                 height: MediaQuery.of(context).size.height * 0.03,
               ), // Responsywny odstęp
               Row(
@@ -326,27 +322,35 @@ class _MainPageState extends State<MainPage> {
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.03,
               ), // Responsywny odstęp
-
-              _QuickActionCard(
-                    icon: Icons.help,
-                    title: 'main.help'.tr(),
-                    subtitle: 'main.help_desc'.tr(),
-                    color: Colors.purple,
-                    onTap: () {},
+              Row(
+                children: [
+                  Expanded(
+                    child: _QuickActionCard(
+                      icon: Icons.settings,
+                      title: 'main.settings'.tr(),
+                      subtitle: 'main.settings_desc'.tr(),
+                      color: Colors.orangeAccent,
+                      onTap: () {
+                        Navigator.pushNamed(context, '/settings');
+                      },
+                    ),
                   ),
-
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.03,
-              ), // Responsywny odstęp
-              _QuickActionCard(
-                    icon: Icons.settings,
-                    title: 'main.settings'.tr(),
-                    subtitle: 'main.settings_desc'.tr(),
-                    color: Colors.orange,
-                    onTap: () {
-                      Navigator.pushNamed(context, '/settings');
-                    },
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.03,
                   ),
+                  Expanded(
+                    child: _QuickActionCard(
+                      icon: Icons.help,
+                      title: 'main.help'.tr(),
+                      subtitle: 'main.help_desc'.tr(),
+                      color: Colors.purple,
+                      onTap: () {
+                        Navigator.pushNamed(context, '/help');
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -399,7 +403,7 @@ class _QuickActionCard extends StatelessWidget {
             Icon(
               icon,
               color: color,
-              size: cardHeight * 0.25, // Responsywny rozmiar ikony
+              size: cardHeight * 0.2, // Responsywny rozmiar ikony
             ),
             SizedBox(height: cardHeight * 0.08), // Responsywny odstęp
             Text(

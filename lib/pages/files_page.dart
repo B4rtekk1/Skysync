@@ -30,21 +30,18 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   String _searchQuery = '';
-  String _sortBy = 'name'; // 'name', 'date', 'size', 'type'
+  String _sortBy = 'name';
   bool _isGridView = false;
   bool _isLoading = true;
   String? _errorMessage;
   String _email = 'loading@example.com';
-  String _currentPath = ''; // Ścieżka do bieżącego folderu
+  String _currentPath = '';
 
-  // Tryb selekcji wielu plików
   bool _isSelectionMode = false;
-  Set<String> _selectedFiles = {}; // Set nazw zaznaczonych plików
+  Set<String> _selectedFiles = {};
 
-  // Dane plików z serwera
   List<FileItem> _files = [];
 
-  // Timer do automatycznego przewijania
   Timer? _scrollTimer;
   bool _isDragging = false;
 
@@ -65,7 +62,6 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Odśwież dane przy powrocie do strony
     _loadFiles();
   }
 
@@ -109,7 +105,6 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         return;
       }
 
-      // Sprawdź cache dla listy plików
       final cachedFiles = CacheService().getCachedFiles(username, _currentPath);
       if (cachedFiles != null) {
         print('Używam cache\'owanych plików dla: $username/$_currentPath');
@@ -117,7 +112,6 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         return;
       }
 
-      // Użyj bieżącej ścieżki lub domyślnie folder użytkownika
       final folderPath = _currentPath.isEmpty ? username : '$username/$_currentPath';
       print('Ładowanie plików z: $folderPath');
       
@@ -133,12 +127,10 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         final data = jsonDecode(response.body);
         final filesData = data['files'] as List;
         
-        // Zapisz do cache
         await CacheService().cacheFiles(username, _currentPath, filesData.cast<Map<String, dynamic>>());
         
         _processFilesData(filesData.cast<Map<String, dynamic>>());
       } else {
-        // Sprawdź czy to błąd wygasłego tokenu
         if (response.body.toLowerCase().contains('token expired') || 
             response.body.toLowerCase().contains('unauthorized') ||
             response.statusCode == 401) {
@@ -171,7 +163,6 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         final type = fileData['type'] as String;
         final isFavorite = fileData['is_favorite'] as bool? ?? false;
         
-        // Obsługa nowych pól dla folderów
         String displaySize;
         if (type == 'folder') {
           final fileCount = fileData['file_count'] as int? ?? 0;
@@ -328,7 +319,6 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
   }
 
   Future<void> _createFolder() async {
-    // Pokaż dialog do wprowadzenia nazwy folderu
     final folderName = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
@@ -360,7 +350,6 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
     if (folderName == null || folderName.isEmpty) return;
 
     try {
-      // Pokaż dialog z progressem
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -392,17 +381,15 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         },
       );
 
-      // Pobierz token i email
       final token = await TokenService.getToken();
       final username = await TokenService.getUsername();
       
       if (token == null || username == null) {
-        Navigator.pop(context); // Zamknij dialog
+        Navigator.pop(context);
         NotificationService.showAuthError(context);
         return;
       }
 
-      // Utwórz folder przez API w bieżącej ścieżce
       final fullFolderPath = _currentPath.isEmpty ? '$username/$folderName' : '$username/$_currentPath/$folderName';
       print('Creating folder: $fullFolderPath in path: $_currentPath');
       final response = await ApiService.createFolder(
@@ -411,21 +398,17 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         token: token,
       );
 
-      Navigator.pop(context); // Zamknij dialog
+      Navigator.pop(context);
 
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        // Dodaj aktywność
         await ActivityService.addActivity(
           ActivityService.createFolderCreateActivity(folderName),
         );
         
-        // Pokaż ładny dialog potwierdzający
         _showFolderCreatedSuccessDialog(folderName);
-        // Wyczyść cache dla bieżącej ścieżki
         await CacheService().clearFilesCache(username, _currentPath);
-        // Odśwież listę plików
         _loadFiles();
       } else {
         final errorData = jsonDecode(response.body);
@@ -434,7 +417,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Zamknij dialog jeśli jest otwarty
+        Navigator.pop(context);
         final error = ErrorHandler.handleError(e, null);
         NotificationService.showEnhancedError(context, error);
       }
@@ -443,17 +426,15 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
 
   Future<void> _uploadFile() async {
     try {
-      // Wybierz pliki (wieloplikowe)
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        allowMultiple: true, // Zmienione na true dla wieloplikowego wyboru
+        allowMultiple: true,
         type: FileType.any,
       );
 
-      if (result == null || result.files.isEmpty) return; // Użytkownik anulował lub nie wybrał plików
+      if (result == null || result.files.isEmpty) return;
 
       final files = result.files;
       
-      // Pobierz token i username
       final token = await TokenService.getToken();
       final username = await TokenService.getUsername();
       
@@ -462,7 +443,6 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         return;
       }
 
-      // Pokaż dialog z progressem dla wieloplikowego uploadu
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -510,7 +490,6 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         },
       );
 
-      // Upload wszystkich plików
       final uploadFolder = _currentPath.isEmpty ? username : '$username/$_currentPath';
       int completedFiles = 0;
       List<String> failedFiles = [];
@@ -523,10 +502,8 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
             continue;
           }
 
-          // Wczytaj plik
           final fileBytes = await File(file.path!).readAsBytes();
 
-          // Upload plik
           final response = await ApiService.uploadFile(
             username: username,
             folderName: uploadFolder,
@@ -548,33 +525,27 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         }
       }
 
-      Navigator.pop(context); // Zamknij dialog
+      Navigator.pop(context);
 
       if (!mounted) return;
 
-      // Pokaż podsumowanie
       if (successfulFiles.isNotEmpty && failedFiles.isEmpty) {
-        // Wszystkie pliki zostały uploadowane pomyślnie
         if (successfulFiles.length == 1) {
           _showUploadSuccessDialog(successfulFiles.first);
         } else {
           _showMultipleUploadSuccessDialog(successfulFiles);
         }
       } else if (successfulFiles.isNotEmpty && failedFiles.isNotEmpty) {
-        // Część plików została uploadowana pomyślnie
         _showPartialUploadDialog(successfulFiles, failedFiles);
       } else {
-        // Wszystkie pliki się nie udały
         _showUploadFailureDialog(failedFiles);
       }
 
-      // Wyczyść cache dla bieżącej ścieżki
       await CacheService().clearFilesCache(username, _currentPath);
-      // Odśwież listę plików
       _loadFiles();
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Zamknij dialog jeśli jest otwarty
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('files.upload_error'.tr(args: [e.toString()]))),
         );
@@ -609,7 +580,6 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
     _loadFiles();
   }
 
-  // Metody zarządzania trybem selekcji
   void _toggleSelectionMode() {
     setState(() {
       _isSelectionMode = !_isSelectionMode;
@@ -2448,6 +2418,26 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                     Text(
                                       'Delete',
                                       style: TextStyle(fontWeight: FontWeight.w500, color: Colors.red.shade600),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'rename',
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade50,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(Icons.edit, color: const Color.fromARGB(255, 72, 162, 19), size: 18),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Rename',
+                                      style: const TextStyle(fontWeight: FontWeight.w500),
                                     ),
                                   ],
                                 ),
