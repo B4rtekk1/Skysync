@@ -69,7 +69,7 @@ SkySync is a modern file management application built with Flutter that provides
 - Flutter SDK 3.7.2 or higher
 - Dart SDK
 - Android Studio / VS Code
-- Backend API server ([see backend documentation](SERVER_DOCUMENTATION.md))
+- Backend API server [Readme](SERVER.md)
 
 ### Installation
 
