@@ -62,6 +62,12 @@ SkySync is a modern file management application built with Flutter that provides
 - **Localization**: easy_localization
 - **QR Code**: qr_flutter
 
+## First look
+
+| ![img1](rdAssets/2.png) | ![img2](rdAssets/3.png)|
+| ![img1](rdAssets/4.png) | ![img2](rdAssets/5.png)|
+| ![img1](rdAssets/6.png) | ![img2](rdAssets/7.png)|
+
 ## Getting Started
 
 ### Prerequisites
@@ -217,14 +223,6 @@ flutter build web --release
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support and questions:
-
-- Create an issue in the repository
-- Check the documentation in the `docs/` folder
-- Review the error handling demo at `/error-demo` route
 
 ## Roadmap
 

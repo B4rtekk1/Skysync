@@ -238,6 +238,7 @@
   "files.favorite": "Add to favorites",
   "files.unfavorite": "Remove from favorites",
   "files.create_folder": "Create folder",
+  "files.close": "Close",
   "files.create_folder_desc": "Create a new folder in the current folder",
   "files.folder_name": "Folder name",
   "files.enter_folder_name": "Enter folder name",
