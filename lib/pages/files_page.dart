@@ -1491,7 +1491,6 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                     ),
                   ],
                 ),
-                // Informacja o trybie selekcji
                 if (!_isSelectionMode && _filteredFiles.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
@@ -1505,7 +1504,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'files.tip'.tr(),
+                            'files.tip_d'.tr(),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade600,
