@@ -18,6 +18,7 @@ class _GroupsPageState extends State<GroupsPage> {
   bool _isLoading = true;
   String? _errorMessage;
   String _username = 'loading';
+  String _email = 'loading@example.com';
   final TextEditingController _groupNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
@@ -30,8 +31,10 @@ class _GroupsPageState extends State<GroupsPage> {
 
   Future<void> _loadUserData() async {
     final username = await TokenService.getUsername();
+    final email = await TokenService.getEmail();
     setState(() {
       _username = username ?? 'unknown';
+      _email = email ?? 'unknown';
     });
   }
 
@@ -369,6 +372,7 @@ class _GroupsPageState extends State<GroupsPage> {
     return Scaffold(
       drawer: CustomDrawer(
         username: _username,
+        email: _email,
         currentRoute: '/groups',
         onSignOut: () {
           Navigator.pushReplacementNamed(context, '/login');

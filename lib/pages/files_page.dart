@@ -35,6 +35,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
   bool _isLoading = true;
   String? _errorMessage;
   String _email = 'loading@example.com';
+  String _username = 'loading';
   String _currentPath = '';
 
   bool _isSelectionMode = false;
@@ -67,8 +68,10 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
 
   Future<void> _loadUserData() async {
     final email = await TokenService.getEmail();
+    final usermame = await TokenService.getUsername();
     setState(() {
       _email = email ?? 'unknown@example.com';
+      _username = usermame ?? 'unknown';
     });
   }
 
@@ -1067,7 +1070,8 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: CustomDrawer(
-        username: _email,
+        username: _username,
+        email: _email,
         currentRoute: '/files',
         onSignOut: () {
           Navigator.pushReplacementNamed(context, '/login');

@@ -28,6 +28,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
   bool _isGridView = false;
   String? _errorMessage;
   String _username = '';
+  String _email = '';
   String _searchQuery = '';
   String _sortBy = 'date';
   final TextEditingController _searchController = TextEditingController();
@@ -41,8 +42,10 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
 
   Future<void> _loadUserData() async {
     final username = await TokenService.getUsername();
+    final email = await TokenService.getEmail();
     setState(() {
       _username = username ?? '';
+      _email = email ?? '';
     });
   }
 
@@ -689,6 +692,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
     return Scaffold(
       drawer: CustomDrawer(
         username: _username,
+        email: _email,
         currentRoute: '/my-shared-files',
         onSignOut: () {
           Navigator.pushReplacementNamed(context, '/login');

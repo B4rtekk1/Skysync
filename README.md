@@ -1,5 +1,7 @@
 # SkySync - File Management Application
 
+![Skysync logo](assets/Logo-name.png)
+
 ## Overview
 
 SkySync is a modern file management application built with Flutter that provides secure file storage, sharing and management capabilities. The application features a comprehensive error handling system, multi-language support, and an intuitive user interface.
@@ -63,6 +65,13 @@ SkySync is a modern file management application built with Flutter that provides
 - **QR Code**: qr_flutter
 
 ## First look
+
+```mermaid
+flowchart TD
+    A[Start] --> B{Warunek?}
+    B -->|Tak| C[Wykonaj akcję]
+    B -->|Nie| D[Zakończ]
+```
 
 |    Demo images           |   Demo images            |
 |-----------------------|-----------------------|

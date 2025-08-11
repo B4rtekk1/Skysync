@@ -15,6 +15,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMixin {
   // User data
   String _username = 'loading';
+  String _email = 'loading@example.com';
 
   // Appearance
   String _fontSize = 'medium';
@@ -89,8 +90,10 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
 
   Future<void> _loadUserData() async {
     final username = await TokenService.getUsername();
+    final email = await TokenService.getEmail();
     setState(() {
       _username = username ?? 'unknown';
+      _email = email ?? 'unknown';
     });
   }
 
@@ -153,6 +156,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
     return Scaffold(
       drawer: CustomDrawer(
         username: _username,
+        email: _email,
         currentRoute: '/settings',
         onSignOut: () {
           Navigator.pushReplacementNamed(context, '/login');

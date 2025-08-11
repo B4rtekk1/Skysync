@@ -15,6 +15,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   String _username = 'loading';
+  String _email = 'loading@example.com';
 
   @override
   void initState() {
@@ -24,11 +25,11 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> _loadUserData() async {
     final username = await TokenService.getUsername();
-    print('DEBUG: Username from TokenService: $username');
+    final email = await TokenService.getEmail();
     setState(() {
       _username = username ?? 'unknown';
+      _email = email ?? 'unknown';
     });
-    print('DEBUG: After setState - _username: $_username');
   }
 
   Future<void> _uploadFile() async {
@@ -167,6 +168,7 @@ class _MainPageState extends State<MainPage> {
       ),
       drawer: CustomDrawer(
         username: _username,
+        email: _email,
         currentRoute: '/main',
         onSignOut: () {
           Navigator.pushReplacementNamed(context, '/login');

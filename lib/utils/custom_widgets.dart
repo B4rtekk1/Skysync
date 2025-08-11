@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'token_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PasswordField extends StatefulWidget {
   final TextEditingController controller;
@@ -222,12 +223,14 @@ class _AnimatedButtonState extends State<AnimatedButton>
 
 class CustomDrawer extends StatelessWidget {
   final String username;
+  final String email;
   final VoidCallback onSignOut;
   final String currentRoute;
 
   const CustomDrawer({
     super.key,
     required this.username,
+    required this.email,
     required this.onSignOut,
     this.currentRoute = '/home',
   });
@@ -303,7 +306,7 @@ class CustomDrawer extends StatelessWidget {
                     ),
                   ),
                   accountName: Text(
-                    username, // Use username as display name
+                    username, 
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -311,7 +314,7 @@ class CustomDrawer extends StatelessWidget {
                     ),
                   ),
                   accountEmail: Text(
-                    username,
+                    email,
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.white70,
@@ -379,7 +382,7 @@ class CustomDrawer extends StatelessWidget {
                     context,
                     icon: Icons.help,
                     title: 'main.help'.tr(),
-                    route: null,
+                    route: "https://github.com/B4rtekk1/Skysync/issues",
                     isSelected: false,
                   ),
                 ],
@@ -475,11 +478,20 @@ class CustomDrawer extends StatelessWidget {
             fontSize: 16,
           ),
         ),
-        onTap: () {
+        onTap: () async{
           Navigator.pop(context);
           if (route != null) {
+          if (route.startsWith('http')) {
+            final Uri url = Uri.parse(route);
+            if (await canLaunchUrl(url)) {
+              await launchUrl(url, mode: LaunchMode.externalApplication);
+            } else {
+              throw 'Cannot open the url: $route';
+            }
+          } else {
             Navigator.pushReplacementNamed(context, route);
           }
+        }
         },
       ),
     );

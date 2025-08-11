@@ -20,14 +20,11 @@ import 'utils/notification_service.dart';
 import 'utils/app_settings.dart';
 import 'utils/token_service.dart';
 import 'utils/cache_service.dart';
-import 'config/env_mobile.dart';
-import 'config/env_windows.dart';
-import 'config/env_linux.dart';
-import 'config/env_macos.dart';
-import 'config/env_web.dart' if (dart.library.io) 'config/env_web_stub.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   
   await EasyLocalization.ensureInitialized();
   await SystemChrome.setPreferredOrientations([
@@ -35,18 +32,6 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Inicjalizacja konfiguracji środowiska
-  if (kIsWeb) {
-    WebEnvConfig.initialize();
-  } else if (Platform.isWindows) {
-    await WindowsEnvConfig.initialize();
-  } else if (Platform.isLinux) {
-    LinuxEnvConfig.initialize();
-  } else if (Platform.isMacOS) {
-    MacOSEnvConfig.initialize();
-  } else {
-    await MobileEnvConfig.initialize();
-  }
   
   runApp(
     EasyLocalization(

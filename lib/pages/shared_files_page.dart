@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
@@ -29,6 +31,7 @@ class _SharedFilesPageState extends State<SharedFilesPage> {
   bool _isLoading = true;
   String? _errorMessage;
   String _username = 'loading';
+  String _email = 'loading@example.com';
 
   // Dane plików i folderów udostępnionych z serwera
   List<SharedItem> _sharedItems = [];
@@ -43,8 +46,10 @@ class _SharedFilesPageState extends State<SharedFilesPage> {
 
   Future<void> _loadUserData() async {
     final username = await TokenService.getUsername();
+    final email = await TokenService.getEmail();
     setState(() {
       _username = username ?? 'unknown';
+      _email = email ?? 'unknown';
     });
   }
 
@@ -954,6 +959,7 @@ class _SharedFilesPageState extends State<SharedFilesPage> {
     return Scaffold(
       drawer: CustomDrawer(
         username: _username,
+        email: _email,
         currentRoute: '/shared-files',
         onSignOut: () {
           Navigator.pushReplacementNamed(context, '/login');

@@ -26,6 +26,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
   bool _isLoading = true;
   String? _errorMessage;
   String _username = 'loading';
+  String _email = 'loading';
 
   // Dane ulubionych plików z serwera
   List<FavoriteFile> _favorites = [];
@@ -40,8 +41,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
 
   Future<void> _loadUserData() async {
     final username = await TokenService.getUsername();
+    final email = await TokenService.getEmail();
     setState(() {
       _username = username ?? 'unknown';
+      _email = email ?? 'unknown';
     });
   }
 
@@ -445,6 +448,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
     return Scaffold(
       drawer: CustomDrawer(
         username: _username,
+        email: _email,
         currentRoute: '/favorites',
         onSignOut: () {
           Navigator.pushReplacementNamed(context, '/login');

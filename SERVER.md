@@ -214,6 +214,11 @@ RATE_LIMIT_WINDOW=60
 - **In password field do not put your gmail password. It must be app password more information [here](https://www.hostpapa.com/knowledgebase/how-to-create-and-use-google-app-passwords/)**
 - **Highly recommend using [ngrok](https://ngrok.com/) for tunneling**
 
+```bash
+# If you using ngrok type:
+$ ngrok http --url <domain> <port>
+```
+
 ### 3. Start the server
 
 ```bash
