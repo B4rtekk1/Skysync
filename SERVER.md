@@ -211,7 +211,7 @@ RATE_LIMIT_WINDOW=60
 
 ### Note
 
-- **In password field do not put your gmail password. It must be app password more information [here](https://www.hostpapa.com/knowledgebase/how-to-create-and-use-google-app-passwords/)**
+- **In password field do not put your gmail password. It must be app password more information [check this link](https://www.hostpapa.com/knowledgebase/how-to-create-and-use-google-app-passwords/)**
 - **Highly recommend using [ngrok](https://ngrok.com/) for tunneling**
 
 ```bash
@@ -281,7 +281,7 @@ SECURITY_CONFIG = {
 
 Security logs are stored in `security.log` with the following format:
 
-```
+```bash
 2024-01-15 10:30:00 - INFO - [192.168.1.100] [testuser] SECURITY_EVENT: {"event_type": "failed_login", "details": "Invalid password", "severity": "medium"}
 ```
 

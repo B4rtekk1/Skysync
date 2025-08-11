@@ -66,19 +66,11 @@ SkySync is a modern file management application built with Flutter that provides
 
 ## First look
 
-```mermaid
-flowchart TD
-    A[Start] --> B{Warunek?}
-    B -->|Tak| C[Wykonaj akcję]
-    B -->|Nie| D[Zakończ]
-```
-
 |    Demo images           |   Demo images            |
 |-----------------------|-----------------------|
-| ![img1](rdAssets/2.png) | ![img2](rdAssets/3.png) |
-| ![img3](rdAssets/4.png) | ![img4](rdAssets/5.png) |
-| ![img5](rdAssets/6.png) | ![img6](rdAssets/7.png) |
-
+| ![img1](assets/readme/2.png) | ![img2](assets/readme/3.png) |
+| ![img3](assets/readme/4.png) | ![img4](assets/readme/5.png) |
+| ![img5](assets/readme/6.png) | ![img6](assets/readme/7.png) |
 
 ## Getting Started
 
@@ -107,7 +99,8 @@ flowchart TD
 3. **Configure environment**
    - Create a `.env` file in the root directory
    - Add your API configuration:
-   ```
+
+   ```bash
    API_KEY=your_api_key_here
    BASE_URL=http://your-backend-url:8000
    ```
@@ -118,10 +111,16 @@ flowchart TD
    flutter run
    ```
 
+5. **Build release version**
+
+   ```bash
+   flutter build windows --release
+   flutter build android --release
+   #etc.
 
 ## Project Structure
 
-```
+```bash
 lib/
 ├── main.dart                 # Application entry point
 ├── pages/                    # Application pages
@@ -243,4 +242,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [ ] File versioning
 - [ ] Real-time collaboration
 - [ ] Cloud storage integration
-- [ ] Advanced security features (2FA, encryption) 
+- [ ] Advanced security features (2FA, encryption)
