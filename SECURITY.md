@@ -2,7 +2,7 @@
 
 ## How to report a security vulnerability
 
-If you discover a security vulnerability in this project, please report it by emailing [bartoszkasyna@gmail.com] with detailed information. Please do not create a public issue.
+If you discover a security vulnerability in this project, please report it by emailing bartoszkasyna@gmail.com with detailed information. Please do not create a public issue.
 
 ## Supported versions
 
