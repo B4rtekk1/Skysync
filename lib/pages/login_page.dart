@@ -425,54 +425,15 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                   ),
                                 ],
                               ),
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _handleLogin,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF764ba2),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 18,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child:
-                                    _isLoading
-                                        ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                                  Colors.white,
-                                                ),
-                                          ),
-                                        )
-                                        : Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            const Icon(Icons.login, size: 20),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'login.login_button'.tr(),
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                                letterSpacing: 0.5,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                              child: AnimatedButton(
+                                text: 'login.login_button'.tr(),
+                                onPressed: _handleLogin,
+                                isLoading: _isLoading,
                               ),
                             ),
 
                             const SizedBox(height: 24),
 
-                            // Forgot password link
                             Center(
                               child: TextButton(
                                 onPressed: () {
@@ -493,6 +454,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w500,
                                     decoration: TextDecoration.underline,
+                                    fontSize: 16,
                                   ),
                                 ),
                               ),

@@ -150,208 +150,204 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFf8fafc),
+      backgroundColor: Colors.transparent,
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              const Color(0xFF667eea).withValues(alpha: 0.1),
-              const Color(0xFF764ba2).withValues(alpha: 0.1),
-            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
+            colors: [Color(0xFF667eea), Color(0xFF764ba2), Color(0xFFf093fb)],
           ),
         ),
-        child: Stack(
-          children: [
-            Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 50),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 256,
-                    maxHeight: 256,
-                  ),
-                  child: Image.asset(
-                    'assets/Logo-name.png',
-                    fit: BoxFit.contain,
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 50),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: 256,
+                      maxHeight: 256,
+                    ),
+                    child: Image.asset(
+                      'assets/Logo-name.png',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 120),
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: SingleChildScrollView(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      double width = constraints.maxWidth * 0.8;
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _showTokenInput ? 'forgot.enter_token_title'.tr() : 'forgot.reset_title'.tr(),
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _showTokenInput 
-                              ? 'forgot.enter_token_desc'.tr()
-                              : 'forgot.enter_email_desc'.tr(),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 30),
-                          
-                          // Email input (shown when not showing token input)
-                          if (!_showTokenInput) ...[
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(minWidth: 200),
-                              child: SizedBox(
-                                width: width,
-                                child: UsernameField(
-                                  controller: _emailController,
-                                  labelText: 'forgot.email_label'.tr(),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(minWidth: 200),
-                              child: SizedBox(
-                                width: width,
-                                child: AnimatedButton(
-                                  text: 'forgot.send_token'.tr(),
-                                  onPressed: _handleResetPassword,
-                                  isLoading: _isLoading,
-                                ),
-                              ),
-                            ),
-                          ],
-                          
-                          // Token input (shown when showing token input)
-                          if (_showTokenInput) ...[
-                            // Show email info
-                            Container(
-                              width: width,
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.green.shade200),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'forgot.token_sent'.tr(namedArgs: {'email': _sentToEmail}),
-                                      style: TextStyle(
-                                        color: Colors.green.shade700,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+              Padding(
+                padding: const EdgeInsets.only(top: 120),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: SingleChildScrollView(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        double width = constraints.maxWidth * 0.8;
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _showTokenInput ? 'forgot.enter_token_title'.tr() : 'forgot.reset_title'.tr(),
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                             const SizedBox(height: 16),
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(minWidth: 200),
-                              child: SizedBox(
-                                width: width,
-                                child: TextField(
-                                  controller: _tokenController,
-                                  decoration: InputDecoration(
-                                    labelText: 'forgot.token_label'.tr(),
-                                    hintText: 'forgot.token_hint'.tr(),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
+                            Text(
+                              _showTokenInput 
+                                ? 'forgot.enter_token_desc'.tr()
+                                : 'forgot.enter_email_desc'.tr(),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                            // Email input (shown when not showing token input)
+                            if (!_showTokenInput) ...[
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(minWidth: 200),
+                                child: SizedBox(
+                                  width: width,
+                                  child: UsernameField(
+                                    controller: _emailController,
+                                    labelText: 'forgot.email_label'.tr(),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(minWidth: 200),
-                              child: SizedBox(
-                                width: width,
-                                child: AnimatedButton(
-                                  text: 'forgot.reset_button'.tr(),
-                                  onPressed: _handleTokenSubmit,
-                                  isLoading: _isLoading,
-                                ),
-                              ),
-                            ),
-                          ],
-                          
-                          // Back button (shown when showing token input)
-                          if (_showTokenInput) ...[
-                            const SizedBox(height: 16),
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _showTokenInput = false;
-                                  _tokenController.clear();
-                                });
-                              },
-                              child: Text(
-                                'forgot.back_to_email'.tr(),
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                          
-                          const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'forgot.remember_password'.tr(),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              InkWell(
-                                onTap: () {
-                                  Navigator.pop(context);
-                                },
-                                child: Text(
-                                  'forgot.back_to_login'.tr(),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Theme.of(context).colorScheme.primary,
-                                    fontWeight: FontWeight.bold,
-                                    decoration: TextDecoration.none,
+                              const SizedBox(height: 24),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(minWidth: 200),
+                                child: SizedBox(
+                                  width: width,
+                                  child: AnimatedButton(
+                                    text: 'forgot.send_token'.tr(),
+                                    onPressed: _handleResetPassword,
+                                    isLoading: _isLoading,
                                   ),
                                 ),
                               ),
                             ],
-                          ),
-                        ],
-                      );
-                    },
+                            // Token input (shown when showing token input)
+                            if (_showTokenInput) ...[
+                              // Show email info
+                              Container(
+                                width: width,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.green.shade200),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'forgot.token_sent'.tr(namedArgs: {'email': _sentToEmail}),
+                                        style: TextStyle(
+                                          color: const Color(0xFF764ba2),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(minWidth: 200),
+                                child: SizedBox(
+                                  width: width,
+                                  child: TextField(
+                                    controller: _tokenController,
+                                    decoration: InputDecoration(
+                                      labelText: 'forgot.token_label'.tr(),
+                                      hintText: 'forgot.token_hint'.tr(),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(minWidth: 200),
+                                child: SizedBox(
+                                  width: width,
+                                  child: AnimatedButton(
+                                    text: 'forgot.reset_button'.tr(),
+                                    onPressed: _handleTokenSubmit,
+                                    isLoading: _isLoading,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            // Back button (shown when showing token input)
+                            if (_showTokenInput) ...[
+                              const SizedBox(height: 16),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _showTokenInput = false;
+                                    _tokenController.clear();
+                                  });
+                                },
+                                child: Text(
+                                  'forgot.back_to_email'.tr(),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 24),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'forgot.remember_password'.tr(),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Text(
+                                    'forgot.back_to_login'.tr(),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      decoration: TextDecoration.none,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
-} 
+}

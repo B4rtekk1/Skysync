@@ -279,12 +279,18 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
                   _buildActionTile(
                     'edit_profile'.tr(),
                     Icons.person,
+                    
                     () {},
                   ),
                   _buildActionTile(
                     'change_password'.tr(),
                     Icons.lock,
-                    () {},
+                    () {
+                      TokenService.logout().then((_) {
+                        Navigator.pushReplacementNamed(context, '/login');
+                        Navigator.pushNamed(context, '/forgot-password', arguments: _email);
+                      });
+                    },
                   ),
                   _buildActionTile(
                     'log_out_other_devices'.tr(),

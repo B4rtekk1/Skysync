@@ -34,13 +34,12 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> _uploadFile() async {
     try {
-      // Wybierz plik
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         allowMultiple: false,
         type: FileType.any,
       );
 
-      if (result == null) return; // Użytkownik anulował
+      if (result == null) return;
 
       final file = result.files.first;
       if (file.path == null) {
@@ -50,7 +49,6 @@ class _MainPageState extends State<MainPage> {
         return;
       }
 
-      // Pobierz token i username
       final token = await TokenService.getToken();
       final username = await TokenService.getUsername();
 
@@ -61,7 +59,6 @@ class _MainPageState extends State<MainPage> {
         return;
       }
 
-      // Pokaż dialog z progressem
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -94,10 +91,8 @@ class _MainPageState extends State<MainPage> {
         },
       );
 
-      // Wczytaj plik
       final fileBytes = await File(file.path!).readAsBytes();
 
-      // Upload plik do głównego folderu użytkownika
       final response = await ApiService.uploadFile(
         username: username,
         folderName: username,

@@ -1919,7 +1919,6 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                     ),
                                   )
                                 else if (FileUtils.isTextFile(file.name))
-                                  // Podgląd pliku tekstowego
                                   Container(
                                     width: 48,
                                     height: 48,

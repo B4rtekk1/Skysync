@@ -186,8 +186,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             backgroundColor: Colors.green,
           ),
         );
-        
-        // Przejdź do strony logowania
+
         Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
       } else {
         final data = jsonDecode(response.body);
@@ -370,137 +369,59 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             ),
                           ),
                           
-                          // Password requirements
                           if (_passwordController.text.isNotEmpty) ...[
                             const SizedBox(height: 16),
                             Container(
-                              width: width,
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey.shade300),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.grey.shade50,
+                                    Colors.grey.shade100,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.grey.shade200,
+                                  width: 1,
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    'reset.password_requirements'.tr(),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Column(
+                                  Row(
                                     children: [
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            _hasMinLength ? Icons.check : Icons.close,
-                                            color: _hasMinLength ? Colors.green : Colors.red,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text('reset.min_12_chars'.tr()),
-                                        ],
+                                      Icon(
+                                        Icons.security,
+                                        color: const Color(0xFF764ba2),
+                                        size: 20,
                                       ),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            _hasMaxLength ? Icons.check : Icons.close,
-                                            color: _hasMaxLength ? Colors.green : Colors.red,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text('reset.max_128_chars'.tr()),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            _hasUppercase ? Icons.check : Icons.close,
-                                            color: _hasUppercase ? Colors.green : Colors.red,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text('reset.uppercase'.tr()),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            _hasLowercase ? Icons.check : Icons.close,
-                                            color: _hasLowercase ? Colors.green : Colors.red,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text('reset.lowercase'.tr()),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            _hasNumber ? Icons.check : Icons.close,
-                                            color: _hasNumber ? Colors.green : Colors.red,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text('reset.number'.tr()),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            _hasSpecial ? Icons.check : Icons.close,
-                                            color: _hasSpecial ? Colors.green : Colors.red,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text('reset.special_char'.tr()),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            _noRepeatedChars ? Icons.check : Icons.close,
-                                            color: _noRepeatedChars ? Colors.green : Colors.red,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text('reset.no_repeated_chars'.tr()),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            _noSequentialPatterns ? Icons.check : Icons.close,
-                                            color: _noSequentialPatterns ? Colors.green : Colors.red,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text('reset.no_sequential_patterns'.tr()),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            _noCommonWords ? Icons.check : Icons.close,
-                                            color: _noCommonWords ? Colors.green : Colors.red,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text('reset.no_common_words'.tr()),
-                                        ],
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'reset.password_requirements'.tr(),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF764ba2),
+                                        ),
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(height: 12),
+                                  _buildRequirement('reset.min_12_chars'.tr(), _hasMinLength),
+                                  _buildRequirement('reset.max_128_chars'.tr(), _hasMaxLength),
+                                  _buildRequirement('reset.uppercase'.tr(), _hasUppercase),
+                                  _buildRequirement('reset.lowercase'.tr(), _hasLowercase),
+                                  _buildRequirement('reset.number'.tr(), _hasNumber),
+                                  _buildRequirement('reset.special_char'.tr(), _hasSpecial),
+                                  _buildRequirement('reset.no_repeated_chars'.tr(), _noRepeatedChars),
+                                  _buildRequirement('reset.no_sequential_patterns'.tr(), _noSequentialPatterns),
+                                  _buildRequirement('reset.no_common_words'.tr(), _noCommonWords),
                                 ],
                               ),
                             ),
                           ],
                           
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
                           
                           // Confirm password field
                           ConstrainedBox(
@@ -620,4 +541,36 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       ),
     );
   }
-} 
+  Widget _buildRequirement(String text, bool isMet) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: isMet ? Colors.green.shade100 : Colors.red.shade100,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              isMet ? Icons.check : Icons.close,
+              color: isMet ? Colors.green : Colors.red,
+              size: 12,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: isMet ? Colors.green.shade700 : Colors.red.shade700,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
