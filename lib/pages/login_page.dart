@@ -147,32 +147,21 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 children: [
                   const SizedBox(height: 20),
 
-                  // Logo i tytuł
+                  // Logo
                   FadeTransition(
                     opacity: _fadeAnimation,
                     child: Column(
                       children: [
                         Image.asset(
                           'assets/Logo-name.png',
-                          width: 220,
+                          width: 320,
                           fit: BoxFit.contain,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'login.welcome'.tr(),
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 1.2,
-                          ),
-                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'login.subtitle'.tr(),
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 24,
                             color: Colors.white.withValues(alpha: 0.9),
                             letterSpacing: 0.5,
                           ),

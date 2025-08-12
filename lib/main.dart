@@ -73,9 +73,9 @@ class _MyAppState extends State<MyApp> {
       animation: _appSettings,
       builder: (context, child) {
         return MaterialApp(
-          title: 'ServApp',
+          title: 'kysync',
           debugShowCheckedModeBanner: false,
-          showSemanticsDebugger: false, // Włącz to na true aby zobaczyć debug widgetów
+          showSemanticsDebugger: false,
           navigatorKey: NotificationService.navigatorKey,
           theme: _appSettings.getThemeData(),
           localizationsDelegates: context.localizationDelegates,
