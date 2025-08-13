@@ -344,6 +344,7 @@
   "favorites.rename": "Rename",
   "favorites.delete": "Delete",
   "favorites.opening_file": "Opening file: {filename}",
+  "favorites.loading_files": "Loading files",
   "search.favorites": "Search favorites...",
   "shared_files.title": "Shared files",
   "shared_files.not_logged_in": "Not logged in. Please login again.",

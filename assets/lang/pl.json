@@ -344,6 +344,7 @@
   "favorites.rename": "Zmień nazwę",
   "favorites.delete": "Usuń",
   "favorites.opening_file": "Otwieranie pliku: {filename}",
+  "favotites.loading_files": "Ładowanie ulubionych plików",
   "search.favorites": "Szukaj w ulubionych...",
   "shared_files.title": "Udostępnione pliki",
   "shared_files.not_logged_in": "Nie zalogowano. Zaloguj się ponownie.",

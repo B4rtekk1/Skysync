@@ -642,7 +642,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                                   Icons.sort_by_alpha,
                                   size: 18,
                                   color: _sortBy == 'name' 
-                                    ? Theme.of(context).colorScheme.primary 
+                                    ? Color(0xFF764ba2)
                                     : Colors.grey.shade600,
                                 ),
                                 const SizedBox(width: 12),

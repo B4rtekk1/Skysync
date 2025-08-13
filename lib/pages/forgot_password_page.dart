@@ -50,7 +50,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
         );
         
-        // Automatycznie pokaż formularz do wprowadzania tokenu
         setState(() {
           _sentToEmail = _emailController.text;
           _showTokenInput = true;
@@ -112,7 +111,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['valid'] == true) {
-          // Przejdź do strony resetowania hasła z tokenem
           Navigator.pushNamed(context, '/reset-password', arguments: _tokenController.text);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

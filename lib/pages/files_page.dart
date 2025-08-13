@@ -664,12 +664,12 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                        color: Color(0xFF764ba2).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         Icons.check_circle,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: Color(0xFF764ba2),
                         size: 24,
                       ),
                     ),
@@ -1831,7 +1831,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                           color: isActive
                               ? Colors.blue.withValues(alpha: 0.15)
                               : isSelected
-                                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                                  ? Color(0xFF764ba2).withValues(alpha: 0.1)
                                   : null,
                           borderRadius: BorderRadius.circular(8),
                           border: isActive
@@ -1882,7 +1882,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                       },
                                       visualDensity: VisualDensity.compact,
                                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                      activeColor: Theme.of(context).colorScheme.primary,
+                                      activeColor: Color(0xFF764ba2),
                                     ),
                                   ),
                                 if (FileUtils.isImage(file.name))
@@ -2263,7 +2263,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                                 },
                                 visualDensity: VisualDensity.compact,
                                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                activeColor: Theme.of(context).colorScheme.primary,
+                                activeColor: Color(0xFF764ba2),
                               ),
                             ),
                           Container(
@@ -2596,7 +2596,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                           color: isActive
                               ? Colors.blue.withValues(alpha: 0.15)
                               : isSelected
-                                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                                  ? Color(0xFF764ba2).withValues(alpha: 0.1)
                                   : null,
                           borderRadius: BorderRadius.circular(8),
                           border: isActive
@@ -2710,7 +2710,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                       },
                       visualDensity: VisualDensity.compact,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      activeColor: Theme.of(context).colorScheme.primary,
+                      activeColor: Color(0xFF764ba2),
                     ),
                   PopupMenuButton<String>(
                     onSelected: (value) {

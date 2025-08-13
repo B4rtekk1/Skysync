@@ -524,7 +524,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Text(title),
       actions: actions,
       leading: leading,
-      backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.primary,
+      backgroundColor: backgroundColor ?? Color(0xFF764ba2),
       foregroundColor: foregroundColor ?? Colors.white,
       centerTitle: centerTitle,
       elevation: elevation,
@@ -661,7 +661,7 @@ class FileItemCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8.0),
       color:
           isSelected
-              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+              ?Color(0xFF764ba2).withValues(alpha: 0.1)
               : null,
       child: GestureDetector(
         onTap: onTap,

@@ -949,7 +949,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                                   Icons.person,
                                   size: 18,
                                   color: _sortBy == 'shared_with' 
-                                    ? Theme.of(context).colorScheme.primary 
+                                    ? Color(0xFF764ba2)
                                     : Colors.grey.shade600,
                                 ),
                                 const SizedBox(width: 12),
@@ -957,7 +957,7 @@ class _MySharedFilesPageState extends State<MySharedFilesPage> {
                                   'files.sort_sharer'.tr(),
                                   style: TextStyle(
                                     color: _sortBy == 'shared_with' 
-                                      ? Theme.of(context).colorScheme.primary 
+                                      ? Color(0xFF764ba2)
                                       : Colors.grey.shade700,
                                     fontWeight: _sortBy == 'shared_with' 
                                       ? FontWeight.w600 

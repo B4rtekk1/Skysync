@@ -106,7 +106,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         final username = data['username'];
         final email = data['email'];
 
-        // Zapisz token, username i email
         await TokenService.saveToken(token);
         await TokenService.saveUsername(username);
         await TokenService.saveEmail(email);
