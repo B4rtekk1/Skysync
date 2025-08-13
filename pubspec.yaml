@@ -50,6 +50,7 @@ dependencies:
   open_file: ^3.3.2
   syncfusion_flutter_pdfviewer: ^30.1.42
   crypto: ^3.0.3
+  jwt_decoder: ^2.0.1
 
 dev_dependencies:
   flutter_test:

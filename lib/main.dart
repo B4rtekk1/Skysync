@@ -73,7 +73,7 @@ class _MyAppState extends State<MyApp> {
       animation: _appSettings,
       builder: (context, child) {
         return MaterialApp(
-          title: 'kysync',
+          title: 'Skysync',
           debugShowCheckedModeBanner: false,
           showSemanticsDebugger: false,
           navigatorKey: NotificationService.navigatorKey,

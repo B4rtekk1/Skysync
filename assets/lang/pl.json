@@ -192,7 +192,7 @@
   "verification.success": "E-mail został pomyślnie zweryfikowany!",
   "verification.resend_success": "Nowy kod weryfikacyjny został wysłany.",
   "verification.resend_error": "Wystąpił błąd podczas wysyłania kodu. Spróbuj ponownie.",
-  "main.app_title": "ServApp",
+  "main.app_title": "Skysync",
   "main.welcome_back": "Witaj ponownie, {username}!",
   "main.manage_files": "Zarządzaj swoimi plikami i folderami",
   "main.quick_actions": "Szybkie akcje",

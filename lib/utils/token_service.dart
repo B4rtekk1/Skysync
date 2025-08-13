@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class TokenService {
   static const String _tokenKey = 'access_token';
@@ -54,7 +55,25 @@ class TokenService {
     final token = await getToken();
     final username = await getUsername();
     final email = await getEmail();
-    return token != null && username != null && email != null;
+
+    if (token == null || username == null || email == null) {
+      return false;
+    }
+
+    try {
+      final decodedToken = JwtDecoder.decode(token);
+      final expiryDate = DateTime.fromMillisecondsSinceEpoch(decodedToken['exp'] * 1000);
+
+      if (expiryDate.isBefore(DateTime.now())) {
+        await logout();
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      await logout();
+      return false;
+    }
   }
 
   static Future<void> logout() async {
