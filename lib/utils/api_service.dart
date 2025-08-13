@@ -157,6 +157,7 @@ class ApiService {
   }) async {
     print('Connecting to: $baseUrl');
     print('API Key: ${apiKey.isNotEmpty ? "Set" : "Not set"}');
+    print('File name: $fileName');
     
     final url = Uri.parse('$baseUrl/upload_file');
     
