@@ -4,8 +4,6 @@ import 'package:http/http.dart' as http;
 import '../utils/custom_widgets.dart';
 import '../utils/token_service.dart';
 import '../utils/api_service.dart';
-import '../utils/error_handler.dart';
-import '../utils/error_widgets.dart';
 import '../utils/activity_service.dart';
 import '../utils/file_utils.dart';
 import '../widgets/image_preview_widget.dart';

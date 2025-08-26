@@ -557,5 +557,8 @@
   "forgot.token_hint": "Token resetujący",
   "forgot.back_to_email": "Powrót do wprowadzania e-mail",
   "forgot.back_to_login": "Powrót do logowania",
-  "forgot.remember_password": "Pamiętasz hasło? "
+  "forgot.remember_password": "Pamiętasz hasło? ",
+  "delete.title": "Usuń konto",
+  "delete.password": "Wprowadź hasło",
+  "delete.send_token": "Wyślij kod"
 } 

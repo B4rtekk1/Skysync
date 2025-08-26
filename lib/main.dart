@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'pages/delete_account_page.dart';
 import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'pages/login_page.dart';
@@ -108,6 +109,9 @@ class _MyAppState extends State<MyApp> {
               return ResetPasswordPage(token: token);
             },
             '/settings': (context) => const SettingsPage(),
+            '/delete_account': (context) {
+              return DeleteAccountPage();
+            },
           },
         );
       },

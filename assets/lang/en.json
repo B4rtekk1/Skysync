@@ -561,5 +561,8 @@
   "forgot.token_hint": "Reset token",
   "forgot.back_to_email": "Back to email input",
   "forgot.back_to_login": "Back to login",
-  "forgot.remember_password": "Remember your password? "
+  "forgot.remember_password": "Remember your password?",
+  "delete.title": "Delete account",
+  "delete.password": "Enter password",
+  "delete.send_token": "Send code"
 } 

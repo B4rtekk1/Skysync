@@ -6,7 +6,8 @@ import '../utils/cache_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  final String? deleteAccountEmail;
+  const SettingsPage({super.key, this.deleteAccountEmail});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -300,7 +301,9 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
                   _buildActionTile(
                     'delete_account'.tr(),
                     Icons.delete_forever,
-                    () {},
+                    () {
+                      Navigator.pushReplacementNamed(context, '/delete_account');
+                    },
                     isDestructive: true,
                   ),
                   _buildSwitchTile(
