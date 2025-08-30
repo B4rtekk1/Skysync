@@ -1,6 +1,6 @@
 # SkySync - File Management Application
 
-![Skysync logo](assets/Logo-name.png)
+![Skysync logo](assets/Logo1.png)
 
 ## Overview
 

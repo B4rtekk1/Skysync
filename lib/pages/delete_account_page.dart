@@ -8,10 +8,10 @@ class DeleteAccountPage extends StatefulWidget {
   const DeleteAccountPage({super.key});
 
   @override
-  State<DeleteAccountPage> createState() => _ForgotPasswordPageState();
+  State<DeleteAccountPage> createState() => _DeletePasswordPageState();
 }
 
-class _ForgotPasswordPageState extends State<DeleteAccountPage> {
+class _DeletePasswordPageState extends State<DeleteAccountPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _tokenController = TextEditingController();
@@ -27,10 +27,10 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
     super.dispose();
   }
 
-  Future<void> _handleResetPassword() async {
+  Future<void> _handleDeletePassword() async {
     if (_emailController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('forgot.enter_email'.tr())),
+        SnackBar(content: Text('delete.enter_email'.tr())),
       );
       return;
     }
@@ -40,14 +40,14 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
     });
 
     try {
-      final response = await ApiService.resetPassword(email: _emailController.text);
+      final response = await ApiService.deleteAccount(email: _emailController.text);
       
       if (!mounted) return;
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('forgot.instructions_sent'.tr()),
+            content: Text('delete.instructions_sent'.tr()),
             backgroundColor: Colors.green,
           ),
         );
@@ -59,10 +59,10 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
         });
       } else {
         final data = jsonDecode(response.body);
-        String errorMessage = 'forgot.error_occurred'.tr();
+        String errorMessage = 'delete.error_occurred'.tr();
         
         if (response.statusCode == 429) {
-          errorMessage = 'forgot.too_many_attempts'.tr();
+          errorMessage = 'delete.too_many_attempts'.tr();
         } else if (data['detail']) {
           errorMessage = data['detail'];
         }
@@ -82,7 +82,7 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('forgot.error_occurred'.tr()),
+          content: Text('delete.error_occurred'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -96,7 +96,7 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
   Future<void> _handleTokenSubmit() async {
     if (_tokenController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('forgot.enter_token'.tr())),
+        SnackBar(content: Text('delete.enter_token'.tr())),
       );
       return;
     }
@@ -106,26 +106,32 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
     });
 
     try {
-      final response = await ApiService.validateResetToken(token: _tokenController.text);
+      final response = await ApiService.confirmDelete(token: _tokenController.text);
       
       if (!mounted) return;
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['valid'] == true) {
-          Navigator.pushNamed(context, '/reset-password', arguments: _tokenController.text);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('forgot.invalid_or_expired_token'.tr()),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('forgot.invalid_token'.tr()),
+            content: Text('delete.account_deleted_successfully'.tr()),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Navigate back to login page after successful account deletion
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      } else {
+        final data = jsonDecode(response.body);
+        String errorMessage = 'delete.error_occurred'.tr();
+        
+        if (data['detail']) {
+          errorMessage = data['detail'];
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );
@@ -134,7 +140,7 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('forgot.error_occurred'.tr()),
+          content: Text('delete.error_occurred'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -190,7 +196,7 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              _showTokenInput ? 'forgot.enter_token_title'.tr() : 'forgot.reset_title'.tr(),
+                              _showTokenInput ? 'delete.enter_token_title'.tr() : 'delete.reset_title'.tr(),
                               style: const TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
@@ -200,8 +206,8 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
                             const SizedBox(height: 16),
                             Text(
                               _showTokenInput 
-                                ? 'forgot.enter_token_desc'.tr()
-                                : 'forgot.enter_email_desc'.tr(),
+                                ? 'delete.enter_token_desc'.tr()
+                                : 'delete.enter_email_desc'.tr(),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
@@ -216,8 +222,8 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
                                 child: SizedBox(
                                   width: width,
                                   child: UsernameField(
-                                    controller: _passwordController,
-                                    labelText: 'delete.password'.tr(),
+                                    controller: _emailController,
+                                    labelText: 'delete.email'.tr(),
                                   ),
                                 ),
                               ),
@@ -228,7 +234,7 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
                                   width: width,
                                   child: AnimatedButton(
                                     text: 'delete.send_token'.tr(),
-                                    onPressed: _handleResetPassword,
+                                    onPressed: _handleDeletePassword,
                                     isLoading: _isLoading,
                                   ),
                                 ),
@@ -243,15 +249,15 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
                                 decoration: BoxDecoration(
                                   color: Colors.green.shade50,
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.green.shade200),
+                                  border: Border.all(color: Color(0xFF764ba2)),
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+                                    Icon(Icons.check_circle, color: Color(0xFF764ba2), size: 20),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        'forgot.token_sent'.tr(namedArgs: {'email': _sentToEmail}),
+                                        'delete.token_sent'.tr(namedArgs: {'email': _sentToEmail}),
                                         style: TextStyle(
                                           color: const Color(0xFF764ba2),
                                           fontWeight: FontWeight.w500,
@@ -269,8 +275,8 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
                                   child: TextField(
                                     controller: _tokenController,
                                     decoration: InputDecoration(
-                                      labelText: 'forgot.token_label'.tr(),
-                                      hintText: 'forgot.token_hint'.tr(),
+                                      labelText: 'delete.token_label'.tr(),
+                                      hintText: 'delete.token_hint'.tr(),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
@@ -284,7 +290,7 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
                                 child: SizedBox(
                                   width: width,
                                   child: AnimatedButton(
-                                    text: 'forgot.reset_button'.tr(),
+                                    text: 'delete.delete_account_button'.tr(),
                                     onPressed: _handleTokenSubmit,
                                     isLoading: _isLoading,
                                   ),
@@ -302,7 +308,7 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
                                   });
                                 },
                                 child: Text(
-                                  'forgot.back_to_email'.tr(),
+                                  'delete.back_to_email'.tr(),
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -314,19 +320,12 @@ class _ForgotPasswordPageState extends State<DeleteAccountPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  'forgot.remember_password'.tr(),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                  ),
-                                ),
                                 InkWell(
                                   onTap: () {
                                     Navigator.pop(context);
                                   },
                                   child: Text(
-                                    'forgot.back_to_login'.tr(),
+                                    'delete.back_to_login'.tr(),
                                     style: const TextStyle(
                                       fontSize: 16,
                                       color: Colors.white,

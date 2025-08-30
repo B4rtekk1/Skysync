@@ -13,7 +13,8 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMixin {
+class _SettingsPageState extends State<SettingsPage>
+    with TickerProviderStateMixin {
   // User data
   String _username = 'loading';
   String _email = 'loading@example.com';
@@ -35,8 +36,6 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
   bool _wifiOnly = true;
   double _cacheSize = 0.0; // MB
   Map<String, dynamic> _cacheStats = {};
-
-
 
   // Animation controllers
   late AnimationController _fadeController;
@@ -62,21 +61,16 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+    );
 
     _fadeController.forward();
     _slideController.forward();
@@ -112,7 +106,8 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
     final stats = CacheService().getCacheStats();
     setState(() {
       _cacheStats = stats;
-      _cacheSize = double.tryParse(stats['images_cache_size_mb'] ?? '0.0') ?? 0.0;
+      _cacheSize =
+          double.tryParse(stats['images_cache_size_mb'] ?? '0.0') ?? 0.0;
     });
   }
 
@@ -140,7 +135,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
     if (confirmed == true) {
       await CacheService().clearAllCache();
       await _loadCacheStats();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -169,10 +164,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                const Color(0xFF667eea),
-                const Color(0xFF764ba2),
-              ],
+              colors: [const Color(0xFF667eea), const Color(0xFF764ba2)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -277,22 +269,17 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
                 Icons.security,
                 const Color(0xFF4facfe),
                 [
-                  _buildActionTile(
-                    'edit_profile'.tr(),
-                    Icons.person,
-                    
-                    () {},
-                  ),
-                  _buildActionTile(
-                    'change_password'.tr(),
-                    Icons.lock,
-                    () {
-                      TokenService.logout().then((_) {
-                        Navigator.pushReplacementNamed(context, '/login');
-                        Navigator.pushNamed(context, '/forgot-password', arguments: _email);
-                      });
-                    },
-                  ),
+                  _buildActionTile('edit_profile'.tr(), Icons.person, () {}),
+                  _buildActionTile('change_password'.tr(), Icons.lock, () {
+                    TokenService.logout().then((_) {
+                      Navigator.pushReplacementNamed(context, '/login');
+                      Navigator.pushNamed(
+                        context,
+                        '/forgot-password',
+                        arguments: _email,
+                      );
+                    });
+                  }),
                   _buildActionTile(
                     'log_out_other_devices'.tr(),
                     Icons.logout,
@@ -302,7 +289,13 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
                     'delete_account'.tr(),
                     Icons.delete_forever,
                     () {
-                      Navigator.pushReplacementNamed(context, '/delete_account');
+                      TokenService.logout().then((_) {
+                        Navigator.pushReplacementNamed(context, '/login');
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/delete_account',
+                        );
+                      });
                     },
                     isDestructive: true,
                   ),
@@ -346,28 +339,20 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
                 Icons.info,
                 const Color(0xFFa8edea),
                 [
-                  _buildActionTile(
-                    'about'.tr(),
-                    Icons.info_outline,
-                    () {
-                      showAboutDialog(
-                        context: context,
-                        applicationName: 'ServApp',
-                        applicationVersion: '1.0.0',
-                        applicationLegalese: '© 2024 Bartosz Kasyna',
-                      );
-                    },
-                  ),
+                  _buildActionTile('about'.tr(), Icons.info_outline, () {
+                    showAboutDialog(
+                      context: context,
+                      applicationName: 'ServApp',
+                      applicationVersion: '1.0.0',
+                      applicationLegalese: '© 2024 Bartosz Kasyna',
+                    );
+                  }),
                   _buildActionTile(
                     'privacy_policy'.tr(),
                     Icons.privacy_tip,
                     () {},
                   ),
-                  _buildActionTile(
-                    'terms_of_service'.tr(),
-                    Icons.rule,
-                    () {},
-                  ),
+                  _buildActionTile('terms_of_service'.tr(), Icons.rule, () {}),
                 ],
               ),
               const SizedBox(height: 40),
@@ -382,10 +367,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            const Color(0xFF667eea),
-            const Color(0xFF764ba2),
-          ],
+          colors: [const Color(0xFF667eea), const Color(0xFF764ba2)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -409,11 +391,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
                 color: Colors.white.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 30,
-              ),
+              child: Icon(Icons.person, color: Colors.white, size: 30),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -488,11 +466,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
                     color: color,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(
-                    icon,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  child: Icon(icon, color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -523,7 +497,10 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       decoration: BoxDecoration(
-        color: enabled ? Theme.of(context).colorScheme.surfaceVariant : Theme.of(context).colorScheme.surface,
+        color:
+            enabled
+                ? Theme.of(context).colorScheme.surfaceVariant
+                : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: SwitchListTile(
@@ -531,7 +508,10 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
           title,
           style: TextStyle(
             fontWeight: FontWeight.w500,
-            color: enabled ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant,
+            color:
+                enabled
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         value: value,
@@ -541,9 +521,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
           value ? iconOn : iconOff,
           color: enabled ? const Color(0xFF667eea) : Colors.grey,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -557,7 +535,10 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       decoration: BoxDecoration(
-        color: enabled ? Theme.of(context).colorScheme.surfaceVariant : Theme.of(context).colorScheme.surface,
+        color:
+            enabled
+                ? Theme.of(context).colorScheme.surfaceVariant
+                : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: CheckboxListTile(
@@ -565,15 +546,16 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
           title,
           style: TextStyle(
             fontWeight: FontWeight.w500,
-            color: enabled ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant,
+            color:
+                enabled
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         value: value,
         onChanged: enabled ? onChanged : null,
         activeColor: const Color(0xFF667eea),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -592,31 +574,24 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        leading: Icon(
-          icon,
-          color: const Color(0xFF667eea),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        leading: Icon(icon, color: const Color(0xFF667eea)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
         trailing: DropdownButton<String>(
           value: value,
-          items: items
-              .map((item) => DropdownMenuItem(
-                    value: item['value'],
-                    child: Text(item['label']!),
-                  ))
-              .toList(),
+          items:
+              items
+                  .map(
+                    (item) => DropdownMenuItem(
+                      value: item['value'],
+                      child: Text(item['label']!),
+                    ),
+                  )
+                  .toList(),
           onChanged: onChanged,
           underline: Container(),
           icon: const Icon(Icons.arrow_drop_down),
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -635,10 +610,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
           decoration: InputDecoration(
             labelText: 'select_language'.tr(),
             border: InputBorder.none,
-            icon: const Icon(
-              Icons.language,
-              color: Color(0xFF667eea),
-            ),
+            icon: const Icon(Icons.language, color: Color(0xFF667eea)),
           ),
           items: [
             DropdownMenuItem(value: 'pl', child: Text('polish'.tr())),
@@ -681,14 +653,10 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
         ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
-
-
 
   Widget _buildCacheTile() {
     return Container(
@@ -698,24 +666,17 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        leading: const Icon(
-          Icons.storage,
-          color: Color(0xFF667eea),
-        ),
+        leading: const Icon(Icons.storage, color: Color(0xFF667eea)),
         title: Text(
           'cache_size'.tr(),
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w500),
         ),
         subtitle: Text('${_cacheSize.toStringAsFixed(1)} MB'),
         trailing: IconButton(
           icon: const Icon(Icons.delete, color: Colors.red),
           onPressed: _clearCache,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -728,20 +689,13 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        leading: const Icon(
-          Icons.info_outline,
-          color: Color(0xFF667eea),
-        ),
+        leading: const Icon(Icons.info_outline, color: Color(0xFF667eea)),
         title: Text(
           'storage_info'.tr(),
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w500),
         ),
         subtitle: const Text('Total: 2 GB, Used: 1.2 GB'),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -763,4 +717,4 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
       },
     );
   }
-} 
+}

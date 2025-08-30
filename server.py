@@ -188,6 +188,72 @@ def send_reset_password_email(to_email, reset_token, base_url=os.getenv("BASE_UR
     else:
         print("[ERROR] Email or password environment variables are not set.")
 
+def send_account_deletion_email(to_email, deletion_token, base_url=os.getenv("BASE_URL")):
+    """
+    Sends an account deletion confirmation email to the user.
+
+    Args:
+        to_email (str): The recipient's email address.
+        deletion_token (str): The deletion token for account deletion.
+        base_url (str): The base URL for the application.
+    """
+    print(f"[DEBUG] Preparing to send account deletion email to {to_email}")
+    if email and password:
+        subject = "Account Deletion Request"
+
+        deletion_link = f"{base_url}/delete-account?token={deletion_token}"
+        
+        body = f"""
+        Hello,
+
+        You have requested to delete your account permanently.
+
+        To confirm account deletion, please follow these steps:
+
+        1. Open your Skysync application
+        2. Go to "Delete Account" page
+        3. Enter the following deletion token:
+           {deletion_token}
+
+        OR click this link to copy the token:
+        {deletion_link}
+
+        ⚠️  WARNING: This action is IRREVERSIBLE!
+        - All your files will be permanently deleted
+        - All your data will be permanently removed
+        - This action cannot be undone
+
+        This token will expire in 1 hour for security reasons.
+
+        If you did not request this account deletion, please ignore this email.
+        Your account will remain unchanged.
+
+        Best regards,
+        Your App Team
+
+        ---
+        This is an automated message, please do not reply to this email.
+        """
+
+        msg = MIMEMultipart()
+        msg['Subject'] = subject
+        msg['From'] = email
+        msg['To'] = to_email
+
+        msg.attach(MIMEText(body))
+
+        try:
+            with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                server.starttls()
+                print("[DEBUG] Logging into SMTP server")
+                server.login(email, password)
+                server.send_message(msg)
+                print(f"[DEBUG] Account deletion email sent to {to_email}")
+        except Exception as e:
+            print(f"[ERROR] Failed to send account deletion email to {to_email}: {e}")
+    else:
+        print("[ERROR] Email or password environment variables are not set.")
+
 # Alias for backward compatibility
 send_email = send_verification_email
 
@@ -241,6 +307,7 @@ SECURITY_CONFIG = {
 
 # Rate limiting for password reset and login attempts
 reset_attempts = {}
+deletion_attempts = {}
 login_attempts = defaultdict(list)
 blocked_ips = {}
 session_store = {}
@@ -339,7 +406,7 @@ async def rate_limit_middleware(request: Request, call_next):
         else:
             del blocked_ips[client_ip]
 
-    sensitive_endpoints = ["/login", "/create_user", "/reset_password", "/upload_file"]
+    sensitive_endpoints = ["/login", "/create_user", "/reset_password", "/upload_file", "delete_account"]
     if request.url.path in sensitive_endpoints:
         current_time = datetime.now()
         if client_ip in login_attempts:
@@ -665,6 +732,8 @@ class User(Base):
         verification_code (str): Code sent for email verification.
         reset_token (str): Token for password reset.
         reset_token_expiry (datetime): Expiry time for reset token.
+        deletion_token (str): Token for account deletion.
+        deletion_token_expiry (datetime): Expiry time for deletion token.
         failed_login_attempts (int): Number of failed login attempts.
         account_locked_until (datetime): When account is locked until.
         last_login (datetime): Last successful login time.
@@ -680,6 +749,8 @@ class User(Base):
     verification_code = Column(String, nullable=True)
     reset_token = Column(String, nullable=True)
     reset_token_expiry = Column(DateTime, nullable=True)
+    deletion_token = Column(String, nullable=True)
+    deletion_token_expiry = Column(DateTime, nullable=True)
     failed_login_attempts = Column(Integer, default=0)
     account_locked_until = Column(DateTime, nullable=True)
     last_login = Column(DateTime, nullable=True)
@@ -1242,6 +1313,16 @@ class AuditLogRequest(BaseModel):
     username: Optional[str] = None
     limit: Optional[int] = Field(None, ge=1, le=1000)
     offset: Optional[int] = Field(None, ge=0)
+
+class RequestAccountDeletionRequest(BaseModel):
+    email: str = Field(..., pattern=r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
+    
+    @validator('email')
+    def validate_email(cls, v):
+        return v.lower()
+
+class ConfirmAccountDeletionRequest(BaseModel):
+    token: str = Field(..., min_length=32, max_length=64)
 
 # -----------------------------------
 # Helper Functions
@@ -2833,7 +2914,7 @@ async def delete_user(
     for file in user_files:
         db.delete(file)
     
-    user_folder = os.path.join(os.getcwd(), email)
+    user_folder = os.path.join(os.getcwd(), username)
     if os.path.exists(user_folder):
         try:
             shutil.rmtree(user_folder)
@@ -2843,7 +2924,7 @@ async def delete_user(
     db.delete(user)
     db.commit()
 
-    return {"message": f"User {email} and their folder have been deleted successfully"}
+    return {"message": f"User {username} and their folder have been deleted successfully"}
 
 @app.post("/toggle_favorite")
 async def toggle_favorite(
@@ -6030,6 +6111,296 @@ async def get_my_group_shared_folders(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting shared folders: {str(e)}")
+
+# -----------------------------------
+# Account Deletion Endpoints
+# -----------------------------------
+
+@app.post("/request_account_deletion")
+async def request_account_deletion(
+    request: ResetPasswordRequest,  # Reuse the same model for email
+    db: Session = Depends(get_db),
+    api_key: str = Depends(require_api_key)
+):
+    """
+    Request account deletion by sending a deletion token to user's email.
+    Args:
+        request (ResetPasswordRequest): Email address for account deletion.
+        db (Session): Database session.
+        api_key (str): API key from headers.
+    Returns:
+        dict: Message about deletion request status.
+    Raises:
+        HTTPException: 404 if user not found, 500 on email error.
+    """
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not user.verified:
+        raise HTTPException(status_code=400, detail="Account must be verified before deletion")
+    
+    # Generate deletion token
+    deletion_token = secrets.token_urlsafe(32)
+    deletion_token_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    # Store deletion token in user record
+    user.reset_token = deletion_token
+    user.reset_token_expiry = deletion_token_expiry
+    db.commit()
+    
+    # Send deletion email
+    try:
+        send_account_deletion_email(user.email, deletion_token, base_url=BASE_URL)
+        return {"message": "Account deletion request sent to your email. Please check your inbox and follow the instructions."}
+    except Exception as e:
+        # Remove the token if email fails
+        user.reset_token = None
+        user.reset_token_expiry = None
+        db.commit()
+        raise HTTPException(status_code=500, detail="Failed to send deletion email. Please try again later.")
+
+@app.post("/confirm_account_deletion")
+async def confirm_account_deletion(
+    request: ConfirmResetRequest,  # Reuse the same model for token and password
+    db: Session = Depends(get_db),
+    api_key: str = Depends(require_api_key)
+):
+    """
+    Confirm account deletion with token and password verification.
+    Args:
+        request (ConfirmResetRequest): Token and password for account deletion.
+        db (Session): Database session.
+        api_key (str): API key from headers.
+    Returns:
+        dict: Message about deletion confirmation.
+    Raises:
+        HTTPException: 400 if invalid token or weak password.
+    """
+    # Waliduj nowe hasło
+    if not validate_new_password(request.new_password):
+        raise HTTPException(status_code=400, detail="Password does not meet security requirements")
+    
+    # Znajdź użytkownika z ważnym tokenem
+    user = db.query(User).filter(
+        User.reset_token == request.token,
+        User.reset_token_expiry > datetime.utcnow()
+    ).first()
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    
+    # Hashuj nowe hasło
+    hashed_password = bcrypt.hashpw(request.new_password.encode('utf-8'), bcrypt.gensalt())
+    user.password = hashed_password.decode('utf-8')
+    
+    # Wyczyść token
+    user.reset_token = None
+    user.reset_token_expiry = None
+    db.commit()
+    
+    return {"message": "Password has been reset successfully"}
+
+@app.post("/delete_account")
+async def request_account_deletion(request: RequestAccountDeletionRequest, db: Session = Depends(get_db), api_key: str = Depends(require_api_key)):
+    """
+    Request account deletion by sending a token to the user's email.
+    Args:
+        request (RequestAccountDeletionRequest): JSON body with email.
+        db (Session): SQLAlchemy session.
+        api_key (str): API key from headers.
+    Returns:
+        dict: Success message (always the same for security).
+    Raises:
+        HTTPException: 429 if too many attempts.
+    """
+    email = request.email.lower()
+    
+    # Rate limiting - max 3 próby na godzinę
+    current_time = time.time()
+    if email in deletion_attempts:
+        attempts = deletion_attempts[email]
+        # Usuń stare próby (starsze niż 1 godzina)
+        attempts = [t for t in attempts if current_time - t < 3600]
+        
+        if len(attempts) >= 3:
+            raise HTTPException(status_code=429, detail="Too many deletion attempts. Please try again later.")
+        
+        attempts.append(current_time)
+        deletion_attempts[email] = attempts
+    else:
+        deletion_attempts[email] = [current_time]
+    
+    # Sprawdź czy użytkownik istnieje
+    user = db.query(User).filter(User.email == email).first()
+    
+    # Zawsze zwróć sukces, nawet jeśli użytkownik nie istnieje
+    if user:
+        # Generuj bezpieczny token
+        deletion_token = secrets.token_urlsafe(32)
+        expiry = datetime.utcnow() + timedelta(hours=1)
+        
+        # Zapisz token w bazie danych
+        user.deletion_token = deletion_token
+        user.deletion_token_expiry = expiry
+        db.commit()
+        
+        # Wyślij email z linkiem usuwania konta
+        try:
+            send_account_deletion_email(user.email, deletion_token, base_url=BASE_URL)
+        except Exception as e:
+            print(f"[ERROR] Failed to send deletion email: {e}")
+            # Nie przerywamy procesu, nawet jeśli email się nie wyśle
+    
+    return {"message": "Account deletion instructions have been sent to your email address."}
+
+@app.post("/confirm_delete")
+async def confirm_account_deletion(request: ConfirmAccountDeletionRequest, db: Session = Depends(get_db), api_key: str = Depends(require_api_key)):
+    """
+    Confirm account deletion with token.
+    Args:
+        request (ConfirmAccountDeletionRequest): JSON body with token.
+        db (Session): SQLAlchemy session.
+        api_key (str): API key from headers.
+    Returns:
+        dict: Success message.
+    Raises:
+        HTTPException: 400 if invalid token.
+    """
+    # Znajdź użytkownika z ważnym tokenem
+    user = db.query(User).filter(
+        User.deletion_token == request.token,
+        User.deletion_token_expiry > datetime.utcnow()
+    ).first()
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired deletion token")
+    
+    # Usuń konto użytkownika i wszystkie powiązane dane
+    try:
+        # Usuń wszystkie ulubione dla plików tego użytkownika
+        user_files = db.query(File).filter(File.user_id == user.id).all()
+        for file in user_files:
+            favorites_to_delete = db.query(Favorite).filter(Favorite.file_id == file.id).all()
+            for favorite in favorites_to_delete:
+                db.delete(favorite)
+        
+        # Usuń wszystkie udostępnione pliki gdzie ten użytkownik jest udostępniającym
+        shared_files_as_sharer = db.query(SharedFile).filter(SharedFile.shared_by_user_id == user.id).all()
+        for shared_file in shared_files_as_sharer:
+            db.delete(shared_file)
+        
+        # Usuń wszystkie udostępnione pliki gdzie ten użytkownik jest odbiorcą
+        shared_files_as_recipient = db.query(SharedFile).filter(SharedFile.shared_with_user_id == user.id).all()
+        for shared_file in shared_files_as_recipient:
+            db.delete(shared_file)
+        
+        # Usuń wszystkie udostępnione foldery gdzie ten użytkownik jest udostępniającym
+        shared_folders_as_sharer = db.query(SharedFolder).filter(SharedFolder.shared_by_user_id == user.id).all()
+        for shared_folder in shared_folders_as_sharer:
+            db.delete(shared_folder)
+        
+        # Usuń wszystkie udostępnione foldery gdzie ten użytkownik jest odbiorcą
+        shared_folders_as_recipient = db.query(SharedFolder).filter(SharedFolder.shared_with_user_id == user.id).all()
+        for shared_folder in shared_folders_as_recipient:
+            db.delete(shared_folder)
+        
+        # Usuń wszystkie członkostwa w grupach
+        group_memberships = db.query(UserGroupMember).filter(UserGroupMember.user_id == user.id).all()
+        for membership in group_memberships:
+            db.delete(membership)
+        
+        # Usuń wszystkie rekordy historii haseł
+        password_history_records = db.query(PasswordHistory).filter(PasswordHistory.user_id == user.id).all()
+        for password_record in password_history_records:
+            db.delete(password_record)
+        
+        # Usuń wszystkie sesje użytkownika
+        user_sessions = db.query(UserSession).filter(UserSession.user_id == user.id).all()
+        for session in user_sessions:
+            db.delete(session)
+        
+        # Usuń wszystkie rekordy skanowania plików
+        for file in user_files:
+            file_scans = db.query(FileScan).filter(FileScan.file_id == file.id).all()
+            for scan in file_scans:
+                db.delete(scan)
+        
+        # Usuń wszystkie rekordy logów dostępu
+        access_logs = db.query(AccessLog).filter(AccessLog.user_id == user.id).all()
+        for log in access_logs:
+            db.delete(log)
+        
+        # Usuń wszystkie rekordy historii zmian nazw
+        for file in user_files:
+            rename_records = db.query(RenameFile).filter(RenameFile.file_id == file.id).all()
+            for rename_record in rename_records:
+                db.delete(rename_record)
+        
+        # Usuń wszystkie zdarzenia bezpieczeństwa związane z tym użytkownikiem
+        security_events = db.query(SecurityEvent).filter(SecurityEvent.username == user.username).all()
+        for event in security_events:
+            db.delete(event)
+        
+        # Usuń wszystkie udostępnione pliki grupowe gdzie ten użytkownik jest udostępniającym
+        group_shared_files_as_sharer = db.query(GroupSharedFile).filter(GroupSharedFile.shared_by_user_id == user.id).all()
+        for group_shared_file in group_shared_files_as_sharer:
+            db.delete(group_shared_file)
+        
+        # Usuń wszystkie udostępnione foldery grupowe gdzie ten użytkownik jest udostępniającym
+        group_shared_folders_as_sharer = db.query(GroupSharedFolder).filter(GroupSharedFolder.shared_by_user_id == user.id).all()
+        for group_shared_folder in group_shared_folders_as_sharer:
+            db.delete(group_shared_folder)
+        
+        # Usuń wszystkie rekordy zaszyfrowanych plików dla plików tego użytkownika
+        for file in user_files:
+            encrypted_file = db.query(EncryptedFile).filter(EncryptedFile.file_id == file.id).first()
+            if encrypted_file:
+                db.delete(encrypted_file)
+        
+        # Usuń wszystkie pliki tego użytkownika
+        for file in user_files:
+            db.delete(file)
+        
+        # Usuń folder użytkownika z systemu plików
+        user_folder = os.path.join(os.getcwd(), user.username)
+        if os.path.exists(user_folder):
+            try:
+                shutil.rmtree(user_folder)
+            except Exception as e:
+                print(f"[WARNING] Failed to delete user folder: {e}")
+        
+        # Usuń użytkownika z bazy danych
+        db.delete(user)
+        db.commit()
+        
+        return {"message": "Your account has been permanently deleted successfully"}
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error deleting account: {str(e)}")
+
+@app.get("/delete-password")
+async def validate_deletion_token(token: str, db: Session = Depends(get_db), api_key: str = Depends(require_api_key)):
+    """
+    Validate deletion token.
+    Args:
+        token (str): Deletion token from URL.
+        db (Session): SQLAlchemy session.
+        api_key (str): API key from headers.
+    Returns:
+        dict: Token validation status.
+    """
+    # Sprawdź czy token istnieje i jest ważny
+    user = db.query(User).filter(
+        User.deletion_token == token,
+        User.deletion_token_expiry > datetime.utcnow()
+    ).first()
+    
+    if user:
+        return {"valid": True, "message": "Token is valid"}
+    else:
+        return {"valid": False, "message": "Invalid or expired token"}
 
 # Uruchomienie serwera
 if __name__ == "__main__":
