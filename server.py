@@ -1684,6 +1684,8 @@ async def upload_file(
     Raises:
         HTTPException: 400/403/404/409/413/415 on errors.
     """
+    print(await request.json())
+
     try:
         folder_info_dict = json.loads(folder_info)
         folder_name = folder_info_dict.get("folder")
