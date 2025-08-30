@@ -5,6 +5,7 @@ import '../utils/custom_widgets.dart';
 import '../utils/token_service.dart';
 import '../utils/api_service.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -341,8 +342,13 @@ class _MainPageState extends State<MainPage> {
                       title: 'main.help'.tr(),
                       subtitle: 'main.help_desc'.tr(),
                       color: Colors.purple,
-                      onTap: () {
-                        Navigator.pushNamed(context, '/help');
+                      onTap: () async{
+                        final url = Uri.parse('https://github.com/B4rtekk1/Skysync/issues');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url);
+                        }else{
+                          throw 'Could not launch $url';
+                        }
                       },
                     ),
                   ),
