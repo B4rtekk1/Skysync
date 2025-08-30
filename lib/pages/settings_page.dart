@@ -3,6 +3,7 @@ import '../utils/custom_widgets.dart';
 import '../utils/token_service.dart';
 import '../utils/app_settings.dart';
 import '../utils/cache_service.dart';
+import '../utils/storage_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -36,6 +37,7 @@ class _SettingsPageState extends State<SettingsPage>
   bool _wifiOnly = true;
   double _cacheSize = 0.0; // MB
   Map<String, dynamic> _cacheStats = {};
+  Map<String, dynamic> _storageInfo = {};
 
   // Animation controllers
   late AnimationController _fadeController;
@@ -93,13 +95,24 @@ class _SettingsPageState extends State<SettingsPage>
   }
 
   Future<void> _loadAppSettings() async {
-    await AppSettings().initialize();
-    await _loadCacheStats();
-    setState(() {
-      _fontSize = AppSettings().fontSize;
-      _defaultView = AppSettings().defaultView;
-      _defaultSort = AppSettings().defaultSort;
-    });
+    try {
+      await AppSettings().initialize();
+      await _loadCacheStats();
+      await _loadStorageInfo();
+      setState(() {
+        _fontSize = AppSettings().fontSize;
+        _defaultView = AppSettings().defaultView;
+        _defaultSort = AppSettings().defaultSort;
+      });
+    } catch (e) {
+      print('Błąd podczas ładowania ustawień aplikacji: $e');
+      // Ustaw domyślne wartości w przypadku błędu
+      setState(() {
+        _fontSize = 'medium';
+        _defaultView = 'list';
+        _defaultSort = 'name';
+      });
+    }
   }
 
   Future<void> _loadCacheStats() async {
@@ -109,6 +122,42 @@ class _SettingsPageState extends State<SettingsPage>
       _cacheSize =
           double.tryParse(stats['images_cache_size_mb'] ?? '0.0') ?? 0.0;
     });
+  }
+
+  Future<void> _loadStorageInfo() async {
+    try {
+      final storageInfo = await StorageService().getDeviceStorageInfo();
+      setState(() {
+        _storageInfo = storageInfo;
+      });
+    } catch (e) {
+      print('Błąd podczas ładowania informacji o storage: $e');
+      setState(() {
+        _storageInfo = {};
+      });
+    }
+  }
+
+  /// Zwraca bezpieczną wartość dla LinearProgressIndicator (0.0 - 1.0)
+  double _getValidProgressValue(String percentageStr) {
+    try {
+      // Sprawdź czy string nie jest pusty lub null
+      if (percentageStr.isEmpty || percentageStr == 'null') {
+        return 0.0;
+      }
+      
+      final percentage = double.tryParse(percentageStr);
+      if (percentage == null || percentage.isNaN || percentage.isInfinite) {
+        return 0.0;
+      }
+      
+      // Upewnij się, że wartość jest między 0.0 a 1.0
+      final normalizedValue = (percentage / 100).clamp(0.0, 1.0);
+      return normalizedValue;
+    } catch (e) {
+      print('Błąd podczas parsowania procentu: $e');
+      return 0.0;
+    }
   }
 
   Future<void> _clearCache() async {
@@ -135,6 +184,7 @@ class _SettingsPageState extends State<SettingsPage>
     if (confirmed == true) {
       await CacheService().clearAllCache();
       await _loadCacheStats();
+      await _loadStorageInfo();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -330,6 +380,7 @@ class _SettingsPageState extends State<SettingsPage>
                   ),
                   _buildCacheTile(),
                   _buildStorageTile(),
+                  _buildAppSizeTile(),
                 ],
               ),
 
@@ -659,6 +710,75 @@ class _SettingsPageState extends State<SettingsPage>
   }
 
   Widget _buildCacheTile() {
+    final imagesCacheSize = _storageInfo['cache_size_mb']?.toString() ?? '0.0';
+    final tempSize = _storageInfo['temp_size_mb']?.toString() ?? '0.0';
+    final totalCacheSize = (double.tryParse(imagesCacheSize) ?? 0.0) + (double.tryParse(tempSize) ?? 0.0);
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: const Icon(Icons.cached, color: Color(0xFF667eea)),
+        title: Text(
+          'cache_size'.tr(),
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${'images_cache'.tr()}: ${imagesCacheSize} MB',
+              style: const TextStyle(fontSize: 12),
+            ),
+            Text(
+              '${'temp_cache'.tr()}: ${tempSize} MB',
+              style: const TextStyle(fontSize: 12),
+            ),
+            Text(
+              '${'total_cache'.tr()}: ${totalCacheSize.toStringAsFixed(1)} MB',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.refresh, color: Color(0xFF667eea)),
+              onPressed: () async {
+                await _loadCacheStats();
+                await _loadStorageInfo();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('cache_refreshed'.tr()),
+                    backgroundColor: const Color(0xFF667eea),
+                    duration: const Duration(seconds: 1),
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: _clearCache,
+            ),
+          ],
+        ),
+        isThreeLine: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  Widget _buildStorageTile() {
+    final totalGB = _storageInfo['device_total_gb']?.toString() ?? '0.0';
+    final usedGB = _storageInfo['device_used_gb']?.toString() ?? '0.0';
+    final availableGB = _storageInfo['device_available_gb']?.toString() ?? '0.0';
+    final usedPercentage = _storageInfo['device_used_percentage']?.toString() ?? '0.0';
+    final appSizeMB = _storageInfo['total_app_size_mb']?.toString() ?? '0.0';
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       decoration: BoxDecoration(
@@ -668,20 +788,56 @@ class _SettingsPageState extends State<SettingsPage>
       child: ListTile(
         leading: const Icon(Icons.storage, color: Color(0xFF667eea)),
         title: Text(
-          'cache_size'.tr(),
+          'storage_info'.tr(),
           style: const TextStyle(fontWeight: FontWeight.w500),
         ),
-        subtitle: Text('${_cacheSize.toStringAsFixed(1)} MB'),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red),
-          onPressed: _clearCache,
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${'device_storage'.tr()}: ${totalGB} GB total, ${usedGB} GB used (${usedPercentage}%)',
+              style: const TextStyle(fontSize: 12),
+            ),
+            Text(
+              '${'app_storage'.tr()}: ${appSizeMB} MB',
+              style: const TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(
+              value: _getValidProgressValue(usedPercentage),
+              backgroundColor: Colors.grey.shade300,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                _getValidProgressValue(usedPercentage) > 0.8
+                    ? Colors.red
+                    : _getValidProgressValue(usedPercentage) > 0.6
+                        ? Colors.orange
+                        : const Color(0xFF667eea),
+              ),
+            ),
+          ],
         ),
+        trailing: IconButton(
+          icon: const Icon(Icons.refresh, color: Color(0xFF667eea)),
+          onPressed: () async {
+            await _loadStorageInfo();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('storage_refreshed'.tr()),
+                backgroundColor: const Color(0xFF667eea),
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          },
+        ),
+        isThreeLine: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
-  Widget _buildStorageTile() {
+  Widget _buildAppSizeTile() {
+    final appSizeMB = _storageInfo['app_size_mb']?.toString() ?? '0.0';
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       decoration: BoxDecoration(
@@ -689,12 +845,28 @@ class _SettingsPageState extends State<SettingsPage>
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        leading: const Icon(Icons.info_outline, color: Color(0xFF667eea)),
+        leading: const Icon(Icons.apps, color: Color(0xFF667eea)),
         title: Text(
-          'storage_info'.tr(),
+          'app_size'.tr(),
           style: const TextStyle(fontWeight: FontWeight.w500),
         ),
-        subtitle: const Text('Total: 2 GB, Used: 1.2 GB'),
+        subtitle: Text(
+          '${appSizeMB} MB',
+          style: const TextStyle(fontSize: 12),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.refresh, color: Color(0xFF667eea)),
+          onPressed: () async {
+            await _loadStorageInfo();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('app_size_refreshed'.tr()),
+                backgroundColor: const Color(0xFF667eea),
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          },
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
