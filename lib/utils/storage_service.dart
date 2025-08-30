@@ -6,23 +6,23 @@ class StorageService {
   factory StorageService() => _instance;
   StorageService._internal();
 
-  /// Pobiera informacje o storage na urządzeniu
+  /// Retrieves information about device storage
   Future<Map<String, dynamic>> getDeviceStorageInfo() async {
     try {
-      // Pobierz katalogi aplikacji
+      // Get application directories
       final appDir = await getApplicationDocumentsDirectory();
       final tempDir = await getTemporaryDirectory();
       final cacheDir = await getApplicationSupportDirectory();
       
-      // Sprawdź rozmiar katalogów aplikacji
+      // Get size of application directories
       final appSize = await _getDirectorySize(appDir);
       final tempSize = await _getDirectorySize(tempDir);
       final cacheSize = await _getDirectorySize(cacheDir);
       
-      // Sprawdź dostępne miejsce na urządzeniu (Android/iOS)
+      // Get available space on device (Android/iOS)
       final deviceInfo = await _getDeviceStorageInfo();
       
-      // Waliduj dane storage przed zwróceniem
+      // Validate storage data before returning
       final validatedStorage = _validateStorageData(deviceInfo);
       
       final result = {
@@ -36,12 +36,12 @@ class StorageService {
         'device_used_percentage': validatedStorage['used_percentage'],
       };
       
-      // Dodaj logowanie dla debugowania
+      // Add debug logging
       print('Storage info result: $result');
       
       return result;
     } catch (e) {
-      print('Błąd podczas pobierania informacji o storage: $e');
+      print('Error while retrieving storage info: $e');
       return {
         'app_size_mb': '0.0',
         'temp_size_mb': '0.0',
@@ -55,7 +55,7 @@ class StorageService {
     }
   }
 
-  /// Pobiera rozmiar katalogu rekurencyjnie
+  /// Recursively gets the size of a directory
   Future<int> _getDirectorySize(Directory directory) async {
     try {
       int totalSize = 0;
@@ -66,7 +66,7 @@ class StorageService {
             try {
               totalSize += await entity.length();
             } catch (e) {
-              // Ignoruj błędy przy odczycie rozmiaru pliku
+              // Ignore errors when reading file size
             }
           }
         }
@@ -74,12 +74,12 @@ class StorageService {
       
       return totalSize;
     } catch (e) {
-      print('Błąd podczas sprawdzania rozmiaru katalogu: $e');
+      print('Error while checking directory size: $e');
       return 0;
     }
   }
 
-  /// Pobiera informacje o storage urządzenia
+  /// Retrieves information about device storage
   Future<Map<String, dynamic>> _getDeviceStorageInfo() async {
     try {
       print('Platform detection: Android=${Platform.isAndroid}, iOS=${Platform.isIOS}, Windows=${Platform.isWindows}, macOS=${Platform.isMacOS}, Linux=${Platform.isLinux}');
@@ -101,7 +101,7 @@ class StorageService {
         return await _getLinuxStorageInfo();
       } else {
         print('Unknown platform, using fallback values');
-        // Dla innych platform zwróć domyślne wartości
+        // For other platforms, return default values
         return {
           'total_gb': '0.0',
           'available_gb': '0.0',
@@ -110,7 +110,7 @@ class StorageService {
         };
       }
     } catch (e) {
-      print('Błąd podczas sprawdzania storage urządzenia: $e');
+      print('Error while checking device storage: $e');
       return {
         'total_gb': '0.0',
         'available_gb': '0.0',
@@ -120,16 +120,16 @@ class StorageService {
     }
   }
 
-  /// Pobiera informacje o storage na Android
+  /// Retrieves storage information on Android
   Future<Map<String, dynamic>> _getAndroidStorageInfo() async {
     try {
-      // Na Android używamy StatFs do sprawdzenia storage
-      // To jest uproszczona implementacja - w rzeczywistej aplikacji
-      // możesz użyć native code lub plugin
+      // On Android, use StatFs to check storage
+      // This is a simplified implementation - in a real app
+      // you might use native code or a plugin
       final appDir = await getApplicationDocumentsDirectory();
       final path = appDir.path;
       
-      // Sprawdź dostępne miejsce w katalogu aplikacji
+      // Check available space in app directory
       final stat = await Process.run('df', ['-h', path]);
       if (stat.exitCode == 0) {
         final lines = stat.stdout.toString().split('\n');
@@ -140,7 +140,7 @@ class StorageService {
             final used = parts[2];
             final available = parts[3];
             
-            // Konwertuj na GB
+            // Convert to GB
             final totalGB = _convertToGB(total);
             final usedGB = _convertToGB(used);
             final availableGB = _convertToGB(available);
@@ -156,7 +156,7 @@ class StorageService {
         }
       }
       
-      // Fallback - zwróć domyślne wartości
+      // Fallback - return default values
       return {
         'total_gb': '32.0',
         'available_gb': '16.0',
@@ -164,7 +164,7 @@ class StorageService {
         'used_percentage': '50.0',
       };
     } catch (e) {
-      print('Błąd podczas sprawdzania Android storage: $e');
+      print('Error while checking Android storage: $e');
       return {
         'total_gb': '32.0',
         'available_gb': '16.0',
@@ -174,90 +174,89 @@ class StorageService {
     }
   }
 
-  /// Pobiera informacje o storage na Windows
-  /// Pobiera informacje o storage na Windows
-Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
-  try {
-    // Na Windows używamy wmic do sprawdzenia storage
-    final appDir = await getApplicationDocumentsDirectory();
-    final driveLetter = appDir.path.split(':')[0];
-    
-    print('Windows storage check - App directory: ${appDir.path}, Drive letter: $driveLetter');
-    
-    // Sprawdź dostępne miejsce na dysku
-    final stat = await Process.run('wmic', ['logicaldisk', 'where', 'DeviceID="$driveLetter:"', 'get', 'Size,FreeSpace,VolumeName', '/format:csv']);
-    
-    print('WMIC command result - Exit code: ${stat.exitCode}');
-    print('WMIC stdout: ${stat.stdout}');
-    print('WMIC stderr: ${stat.stderr}');
-    
-    if (stat.exitCode == 0) {
-      final lines = stat.stdout.toString().split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
-      print('WMIC output lines: ${lines.length}');
+  /// Retrieves storage information on Windows
+  Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
+    try {
+      // On Windows, use wmic to check storage
+      final appDir = await getApplicationDocumentsDirectory();
+      final driveLetter = appDir.path.split(':')[0];
       
-      // Znajdź linię z danymi (pomijając nagłówek)
-      if (lines.length > 1) {
-        // Linia z danymi to zazwyczaj lines[1] (po pominięciu pustych linii i nagłówka)
-        final dataLine = lines[1]; // Druga niepusta linia
-        print('WMIC data line: "$dataLine"');
+      print('Windows storage check - App directory: ${appDir.path}, Drive letter: $driveLetter');
+      
+      // Check available space on disk
+      final stat = await Process.run('wmic', ['logicaldisk', 'where', 'DeviceID="$driveLetter:"', 'get', 'Size,FreeSpace,VolumeName', '/format:csv']);
+      
+      print('WMIC command result - Exit code: ${stat.exitCode}');
+      print('WMIC stdout: ${stat.stdout}');
+      print('WMIC stderr: ${stat.stderr}');
+      
+      if (stat.exitCode == 0) {
+        final lines = stat.stdout.toString().split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
+        print('WMIC output lines: ${lines.length}');
         
-        final parts = dataLine.split(',');
-        print('WMIC parts: $parts (length: ${parts.length})');
-        
-        if (parts.length >= 3) {
-          // FreeSpace jest w parts[1], Size w parts[2]
-          final freeBytes = int.tryParse(parts[1].trim()) ?? 0;
-          final totalBytes = int.tryParse(parts[2].trim()) ?? 0;
-          final usedBytes = totalBytes - freeBytes;
+        // Find data line (skipping header)
+        if (lines.length > 1) {
+          // Data line is usually lines[1] (after skipping empty lines and header)
+          final dataLine = lines[1]; // Second non-empty line
+          print('WMIC data line: "$dataLine"');
           
-          print('Parsed values - Total: $totalBytes, Free: $freeBytes, Used: $usedBytes');
+          final parts = dataLine.split(',');
+          print('WMIC parts: $parts (length: ${parts.length})');
           
-          // Konwertuj na GB
-          final totalGB = totalBytes / (1024 * 1024 * 1024);
-          final usedGB = usedBytes / (1024 * 1024 * 1024);
-          final availableGB = freeBytes / (1024 * 1024 * 1024);
-          
-          print('Converted to GB - Total: ${totalGB.toStringAsFixed(1)}, Used: ${usedGB.toStringAsFixed(1)}, Available: ${availableGB.toStringAsFixed(1)}');
-          
-          // Sprawdź czy totalGB nie jest zerem przed obliczeniem procentu
-          final percentage = totalGB > 0 ? ((usedGB / totalGB) * 100) : 0.0;
-          return {
-            'total_gb': totalGB.toStringAsFixed(1),
-            'available_gb': availableGB.toStringAsFixed(1),
-            'used_gb': usedGB.toStringAsFixed(1),
-            'used_percentage': percentage.toStringAsFixed(1),
-          };
+          if (parts.length >= 3) {
+            // FreeSpace is in parts[1], Size in parts[2]
+            final freeBytes = int.tryParse(parts[1].trim()) ?? 0;
+            final totalBytes = int.tryParse(parts[2].trim()) ?? 0;
+            final usedBytes = totalBytes - freeBytes;
+            
+            print('Parsed values - Total: $totalBytes, Free: $freeBytes, Used: $usedBytes');
+            
+            // Convert to GB
+            final totalGB = totalBytes / (1024 * 1024 * 1024);
+            final usedGB = usedBytes / (1024 * 1024 * 1024);
+            final availableGB = freeBytes / (1024 * 1024 * 1024);
+            
+            print('Converted to GB - Total: ${totalGB.toStringAsFixed(1)}, Used: ${usedGB.toStringAsFixed(1)}, Available: ${availableGB.toStringAsFixed(1)}');
+            
+            // Check if totalGB is not zero before calculating percentage
+            final percentage = totalGB > 0 ? ((usedGB / totalGB) * 100) : 0.0;
+            return {
+              'total_gb': totalGB.toStringAsFixed(1),
+              'available_gb': availableGB.toStringAsFixed(1),
+              'used_gb': usedGB.toStringAsFixed(1),
+              'used_percentage': percentage.toStringAsFixed(1),
+            };
+          }
         }
       }
+      
+      print('Using fallback values for Windows');
+      // Fallback - return default values
+      return {
+        'total_gb': '500.0',
+        'available_gb': '250.0',
+        'used_gb': '250.0',
+        'used_percentage': '50.0',
+      };
+    } catch (e) {
+      print('Error while checking Windows storage: $e');
+      return {
+        'total_gb': '500.0',
+        'available_gb': '250.0',
+        'used_gb': '250.0',
+        'used_percentage': '50.0',
+      };
     }
-    
-    print('Using fallback values for Windows');
-    // Fallback - zwróć domyślne wartości
-    return {
-      'total_gb': '500.0',
-      'available_gb': '250.0',
-      'used_gb': '250.0',
-      'used_percentage': '50.0',
-    };
-  } catch (e) {
-    print('Błąd podczas sprawdzania Windows storage: $e');
-    return {
-      'total_gb': '500.0',
-      'available_gb': '250.0',
-      'used_gb': '250.0',
-      'used_percentage': '50.0',
-    };
   }
-}
 
-  /// Pobiera informacje o storage na macOS
+  /// Retrieves storage information on macOS
   Future<Map<String, dynamic>> _getMacOSStorageInfo() async {
     try {
-      // Na macOS używamy df do sprawdzenia storage
+      // On macOS, use df to check storage
       final appDir = await getApplicationDocumentsDirectory();
       final path = appDir.path;
       
-      // Sprawdź dostępne miejsce w katalogu aplikacji
+      // Check available space in app directory
       final stat = await Process.run('df', ['-h', path]);
       if (stat.exitCode == 0) {
         final lines = stat.stdout.toString().split('\n');
@@ -268,12 +267,12 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
             final used = parts[2];
             final available = parts[3];
             
-            // Konwertuj na GB
+            // Convert to GB
             final totalGB = _convertToGB(total);
             final usedGB = _convertToGB(used);
             final availableGB = _convertToGB(available);
             
-            // Sprawdź czy totalGB nie jest zerem przed obliczeniem procentu
+            // Check if totalGB is not zero before calculating percentage
             final percentage = totalGB > 0 ? ((usedGB / totalGB) * 100) : 0.0;
             return {
               'total_gb': totalGB.toStringAsFixed(1),
@@ -285,7 +284,7 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
         }
       }
       
-      // Fallback - zwróć domyślne wartości
+      // Fallback - return default values
       return {
         'total_gb': '256.0',
         'available_gb': '128.0',
@@ -293,7 +292,7 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
         'used_percentage': '50.0',
       };
     } catch (e) {
-      print('Błąd podczas sprawdzania macOS storage: $e');
+      print('Error while checking macOS storage: $e');
       return {
         'total_gb': '256.0',
         'available_gb': '128.0',
@@ -303,14 +302,14 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
     }
   }
 
-  /// Pobiera informacje o storage na Linux
+  /// Retrieves storage information on Linux
   Future<Map<String, dynamic>> _getLinuxStorageInfo() async {
     try {
-      // Na Linux używamy df do sprawdzenia storage
+      // On Linux, use df to check storage
       final appDir = await getApplicationDocumentsDirectory();
       final path = appDir.path;
       
-      // Sprawdź dostępne miejsce w katalogu aplikacji
+      // Check available space in app directory
       final stat = await Process.run('df', ['-h', path]);
       if (stat.exitCode == 0) {
         final lines = stat.stdout.toString().split('\n');
@@ -321,12 +320,12 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
             final used = parts[2];
             final available = parts[3];
             
-            // Konwertuj na GB
+            // Convert to GB
             final totalGB = _convertToGB(total);
             final usedGB = _convertToGB(used);
             final availableGB = _convertToGB(available);
             
-            // Sprawdź czy totalGB nie jest zerem przed obliczeniem procentu
+            // Check if totalGB is not zero before calculating percentage
             final percentage = totalGB > 0 ? ((usedGB / totalGB) * 100) : 0.0;
             return {
               'total_gb': totalGB.toStringAsFixed(1),
@@ -338,7 +337,7 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
         }
       }
       
-      // Fallback - zwróć domyślne wartości
+      // Fallback - return default values
       return {
         'total_gb': '100.0',
         'available_gb': '50.0',
@@ -346,7 +345,7 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
         'used_percentage': '50.0',
       };
     } catch (e) {
-      print('Błąd podczas sprawdzania Linux storage: $e');
+      print('Error while checking Linux storage: $e');
       return {
         'total_gb': '100.0',
         'available_gb': '50.0',
@@ -356,15 +355,15 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
     }
   }
 
-  /// Pobiera informacje o storage na iOS
+  /// Retrieves storage information on iOS
   Future<Map<String, dynamic>> _getIOSStorageInfo() async {
     try {
-      // Na iOS używamy NSFileManager do sprawdzenia storage
-      // To jest uproszczona implementacja
+      // On iOS, use NSFileManager to check storage
+      // This is a simplified implementation
       final appDir = await getApplicationDocumentsDirectory();
       final path = appDir.path;
       
-      // Sprawdź dostępne miejsce w katalogu aplikacji
+      // Check available space in app directory
       final stat = await Process.run('df', ['-h', path]);
       if (stat.exitCode == 0) {
         final lines = stat.stdout.toString().split('\n');
@@ -375,12 +374,12 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
             final used = parts[2];
             final available = parts[3];
             
-            // Konwertuj na GB
+            // Convert to GB
             final totalGB = _convertToGB(total);
             final usedGB = _convertToGB(used);
             final availableGB = _convertToGB(available);
             
-            // Sprawdź czy totalGB nie jest zerem przed obliczeniem procentu
+            // Check if totalGB is not zero before calculating percentage
             final percentage = totalGB > 0 ? ((usedGB / totalGB) * 100) : 0.0;
             return {
               'total_gb': totalGB.toStringAsFixed(1),
@@ -392,7 +391,7 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
         }
       }
       
-      // Fallback - zwróć domyślne wartości
+      // Fallback - return default values
       return {
         'total_gb': '64.0',
         'available_gb': '32.0',
@@ -400,7 +399,7 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
         'used_percentage': '50.0',
       };
     } catch (e) {
-      print('Błąd podczas sprawdzania iOS storage: $e');
+      print('Error while checking iOS storage: $e');
       return {
         'total_gb': '64.0',
         'available_gb': '32.0',
@@ -410,7 +409,7 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
     }
   }
 
-  /// Konwertuje rozmiar z różnych jednostek na GB
+  /// Converts size from various units to GB
   double _convertToGB(String size) {
     try {
       final value = double.parse(size.replaceAll(RegExp(r'[A-Za-z]'), ''));
@@ -430,18 +429,18 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
     }
   }
 
-  /// Waliduje i normalizuje dane storage
+  /// Validates and normalizes storage data
   Map<String, dynamic> _validateStorageData(Map<String, dynamic> data) {
     try {
-      // Upewnij się, że wszystkie wartości są dodatnie i skończone
+      // Ensure all values are positive and finite
       final totalGB = (double.tryParse(data['total_gb'] ?? '0.0') ?? 0.0).abs();
       final usedGB = (double.tryParse(data['used_gb'] ?? '0.0') ?? 0.0).abs();
       final availableGB = (double.tryParse(data['available_gb'] ?? '0.0') ?? 0.0).abs();
       
-      // Oblicz procent użytkowania tylko jeśli totalGB > 0
+      // Calculate usage percentage only if totalGB > 0
       final percentage = totalGB > 0 ? ((usedGB / totalGB) * 100).clamp(0.0, 100.0) : 0.0;
       
-      // Dodaj logowanie dla debugowania
+      // Add debug logging
       print('Storage validation - Total: ${totalGB}GB, Used: ${usedGB}GB, Available: ${availableGB}GB, Percentage: ${percentage}%');
       
       return {
@@ -451,7 +450,7 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
         'used_percentage': percentage.toStringAsFixed(1),
       };
     } catch (e) {
-      print('Błąd podczas walidacji danych storage: $e');
+      print('Error while validating storage data: $e');
       return {
         'total_gb': '0.0',
         'available_gb': '0.0',
@@ -461,7 +460,7 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
     }
   }
 
-  /// Czyści cache aplikacji
+  /// Clears application cache
   Future<void> clearAppCache() async {
     try {
       final tempDir = await getTemporaryDirectory();
@@ -470,11 +469,11 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
       await _clearDirectory(tempDir);
       await _clearDirectory(cacheDir);
     } catch (e) {
-      print('Błąd podczas czyszczenia cache: $e');
+      print('Error while clearing cache: $e');
     }
   }
 
-  /// Czyści zawartość katalogu
+  /// Clears the contents of a directory
   Future<void> _clearDirectory(Directory directory) async {
     try {
       if (await directory.exists()) {
@@ -483,13 +482,13 @@ Future<Map<String, dynamic>> _getWindowsStorageInfo() async {
             try {
               await entity.delete();
             } catch (e) {
-              // Ignoruj błędy przy usuwaniu plików
+              // Ignore errors when deleting files
             }
           }
         }
       }
     } catch (e) {
-      print('Błąd podczas czyszczenia katalogu: $e');
+      print('Error while clearing directory: $e');
     }
   }
 } 
