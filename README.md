@@ -1,6 +1,8 @@
 # SkySync - File Management Application
 
-![Skysync logo](assets/Logo1.png)
+<p align="center">
+  <img src="assets/Logo1.png" alt="Opis obrazka"/>
+</p>
 
 ## Overview
 
