@@ -442,7 +442,7 @@ class StorageService {
       
       // Add debug logging
       print('Storage validation - Total: ${totalGB}GB, Used: ${usedGB}GB, Available: ${availableGB}GB, Percentage: ${percentage}%');
-      
+
       return {
         'total_gb': totalGB.toStringAsFixed(1),
         'available_gb': availableGB.toStringAsFixed(1),

@@ -13,16 +13,16 @@ class SharedPdfPreviewWidget extends StatelessWidget {
   final bool showFullScreenOnTap;
 
   const SharedPdfPreviewWidget({
-    Key? key,
+    super.key,
     required this.filename,
     required this.folderName,
     required this.sharedBy,
     this.width = 100,
     this.height = 100,
     this.showFullScreenOnTap = true,
-  }) : super(key: key);
+  });
 
-  String get _pdfUrl => '${ApiService.baseUrl}/files/${sharedBy}/${folderName}/${filename}';
+  String get _pdfUrl => '${ApiService.baseUrl}/files/$sharedBy/$folderName/$filename';
 
   @override
   Widget build(BuildContext context) {
@@ -162,11 +162,11 @@ class SharedFullScreenPdfView extends StatefulWidget {
   final String sharedBy;
 
   const SharedFullScreenPdfView({
-    Key? key,
+    super.key,
     required this.filename,
     required this.folderName,
     required this.sharedBy,
-  }) : super(key: key);
+  });
 
   @override
   State<SharedFullScreenPdfView> createState() => _SharedFullScreenPdfViewState();

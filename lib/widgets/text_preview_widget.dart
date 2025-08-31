@@ -14,16 +14,16 @@ class TextPreviewWidget extends StatelessWidget {
   final BoxFit fit;
 
   const TextPreviewWidget({
-    Key? key,
+    super.key,
     required this.filename,
     required this.folderName,
     this.width = 100,
     this.height = 100,
     this.showFullScreenOnTap = true,
     this.fit = BoxFit.cover,
-  }) : super(key: key);
+  });
 
-  String get _previewUrl => '${ApiService.baseUrl}/files/${folderName}/${filename}?preview=true';
+  String get _previewUrl => '${ApiService.baseUrl}/files/$folderName/$filename?preview=true';
 
   @override
   Widget build(BuildContext context) {
@@ -168,12 +168,12 @@ class FullScreenTextView extends StatelessWidget {
   final String folderName;
 
   const FullScreenTextView({
-    Key? key,
+    super.key,
     required this.filename,
     required this.folderName,
-  }) : super(key: key);
+  });
 
-  String get _previewUrl => '${ApiService.baseUrl}/files/${folderName}/${filename}?preview=true';
+  String get _previewUrl => '${ApiService.baseUrl}/files/$folderName/$filename?preview=true';
 
   @override
   Widget build(BuildContext context) {

@@ -15,7 +15,7 @@ class SharedTextPreviewWidget extends StatelessWidget {
   final BoxFit fit;
 
   const SharedTextPreviewWidget({
-    Key? key,
+    super.key,
     required this.filename,
     required this.folderName,
     required this.sharedBy,
@@ -23,9 +23,9 @@ class SharedTextPreviewWidget extends StatelessWidget {
     this.height = 100,
     this.showFullScreenOnTap = true,
     this.fit = BoxFit.cover,
-  }) : super(key: key);
+  });
 
-  String get _previewUrl => '${ApiService.baseUrl}/files/${sharedBy}/${folderName}/${filename}?preview=true';
+  String get _previewUrl => '${ApiService.baseUrl}/files/$sharedBy/$folderName/$filename?preview=true';
 
   @override
   Widget build(BuildContext context) {
@@ -172,13 +172,13 @@ class SharedFullScreenTextView extends StatelessWidget {
   final String sharedBy;
 
   const SharedFullScreenTextView({
-    Key? key,
+    super.key,
     required this.filename,
     required this.folderName,
     required this.sharedBy,
-  }) : super(key: key);
+  });
 
-  String get _previewUrl => '${ApiService.baseUrl}/files/${sharedBy}/${folderName}/${filename}?preview=true';
+  String get _previewUrl => '${ApiService.baseUrl}/files/$sharedBy/$folderName/$filename?preview=true';
 
   @override
   Widget build(BuildContext context) {

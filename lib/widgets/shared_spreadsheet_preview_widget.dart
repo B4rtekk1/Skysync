@@ -13,16 +13,16 @@ class SharedSpreadsheetPreviewWidget extends StatelessWidget {
   final bool showFullScreenOnTap;
 
   const SharedSpreadsheetPreviewWidget({
-    Key? key,
+    super.key,
     required this.filename,
     required this.folderName,
     required this.sharedBy,
     this.width = 100,
     this.height = 100,
     this.showFullScreenOnTap = true,
-  }) : super(key: key);
+  });
 
-  String get _previewUrl => '${ApiService.baseUrl}/files/${sharedBy}/${folderName}/${filename}?spreadsheet=true';
+  String get _previewUrl => '${ApiService.baseUrl}/files/$sharedBy/$folderName/$filename?spreadsheet=true';
 
   @override
   Widget build(BuildContext context) {
@@ -235,13 +235,13 @@ class SharedFullScreenSpreadsheetView extends StatelessWidget {
   final String sharedBy;
 
   const SharedFullScreenSpreadsheetView({
-    Key? key,
+    super.key,
     required this.filename,
     required this.folderName,
     required this.sharedBy,
-  }) : super(key: key);
+  });
 
-  String get _previewUrl => '${ApiService.baseUrl}/files/${sharedBy}/${folderName}/${filename}?spreadsheet=true';
+  String get _previewUrl => '${ApiService.baseUrl}/files/$sharedBy/$folderName/$filename?spreadsheet=true';
 
   @override
   Widget build(BuildContext context) {
