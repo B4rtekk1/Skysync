@@ -5750,6 +5750,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
 
       // Przygotuj ścieżkę folderu
       final folderPath = _currentPath.isEmpty ? username : '$username/$_currentPath';
+      print("path $folderPath");
       
       // Wywołaj API do zmiany nazwy
       final response = await ApiService.renameFile(

@@ -65,6 +65,7 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   change_app_package_name: ^1.5.0
   rename: ^3.1.0
+  msix: ^3.16.12
 
 # Configuration for flutter_launcher_icons
 flutter_launcher_icons:
@@ -91,6 +92,17 @@ flutter:
     - assets/
     - .env
     - assets/lang/
+
+msix_config:
+  display_name: SkySync  # Nazwa wyświetlana w menu Start
+  publisher_display_name: Bartosz Kasyna    # Nazwa wydawcy
+  identity_name: Skysync # Unikalna nazwa (np. dla Store)
+  msix_version: 1.0.0.0                  # Wersja pakietu
+  logo_path: assets\logo.png            # Ścieżka do ikony (PNG, 256x256 px)
+  capabilities:                          # Uprawnienia aplikacji (opcjonalne)
+    internetClient
+    broadFileSystemAccess
+  store: false
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

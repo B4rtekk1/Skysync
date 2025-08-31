@@ -1212,6 +1212,8 @@ class UnshareFolderFromGroupRequest(BaseModel):
     """
     folder_path: str = Field(..., min_length=1, max_length=255)
     group_name: str = Field(..., min_length=2, max_length=100)
+    
+folder_regex = re.compile(r'^[\w\-\s/]+$', re.UNICODE)
 
 class CreateFolderRequest(BaseModel):
     """
@@ -1221,12 +1223,12 @@ class CreateFolderRequest(BaseModel):
         folder_name (str): Name of the folder to create (default: 'Folder').
         username (str): Username of the folder owner.
     """
-    folder_name: str = Field(..., min_length=1, max_length=255, pattern=r'^[a-zA-Z0-9_\-\s\/]+$')
+    folder_name: str = Field(..., min_length=1, max_length=255)
     username: str = Field(..., min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9_]+$')
     
     @validator('folder_name')
     def validate_folder_name(cls, v):
-        if not re.match(r'^[a-zA-Z0-9_\-\s\/]+$', v):
+        if not folder_regex.match(v):
             raise ValueError('Folder name can only contain letters, numbers, underscores, hyphens, spaces, and forward slashes')
         return v.strip()
 
@@ -1645,6 +1647,7 @@ async def create_folder(
     Raises:
         HTTPException: 403/409 if folder exists or unauthorized.
     """
+    print(request.json())
     # Sprawdź autoryzację - folder musi być tworzony w folderze użytkownika
     username = payload.get("sub")
     if not username:
@@ -1684,8 +1687,6 @@ async def upload_file(
     Raises:
         HTTPException: 400/403/404/409/413/415 on errors.
     """
-    print(await request.json())
-
     try:
         folder_info_dict = json.loads(folder_info)
         folder_name = folder_info_dict.get("folder")
@@ -1790,60 +1791,86 @@ async def upload_file(
     }
     
 @app.post("/rename_file")
-async def rename_file(
-    request: RenameFileRequest, 
-    payload: dict = Depends(require_jwt_token), 
+async def rename_path(
+    request: RenameFileRequest,
+    payload: dict = Depends(require_jwt_token),
     db: Session = Depends(get_db)
 ):
     """
-    Rename a file in a user's folder. Requires JWT token and API key.
+    Rename a file or folder in a user's directory. Handles trailing slashes. Requires JWT token.
     Args:
-        request (ShareFileRequest): File data.
+        request (RenamePathRequest): Data containing folder name and old/new names.
         payload (dict): JWT token payload.
         db (Session): SQLAlchemy session.
     Returns:
         dict: Message about renaming result.
     Raises:
-        HTTPException: 401/403/404/409 on errors.
+        HTTPException: 403/404/409/500 on errors.
     """
     username = payload.get("sub")
     if not username:
         raise HTTPException(status_code=403, detail="Invalid token")
 
+    # Normalize folder_name by removing trailing slashes
+    normalized_folder_name = request.folder_name.rstrip("/").strip()
+    if not normalized_folder_name:
+        raise HTTPException(status_code=400, detail="Folder name cannot be empty")
+
     # Check if the folder belongs to the authenticated user
-    if not request.folder_name.startswith(username):
-        raise HTTPException(status_code=403, detail="You are not authorized to rename files in this folder")
-    
-    folder_path = os.path.join(os.getcwd(), request.folder_name)
+    if not normalized_folder_name.startswith(username):
+        raise HTTPException(status_code=403, detail="You are not authorized to rename in this folder")
+
+    # Construct the folder path
+    folder_path = os.path.join(os.getcwd(), normalized_folder_name)
+    print(f"Checking folder path: {folder_path}")
+    print(f"Folder contents: {os.listdir(folder_path) if os.path.isdir(folder_path) else 'Folder does not exist'}")
     if not os.path.isdir(folder_path):
-        raise HTTPException(status_code=404, detail=f"Folder \"{request.folder_name}\" does not exist")
+        raise HTTPException(status_code=404, detail=f"Folder \"{normalized_folder_name}\" does not exist")
 
-    old_file_path = os.path.join(folder_path, request.old_filename)
-    if not os.path.isfile(old_file_path):
-        raise HTTPException(status_code=404, detail=f"File \"{request.old_filename}\" does not exist in {request.folder_name}")
+    # Construct old and new paths
+    old_path = os.path.join(folder_path, request.old_filename)
+    new_path = os.path.join(folder_path, request.new_filename)
+    print(f"Checking old path: {old_path}")
+    print(f"New path: {new_path}")
 
-    new_file_path = os.path.join(folder_path, request.new_filename)
-    
-    if os.path.exists(new_file_path):
-        raise HTTPException(status_code=409, detail=f"File \"{request.new_filename}\" already exists in {request.folder_name}")
+    # Check if the old path (file or folder) exists
+    if not (os.path.isfile(old_path) or os.path.isdir(old_path)):
+        raise HTTPException(status_code=404, detail=f"Path \"{request.old_filename}\" does not exist in {normalized_folder_name}")
+
+    # Check if the new path already exists
+    if os.path.exists(new_path):
+        raise HTTPException(status_code=409, detail=f"Path \"{request.new_filename}\" already exists in {normalized_folder_name}")
 
     try:
-        os.rename(old_file_path, new_file_path)
-        
+        # Rename the file or folder
+        os.rename(old_path, new_path)
+
+        # Update database records (assuming File model tracks both files and folders)
         file_record = db.query(File).filter(
             File.filename == request.old_filename,
-            File.folder_name == request.folder_name,
+            File.folder_name == normalized_folder_name,
             File.user_id == payload.get("user_id")
         ).first()
-        
+
         if file_record:
             file_record.filename = request.new_filename
             db.commit()
-        
-        return {"message": f"File renamed from {request.old_filename} to {request.new_filename} successfully"}
-    
+        # If it's a folder, update all files within it
+        elif os.path.isdir(new_path):
+            file_records = db.query(File).filter(
+                File.folder_name == os.path.join(normalized_folder_name, request.old_filename),
+                File.user_id == payload.get("user_id")
+            ).all()
+            for record in file_records:
+                # Update the folder_name to reflect the new folder path
+                record.folder_name = os.path.join(normalized_folder_name, request.new_filename)
+            db.commit()
+
+        return {"message": f"Path renamed from {request.old_filename} to {request.new_filename} successfully"}
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error renaming file: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error renaming path: {str(e)}")
 
 @app.post("/list_files")
 async def list_files(

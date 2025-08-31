@@ -795,11 +795,11 @@ class _SettingsPageState extends State<SettingsPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${'device_storage'.tr()}: ${totalGB} GB total, ${usedGB} GB used (${usedPercentage}%)',
+              '${'device_storage'.tr()}: $totalGB GB total, $usedGB GB used ($usedPercentage%) $availableGB GB free',
               style: const TextStyle(fontSize: 12),
             ),
             Text(
-              '${'app_storage'.tr()}: ${appSizeMB} MB',
+              '${'app_storage'.tr()}: $appSizeMB MB',
               style: const TextStyle(fontSize: 12),
             ),
             const SizedBox(height: 8),
