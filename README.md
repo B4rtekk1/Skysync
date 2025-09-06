@@ -1,12 +1,12 @@
 # SkySync - File Management Application
 
 <p align="center">
-  <img src="assets/Logo1.png" alt="Opis obrazka"/>
+  <img src="assets/Logo1.png" alt="Skysync logo"/>
 </p>
 
 ## Overview
 
-SkySync is a modern file management application built with Flutter that provides secure file storage, sharing and management capabilities. The application features a comprehensive error handling system, multi-language support, and an intuitive user interface.
+SkySync is a modern file management application built with Flutter that provides secure file storage, sharing and management capabilities. The application features a comprehensive error handling system, multi-language support, automatic update notifications, and an intuitive user interface.
 
 ## Features
 
@@ -22,12 +22,14 @@ SkySync is a modern file management application built with Flutter that provides
 - Upload and download files
 - Create and manage folders
 - Rename files
-- Share files with other
+- Share files with other users
 - File organization and navigation
 - Bulk file operations (select, delete, move)
 - File search and filtering
-- Files preview
+- **Advanced file preview** (images, PDFs, spreadsheets, text files)
 - Favorites system
+- **File caching** for improved performance
+- **Activity tracking** for file operations
 
 ### ⭐ **Favorites System**
 
@@ -42,6 +44,7 @@ SkySync is a modern file management application built with Flutter that provides
 - Share with groups
 - Quick share functionality via QR code
 - View shared files and folders
+- **Shared file preview** with dedicated widgets
 
 ### 🌐 **Multi-language Support**
 
@@ -56,6 +59,22 @@ SkySync is a modern file management application built with Flutter that provides
 - Retry functionality for recoverable errors
 - Different error display methods (dialogs, snackbars, banners)
 
+### 🔄 **Automatic Updates**
+
+- **Smart update notifications** - only shows when newer version is available
+- **Version comparison** between app and server versions
+- **Persistent version storage** using SharedPreferences
+- **Automatic update checking** on app startup
+- **Download links** for new versions
+
+### 🎨 **Customization**
+
+- **Customizable theme colors** with color picker
+- **Font size options** (small, medium, large)
+- **Default view preferences** (list, grid)
+- **Sorting preferences** for files
+- **Persistent settings** across app sessions
+
 ## Technology Stack
 
 - **Frontend**: Flutter 3.7.2+
@@ -65,6 +84,11 @@ SkySync is a modern file management application built with Flutter that provides
 - **File Handling**: file_picker, path_provider
 - **Localization**: easy_localization
 - **QR Code**: qr_flutter
+- **Version Management**: package_info_plus
+- **PDF Viewing**: syncfusion_flutter_pdfviewer
+- **Image Caching**: cached_network_image
+- **Notifications**: flutter_local_notifications
+- **File Opening**: open_file
 
 ## First look
 
@@ -88,7 +112,7 @@ SkySync is a modern file management application built with Flutter that provides
 1. **Clone the repository**
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/B4rtekk1/Skysync.git
    cd fileserver
    ```
 
@@ -117,7 +141,7 @@ SkySync is a modern file management application built with Flutter that provides
 
    ```bash
    flutter build windows --release
-   flutter build android --release
+   flutter build apk --release
    #etc.
 
 ## Project Structure
@@ -132,13 +156,37 @@ lib/
 │   ├── files_page.dart       # File management
 │   ├── favorites_page.dart   # Favorites
 │   ├── shared_files_page.dart # Shared files
+│   ├── my_shared_files_page.dart # My shared files
+│   ├── groups_page.dart      # Groups management
+│   ├── shared_folder_contents_page.dart # Shared folder contents
+│   ├── forgot_password_page.dart # Password reset
+│   ├── reset_password_page.dart # Password reset form
+│   ├── delete_account_page.dart # Account deletion
+│   ├── verification_page.dart # Email verification
+│   ├── error_demo_page.dart  # Error handling demo
 │   └── settings_page.dart    # Settings
 ├── utils/                    # Utility classes
 │   ├── api_service.dart      # API communication
 │   ├── token_service.dart    # Token management
+│   ├── version_service.dart  # Version management
+│   ├── cache_service.dart    # File caching
+│   ├── storage_service.dart  # Storage operations
+│   ├── activity_service.dart # Activity tracking
+│   ├── notification_service.dart # Notifications
+│   ├── app_settings.dart     # App settings management
+│   ├── file_utils.dart       # File utilities
 │   ├── custom_widgets.dart   # Reusable widgets
 │   ├── error_handler.dart    # Error handling system
 │   └── error_widgets.dart    # Error display widgets
+├── widgets/                  # Custom widgets
+│   ├── update_notification_widget.dart # Update notifications
+│   ├── color_picker_dialog.dart # Color picker
+│   ├── image_preview_widget.dart # Image preview
+│   ├── pdf_preview_widget.dart # PDF preview
+│   ├── spreadsheet_preview_widget.dart # Spreadsheet preview
+│   ├── text_preview_widget.dart # Text preview
+│   ├── shared_*_preview_widget.dart # Shared file previews
+│   └── image_preview_page.dart # Full-screen image preview
 └── assets/
     └── lang/                 # Localization files
         ├── en.json          # English translations
@@ -188,14 +236,37 @@ RetryableErrorWidget(
 
 The application communicates with a backend API for all file operations. Key endpoints include:
 
+### Authentication
+
 - `POST /create_user` - User registration
 - `POST /login` - User authentication
+- `POST /verify/{email}` - Email verification
+- `POST /forgot_password` - Password reset request
+- `POST /reset_password` - Password reset
+- `POST /delete_user/{username}` - Delete user account
+
+### File Operations
+
 - `POST /list_files` - Get file list
 - `POST /upload_file` - Upload files
 - `DELETE /delete_file/{path}` - Delete files
 - `GET /download_file/{path}` - Download files
+- `POST /create_folder` - Create folders
+- `POST /rename_file` - Rename files
+
+### Sharing & Groups
+
 - `POST /share_file` - Share files
 - `GET /get_shared_files` - Get shared files
+- `GET /get_my_shared_files` - Get my shared files
+- `POST /create_group` - Create groups
+- `GET /get_groups` - Get groups
+- `POST /add_to_group` - Add user to group
+
+### System
+
+- `GET /app_version` - Get app version and update info
+- `POST /validate_token` - Validate JWT token
 
 ## Localization
 
@@ -237,8 +308,46 @@ flutter build web --release
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+## Version Management
+
+SkySync includes an intelligent update system:
+
+### How it works:
+
+1. **Version Comparison**: Compares app version with server version
+2. **Smart Notifications**: Only shows update notifications when newer version is available
+3. **Persistent Storage**: Saves version information locally
+4. **Automatic Checking**: Checks for updates on app startup
+
+### Server Configuration:
+
+```bash
+# Start server with update notification
+python server.py --update "1.2.0"
+
+# Start server without update notification
+python server.py --update null
+```
+
+### Version File
+
+The server creates a `version.json` file with:
+
+```json
+{
+  "current_version": "1.0.0+1",
+  "update_version": "1.2.0",
+  "last_updated": "2024-01-15T10:30:00.000000"
+}
+```
+
 ## Roadmap
 
+- [x] **Automatic update notifications** ✅
+- [x] **Version comparison system** ✅
+- [x] **File preview system** ✅
+- [x] **Customizable themes** ✅
+- [x] **Activity tracking** ✅
 - [ ] Offline mode support
 - [ ] Advanced search filters
 - [ ] File versioning

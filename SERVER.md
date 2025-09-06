@@ -142,6 +142,10 @@ All endpoints require appropriate authentication (API key or JWT where specified
 - **GET /groups/my_shared_files**: List files user shared with groups. Requires JWT.
 - **GET /groups/my_shared_folders**: List folders user shared with groups. Requires JWT.
 
+### System/Version Management
+
+- **GET /app_version**: Get application version and update information. Returns current version and update status.
+
 ### Security/Admin
 
 - **POST /security/update_config**: Update security settings (admin only). Requires JWT.
@@ -310,3 +314,65 @@ python test_security.py --url http://localhost:8000 --api-key your_api_key
 9. **Admin Endpoints** - Check admin endpoints
 10. **Session Management** - Test session management
 11. **Audit Logging** - Check audit logging
+
+## Version Management System
+
+The server includes a version management system that allows clients to check for application updates.
+
+### How it works:
+
+1. **Version Storage**: Server stores version information in `version.json` file
+2. **Update Notifications**: Server can be started with `--update <version>` parameter
+3. **Client Integration**: Flutter app checks `/app_version` endpoint for updates
+4. **Smart Comparison**: Only shows update notifications when newer version is available
+
+### Server Startup Options:
+
+```bash
+# Start server with update notification for version 1.2.0
+python server.py --update "1.2.0"
+
+# Start server without update notification
+python server.py --update null
+
+# Start server with default port (8000)
+python server.py --port 8000
+
+# Start server with custom port and update
+python server.py --port 9000 --update "1.3.0"
+```
+
+### Version File Structure:
+
+The server creates a `version.json` file with the following structure:
+
+```json
+{
+  "current_version": "1.0.0+1",
+  "update_version": "1.2.0",
+  "last_updated": "2024-01-15T10:30:00.000000"
+}
+```
+
+### API Response:
+
+The `/app_version` endpoint returns:
+
+```json
+{
+  "update": true,
+  "version": "1.2.0",
+  "message": "New version 1.2.0 is available with fixes and new features",
+  "downloadUrl": "https://github.com/B4rtekk1/Skysync/releases/latest"
+}
+```
+
+Or when no update is available:
+
+```json
+{
+  "update": false,
+  "version": "1.0.0+1",
+  "message": "Application is up to date"
+}
+```
