@@ -569,7 +569,6 @@
   "forgot.remember_password": "Pamiętasz hasło? ",
   "delete.title": "Usuń konto",
   "delete.password": "Wprowadź hasło",
-  "delete.send_token": "Wyślij kod",
   "delete.email": "Wprowadź email",
   "delete.enter_email": "Wprowadź swój adres email",
   "delete.instructions_sent": "Instrukcje usuwania konta zostały wysłane na Twój adres email.",
@@ -596,5 +595,9 @@
   "delete.back_to_login": "Powrót do logowania",
   "delete.remember_password": "Pamiętasz hasło?",
   "delete.account_deleted_successfully": "Twoje konto zostało pomyślnie usunięte na zawsze!",
-  "delete.delete_account_button": "Usuń konto"
+  "delete.delete_account_button": "Usuń konto",
+  "version.update_available": "Dostępna aktualizacja",
+  "version.version": "Wersja {version}",
+  "version.download": "Pobierz",
+  "version.later": "Później"
 } 

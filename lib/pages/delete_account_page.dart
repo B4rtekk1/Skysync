@@ -111,7 +111,6 @@ class _DeletePasswordPageState extends State<DeleteAccountPage> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('delete.account_deleted_successfully'.tr()),
@@ -119,7 +118,6 @@ class _DeletePasswordPageState extends State<DeleteAccountPage> {
           ),
         );
         
-        // Navigate back to login page after successful account deletion
         Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
       } else {
         final data = jsonDecode(response.body);

@@ -18,6 +18,9 @@ import 'utils/notification_service.dart';
 import 'utils/app_settings.dart';
 import 'utils/token_service.dart';
 import 'utils/cache_service.dart';
+import 'utils/api_service.dart';
+import 'utils/version_service.dart';
+import 'widgets/update_notification_widget.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
@@ -52,18 +55,63 @@ class _MyAppState extends State<MyApp> {
   // StreamSubscription? _linkSubscription;
   // final _appLinks = AppLinks();
   late AppSettings _appSettings;
+  late VersionService _versionService;
+  Map<String, dynamic>? _updateInfo;
+  bool _showUpdateNotification = false;
+  String? _lastServerVersion;
+  String? _appVersion;
 
   @override
   void initState() {
     super.initState();
     _appSettings = AppSettings();
+    _versionService = VersionService();
     _appSettings.initialize();
     _initializeCache();
+    _loadLastVersion();
+    _checkForUpdate();
     // _initDeepLinks();
   }
 
   Future<void> _initializeCache() async {
     await CacheService().initialize();
+  }
+
+  Future<void> _loadLastVersion() async {
+    try {
+      final lastVersion = await _versionService.getLastVersion();
+      final appVersion = await _versionService.getAppVersion();
+      setState(() {
+        _lastServerVersion = lastVersion;
+        _appVersion = appVersion;
+      });
+    } catch (e) {
+      print('Error loading last version: $e');
+    }
+  }
+
+  Future<void> _checkForUpdate() async {
+    try {
+      final updateInfo = await ApiService.checkForUpdate();
+      if (updateInfo != null) {
+        setState(() {
+          _updateInfo = updateInfo;
+          _lastServerVersion = updateInfo['version'];
+          _appVersion = updateInfo['appVersion'];
+          if (updateInfo['hasUpdate'] == true) {
+            _showUpdateNotification = true;
+          }
+        });
+      }
+    } catch (e) {
+      print('Error checking for updates: $e');
+    }
+  }
+
+  void _dismissUpdateNotification() {
+    setState(() {
+      _showUpdateNotification = false;
+    });
   }
 
   
@@ -96,7 +144,13 @@ class _MyAppState extends State<MyApp> {
               final email = args is String ? args : '';
               return VerificationPage(email: email);
             },
-            '/main': (context) => const MainPage(),
+            '/main': (context) => MainPageWithUpdate(
+              updateInfo: _updateInfo,
+              showUpdateNotification: _showUpdateNotification,
+              onDismissUpdate: _dismissUpdateNotification,
+              lastServerVersion: _lastServerVersion,
+              appVersion: _appVersion,
+            ),
             '/files': (context) => const FilesPage(),
             '/favorites': (context) => const FavoritesPage(),
             '/shared-files': (context) => const SharedFilesPage(),
@@ -191,6 +245,48 @@ class _SplashScreenState extends State<SplashScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class MainPageWithUpdate extends StatelessWidget {
+  final Map<String, dynamic>? updateInfo;
+  final bool showUpdateNotification;
+  final VoidCallback? onDismissUpdate;
+  final String? lastServerVersion;
+  final String? appVersion;
+
+  const MainPageWithUpdate({
+    super.key,
+    this.updateInfo,
+    required this.showUpdateNotification,
+    this.onDismissUpdate,
+    this.lastServerVersion,
+    this.appVersion,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          const MainPage(),
+          if (showUpdateNotification && updateInfo != null)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: UpdateNotificationWidget(
+                  version: updateInfo!['version'] ?? 'Unknown',
+                  message: updateInfo!['message'] ?? 'Dostępna jest nowa wersja aplikacji',
+                  downloadUrl: updateInfo!['downloadUrl'],
+                  onDismiss: onDismissUpdate,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

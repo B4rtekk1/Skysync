@@ -1,11 +1,70 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../config/env_config.dart';
+import 'version_service.dart';
 
 class ApiService {
   
   static String get apiKey => EnvConfig.apiKey;
   static String get baseUrl => EnvConfig.baseUrl;
+
+  static Future<Map<String, dynamic>?> checkForUpdate() async{
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/app_version'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        // Save the version returned by server
+        final versionService = VersionService();
+        final serverVersion = data['version'] ?? 'Unknown';
+        await versionService.saveLastVersion(serverVersion);
+        await versionService.saveLastCheckTime(DateTime.now());
+        
+        // Get current app version
+        final appVersion = await versionService.getAppVersion();
+        await versionService.saveAppVersion(appVersion);
+        
+        // Check if server version is newer than app version
+        final isUpdateNeeded = await versionService.isUpdateNeeded(serverVersion);
+        
+        print('App version: $appVersion, Server version: $serverVersion, Update needed: $isUpdateNeeded');
+        
+        if (isUpdateNeeded) {
+          final updateInfo = {
+            'hasUpdate': true,
+            'version': serverVersion,
+            'appVersion': appVersion,
+            'message': data['message'] ?? 'Dostępna jest nowa wersja aplikacji',
+            'downloadUrl': data['downloadUrl'] ?? null,
+          };
+          
+          // Save complete update info
+          await versionService.saveLastUpdateInfo(updateInfo);
+          
+          return updateInfo;
+        }
+        
+        // No update needed - versions are the same or app is newer
+        final noUpdateInfo = {
+          'hasUpdate': false,
+          'version': serverVersion,
+          'appVersion': appVersion,
+          'message': data['message'] ?? 'Aplikacja jest aktualna',
+        };
+        await versionService.saveLastUpdateInfo(noUpdateInfo);
+        
+        return noUpdateInfo;
+      }
+      else {
+        print('Error while loading app version ${response.statusCode}');
+        return null;
+      }
+    }
+     catch (e){
+      print('An error occured: $e');
+      return null;
+     }
+  }
 
   static Future<http.Response> registerUser({
     required String username,

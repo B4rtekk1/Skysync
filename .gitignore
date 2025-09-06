@@ -48,3 +48,5 @@ app.*.map.json
 
 .env
 security_test_results.json
+server.db
+migrate_db.py

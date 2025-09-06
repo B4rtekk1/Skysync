@@ -79,6 +79,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import base64
 import asyncio
 import aiofiles
+import argparse
 # import magic  # For MIME type detection - removed due to Windows compatibility issues
 # Note: antivirus package not available - using basic heuristic scanning instead
 
@@ -6430,8 +6431,79 @@ async def validate_deletion_token(token: str, db: Session = Depends(get_db), api
         return {"valid": True, "message": "Token is valid"}
     else:
         return {"valid": False, "message": "Invalid or expired token"}
+    
+@app.get("/app_version")
+async def get_app_version():
+    # Load version info from file
+    version_info = load_version_info()
+    update_version = version_info.get("update_version")
+    current_version = version_info.get("current_version", VERSION)
 
-# Uruchomienie serwera
+    if update_version:
+        return {
+            "update": True,
+            "version": update_version,
+            "message": f"New version {update_version} is available with fixes and new features",
+            "downloadUrl": "https://github.com/B4rtekk1/Skysync/releases/latest"
+        }
+    else:
+        return {
+            "update": False,
+            "version": current_version,
+            "message": "Application is up to date"
+        }
+
+VERSION = "1.0.0+1"
+VERSION_FILE = "version.json"
+
+def load_version_info():
+    """Load version information from JSON file"""
+    try:
+        if os.path.exists(VERSION_FILE):
+            with open(VERSION_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else:
+            default_version = {
+                "current_version": VERSION,
+                "update_version": None,
+                "last_updated": None
+            }
+        save_version_info(default_version)
+        return default_version
+    except Exception as e:
+        print(f"Error loading version info: {e}")
+        return {
+            "current_version": VERSION,
+            "update_version": None,
+            "last_updated": None
+        }
+
+def save_version_info(version_info):
+    """Save version information to JSON file"""
+    try:
+        with open(VERSION_FILE, 'w', encoding='utf-8') as f:
+            json.dump(version_info, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error saving version info: {e}")
+
+def update_version_info(update_version=None):
+    """Update version information and save to file"""
+    version_info = load_version_info()
+    version_info["update_version"] = update_version
+    version_info["last_updated"] = datetime.now().isoformat()
+    save_version_info(version_info)
+    return version_info
+
 if __name__ == "__main__":
+    
+    parser = argparse.ArgumentParser(description="Start FastAPI server with optional port configuration.")
+    parser.add_argument('--port', type=int, default=8000, help='Port on which to run the server (default: 8000)')
+    parser.add_argument('--update', type=str, default=None, help='Update version to notify users (e.g., "1.2.0" or null for no update)')
+    
+    args = parser.parse_args()
+    UPDATED = args.update if args.update and args.update.lower() != 'null' else None
+    
+    update_version_info(UPDATED)
+    
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=args.port)

@@ -974,7 +974,6 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
       return file.name.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
 
-    // Sortowanie
     switch (_sortBy) {
       case 'name':
         filtered.sort((a, b) => a.name.compareTo(b.name));
@@ -990,14 +989,14 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
         break;
     }
 
-    // Foldery zawsze na górze
+
     filtered.sort((a, b) {
       bool aIsFolder = a.type == 'folder';
       bool bIsFolder = b.type == 'folder';
       
       if (aIsFolder && !bIsFolder) return -1;
       if (!aIsFolder && bIsFolder) return 1;
-      return 0; // Oba są folderami lub oba są plikami - zachowaj obecne sortowanie
+      return 0;
     });
 
     return filtered;
@@ -1460,21 +1459,7 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                     ),
                     
                     const Spacer(),
-                    
-                    // Add Files button
-                    TextButton.icon(
-                      onPressed: _uploadFile,
-                      icon: Icon(Icons.add, size: 18, color: const Color(0xFF667eea)),
-                      label: Text('files.add_files'.tr(), style: TextStyle(fontSize: 14, color: const Color(0xFF667eea))),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        foregroundColor: const Color(0xFF667eea),
-                      ),
-                    ),
-                    
-                    const SizedBox(width: 7),
-                    
-                    // File count
+
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -1482,15 +1467,23 @@ class _FilesPageState extends State<FilesPage> with TickerProviderStateMixin {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0xFF667eea).withValues(alpha: 0.3)),
                       ),
-                      child: Text(
-                        _searchQuery.isNotEmpty 
-                          ? '${_filteredFiles.length} of ${_files.length} files'
-                          : '${_filteredFiles.length} files',
-                        style: TextStyle(
-                          color: const Color(0xFF667eea),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
+                      child: Builder(
+                        builder: (context) {
+                          final int fileCount = _filteredFiles.where((f) => f.type != 'folder').length;
+                          final int folderCount = _filteredFiles.where((f) => f.type == 'folder').length;
+                          final int allFileCount = _files.where((f) => f.type != 'folder').length;
+                          final int allFolderCount = _files.where((f) => f.type == 'folder').length;
+                          return Text(
+                            _searchQuery.isNotEmpty
+                              ? 'Folders: $folderCount/$allFolderCount Files: $fileCount/$allFileCount'
+                              : 'Folders: $folderCount, Files: $fileCount',
+                            style: TextStyle(
+                              color: const Color(0xFF667eea),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],

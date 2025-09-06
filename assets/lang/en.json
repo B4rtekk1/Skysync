@@ -599,5 +599,9 @@
   "delete.back_to_login": "Back to login",
   "delete.remember_password": "Remember your password?",
   "delete.account_deleted_successfully": "Your account has been permanently deleted successfully!",
-  "delete.delete_account_button": "Delete Account"
+  "delete.delete_account_button": "Delete Account",
+  "version.update_available": "Update available",
+  "version.version": "Version {version}",
+  "version.download": "Download",
+  "version.later": "Later"
 } 
