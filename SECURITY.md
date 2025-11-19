@@ -17,13 +17,12 @@ Thank you for taking the time to disclose vulnerabilities responsibly!
 Instead, use one of the following private channels (the first one is strongly preferred):
 
 1. **Preferred method** – Open a private vulnerability report directly on GitHub:  
-   https://github.com/YOUR_USERNAME/YOUR_REPO/security/advisories/new  
+   https://github.com/B4rtekk1/Skysync/security/advisories/new  
    GitHub will automatically notify maintainers and keep details hidden from the public.
 
 2. Send an email to: `bartoszkasyna@gmail.com`  
-   (PGP key: https://yourdomain.com/.well-known/security-pgp.txt – optional)
 
-3. As a last resort, send a direct message on GitHub or discord '@bartekbk1'.
+3. As a last resort, send a direct message on GitHub or Discord '@bartekbk1'.
 
 ### What to expect
 - Acknowledgment of receipt within **48 hours**.
