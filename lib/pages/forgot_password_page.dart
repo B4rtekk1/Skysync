@@ -12,7 +12,6 @@ class ForgotPasswordPage extends StatefulWidget {
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _emailController = TextEditingController();
   final ApiService _apiService = ApiService();
-  bool _isLoading = false;
   String? _message;
   bool _isError = false;
 
@@ -22,7 +21,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     super.dispose();
   }
 
-  Future<void> _resetPassword() async {
+  void _resetPassword() {
     if (_emailController.text.isEmpty) {
       setState(() {
         _message = 'Please enter your email';
@@ -31,36 +30,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _message = null;
-      _isError = false;
-    });
+    final email = _emailController.text;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ResetPasswordPage(email: email)),
+    );
 
-    try {
-      await _apiService.resetPassword(_emailController.text);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reset code sent! Check your email.')),
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                ResetPasswordPage(email: _emailController.text),
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _message = e.toString().replaceAll('Exception: ', '');
-        _isError = true;
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    _apiService.resetPassword(email).catchError((e) {
+      debugPrint('Reset password error: $e');
+    });
   }
 
   @override
@@ -97,10 +75,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 const Text(
                   'Enter your email address to receive a password reset link.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 48),
                 TextField(
@@ -130,7 +105,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 ],
                 const SizedBox(height: 32),
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _resetPassword,
+                  onPressed: _resetPassword,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black87,
                     foregroundColor: Colors.white,
@@ -140,19 +115,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                     elevation: 0,
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text(
-                          'Send Reset Link',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
+                  child: const Text(
+                    'Send Reset Link',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),

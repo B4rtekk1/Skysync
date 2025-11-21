@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'verification_page.dart';
 import '../utils/validators.dart';
+import '../widgets/password_requirements.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -16,9 +17,21 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _passwordFocusNode = FocusNode();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(() {
+      setState(() {});
+    });
+    _passwordFocusNode.addListener(() {
+      setState(() {});
+    });
+  }
 
   @override
   void dispose() {
@@ -26,6 +39,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -170,7 +184,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     obscureText: _obscurePassword,
                     validator: validatePassword,
+                    focusNode: _passwordFocusNode,
                   ),
+                  const SizedBox(height: 16),
+                  PasswordRequirements(password: _passwordController.text),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _confirmPasswordController,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import 'login_page.dart';
 import '../utils/validators.dart';
+import '../widgets/password_requirements.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   final String email;
@@ -22,12 +23,24 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final List<FocusNode> _focusNodes = List.generate(8, (index) => FocusNode());
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _passwordFocusNode = FocusNode();
   final ApiService _apiService = ApiService();
 
   bool _isLoading = false;
   String? _errorMessage;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(() {
+      setState(() {});
+    });
+    _passwordFocusNode.addListener(() {
+      setState(() {});
+    });
+  }
 
   @override
   void dispose() {
@@ -39,6 +52,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     }
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -207,7 +221,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       ),
                     ),
                     obscureText: _obscurePassword,
+                    focusNode: _passwordFocusNode,
                   ),
+                  const SizedBox(height: 16),
+                  PasswordRequirements(password: _passwordController.text),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _confirmPasswordController,

@@ -4,7 +4,7 @@ import '../services/api_service.dart';
 import 'login_page.dart';
 
 class VerificationPage extends StatefulWidget {
-  final String email; // Pass email to verification page
+  final String email;
 
   const VerificationPage({super.key, required this.email});
 
@@ -13,8 +13,10 @@ class VerificationPage extends StatefulWidget {
 }
 
 class _VerificationPageState extends State<VerificationPage> {
-  final List<TextEditingController> _controllers =
-      List.generate(6, (index) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
   final ApiService _apiService = ApiService();
   bool _isLoading = false;
@@ -37,7 +39,7 @@ class _VerificationPageState extends State<VerificationPage> {
         _focusNodes[index + 1].requestFocus();
       } else {
         _focusNodes[index].unfocus();
-        _verify(); // Auto-verify when last digit is entered? Optional.
+        _verify();
       }
     } else {
       if (index > 0) {
@@ -66,7 +68,6 @@ class _VerificationPageState extends State<VerificationPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Verification successful!')),
         );
-        // Navigate to login or home
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -122,10 +123,7 @@ class _VerificationPageState extends State<VerificationPage> {
                 Text(
                   'Enter the 6-digit code sent to\n${widget.email}',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 48),
                 Row(
@@ -140,7 +138,10 @@ class _VerificationPageState extends State<VerificationPage> {
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
                         maxLength: 1,
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                         decoration: InputDecoration(
                           counterText: "",
                           border: OutlineInputBorder(
@@ -178,19 +179,25 @@ class _VerificationPageState extends State<VerificationPage> {
                     ),
                     elevation: 0,
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  child:
+                      _isLoading
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : const Text(
+                            'Verify',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        )
-                      : const Text(
-                          'Verify',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
