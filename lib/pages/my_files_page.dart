@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import '../models/file_item.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
@@ -26,6 +28,132 @@ class _MyFilesPageState extends State<MyFilesPage> {
   bool _isGridView = false;
   String _sortBy = 'name';
   bool _sortAscending = true;
+  String _selectedFilter = 'All';
+  String _searchQuery = '';
+  String _includeFormats = '';
+  String _excludeFormats = '';
+  final List<String> _filters = [
+    'All',
+    'Favorites',
+    'Folders',
+    'Images',
+    'Videos',
+    'Documents',
+    'Audio',
+  ];
+  String _dateFilter = 'All Time';
+  String _sizeFilter = 'Any Size';
+  String _currentPath = '/';
+
+  final List<String> _dateFilters = [
+    'All Time',
+    'Today',
+    'Last 7 Days',
+    'Last 30 Days',
+  ];
+  final List<String> _sizeFilters = [
+    'Any Size',
+    'Small (<1MB)',
+    'Medium (1-100MB)',
+    'Large (>100MB)',
+  ];
+
+  List<FileItem> get _filteredFiles {
+    var filtered = _files;
+
+    if (_selectedFilter != 'All') {
+      filtered =
+          filtered.where((file) {
+            if (_selectedFilter == 'Favorites') return file.isFavorite;
+            if (_selectedFilter == 'Folders') return file.isFolder;
+            if (_selectedFilter == 'Images') {
+              return file.mimeType.startsWith('image/');
+            }
+            if (_selectedFilter == 'Videos') {
+              return file.mimeType.startsWith('video/');
+            }
+            if (_selectedFilter == 'Audio') {
+              return file.mimeType.startsWith('audio/');
+            }
+            if (_selectedFilter == 'Documents') {
+              return file.mimeType.contains('pdf') ||
+                  file.mimeType.contains('document') ||
+                  file.mimeType.contains('word') ||
+                  file.mimeType.contains('text') ||
+                  file.mimeType.contains('spreadsheet') ||
+                  file.mimeType.contains('presentation');
+            }
+            return false;
+          }).toList();
+    }
+
+    final now = DateTime.now();
+    if (_dateFilter == 'Today') {
+      filtered =
+          filtered.where((f) {
+            return f.lastModified.year == now.year &&
+                f.lastModified.month == now.month &&
+                f.lastModified.day == now.day;
+          }).toList();
+    } else if (_dateFilter == 'Last 7 Days') {
+      final limit = now.subtract(const Duration(days: 7));
+      filtered = filtered.where((f) => f.lastModified.isAfter(limit)).toList();
+    } else if (_dateFilter == 'Last 30 Days') {
+      final limit = now.subtract(const Duration(days: 30));
+      filtered = filtered.where((f) => f.lastModified.isAfter(limit)).toList();
+    }
+
+    if (_sizeFilter == 'Small (<1MB)') {
+      filtered = filtered.where((f) => f.size < 1024 * 1024).toList();
+    } else if (_sizeFilter == 'Medium (1-100MB)') {
+      filtered =
+          filtered
+              .where((f) => f.size >= 1024 * 1024 && f.size < 100 * 1024 * 1024)
+              .toList();
+    } else if (_sizeFilter == 'Large (>100MB)') {
+      filtered = filtered.where((f) => f.size >= 100 * 1024 * 1024).toList();
+    }
+
+    if (_searchQuery.isNotEmpty) {
+      filtered =
+          filtered
+              .where(
+                (f) =>
+                    f.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+              )
+              .toList();
+    }
+
+    if (_includeFormats.isNotEmpty) {
+      final formats =
+          _includeFormats
+              .toLowerCase()
+              .split(',')
+              .map((e) => e.trim())
+              .toList();
+      filtered =
+          filtered.where((f) {
+            final ext = f.name.split('.').last.toLowerCase();
+            return formats.contains(ext);
+          }).toList();
+    }
+
+    if (_excludeFormats.isNotEmpty) {
+      final formats =
+          _excludeFormats
+              .toLowerCase()
+              .split(',')
+              .map((e) => e.trim())
+              .toList();
+      filtered =
+          filtered.where((f) {
+            final ext = f.name.split('.').last.toLowerCase();
+            return !formats.contains(ext);
+          }).toList();
+    }
+
+    return filtered;
+  }
 
   @override
   void initState() {
@@ -51,7 +179,7 @@ class _MyFilesPageState extends State<MyFilesPage> {
       final filesData = await apiService.listFiles(
         token,
         widget.username,
-        folder: '/',
+        folder: _currentPath,
       );
 
       final newFiles =
@@ -98,7 +226,7 @@ class _MyFilesPageState extends State<MyFilesPage> {
       final filesData = await apiService.listFiles(
         token,
         widget.username,
-        folder: '/',
+        folder: _currentPath,
       );
 
       final newFiles =
@@ -124,7 +252,10 @@ class _MyFilesPageState extends State<MyFilesPage> {
         _sortFiles();
       });
     } catch (e) {
-      print('Error refreshing files: $e');
+      setState(() {
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+        _isLoading = false;
+      });
     }
   }
 
@@ -143,30 +274,135 @@ class _MyFilesPageState extends State<MyFilesPage> {
     return showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
-            title: const Text('New Folder'),
-            content: TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                hintText: 'Folder Name',
-                border: OutlineInputBorder(),
-              ),
-              autofocus: true,
+          (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.rectangle,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10.0,
+                      offset: Offset(0.0, 10.0),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.create_new_folder_outlined,
+                        size: 40,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Create New Folder',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Enter a name for your new folder',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: controller,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: 'Folder Name',
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Colors.blue,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        prefixIcon: const Icon(Icons.folder_open),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (controller.text.trim().isEmpty) return;
+                              Navigator.pop(context);
+                              await _createFolder(controller.text.trim());
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Create',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              TextButton(
-                onPressed: () async {
-                  if (controller.text.trim().isEmpty) return;
-                  Navigator.pop(context);
-                  await _createFolder(controller.text.trim());
-                },
-                child: const Text('Create'),
-              ),
-            ],
+            ),
           ),
     );
   }
@@ -186,7 +422,12 @@ class _MyFilesPageState extends State<MyFilesPage> {
       }
 
       final apiService = ApiService();
-      await apiService.createFolder(token, widget.username, folderName);
+      await apiService.createFolder(
+        token,
+        widget.username,
+        folderName,
+        currentPath: _currentPath,
+      );
 
       if (mounted) {
         setState(() {
@@ -256,7 +497,7 @@ class _MyFilesPageState extends State<MyFilesPage> {
         }
       });
 
-      await apiService.toggleFavorite(token, file.name, "/");
+      await apiService.toggleFavorite(token, file.name, _currentPath);
     } catch (e) {
       setState(() {
         final index = _files.indexWhere((f) => f.name == file.name);
@@ -279,83 +520,391 @@ class _MyFilesPageState extends State<MyFilesPage> {
   void _showSortOptions() {
     showModalBottomSheet(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder:
-          (context) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.sort_by_alpha),
-                title: const Text('Name'),
-                trailing:
-                    _sortBy == 'name'
-                        ? Icon(
-                          _sortAscending
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward,
-                        )
-                        : null,
-                onTap: () {
-                  setState(() {
-                    if (_sortBy == 'name') {
-                      _sortAscending = !_sortAscending;
-                    } else {
-                      _sortBy = 'name';
-                      _sortAscending = true;
-                    }
-                    _sortFiles();
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.access_time),
-                title: const Text('Date Modified'),
-                trailing:
-                    _sortBy == 'date'
-                        ? Icon(
-                          _sortAscending
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward,
-                        )
-                        : null,
-                onTap: () {
-                  setState(() {
-                    if (_sortBy == 'date') {
-                      _sortAscending = !_sortAscending;
-                    } else {
-                      _sortBy = 'date';
-                      _sortAscending = false;
-                    }
-                    _sortFiles();
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.data_usage),
-                title: const Text('Size'),
-                trailing:
-                    _sortBy == 'size'
-                        ? Icon(
-                          _sortAscending
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward,
-                        )
-                        : null,
-                onTap: () {
-                  setState(() {
-                    if (_sortBy == 'size') {
-                      _sortAscending = !_sortAscending;
-                    } else {
-                      _sortBy = 'size';
-                      _sortAscending = false;
-                    }
-                    _sortFiles();
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-            ],
+          (context) => StatefulBuilder(
+            builder:
+                (context, setModalState) => SafeArea(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Sort By',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Done'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildSortOption(
+                        'Name',
+                        'name',
+                        Icons.sort_by_alpha,
+                        setModalState,
+                      ),
+                      _buildSortOption(
+                        'Date Modified',
+                        'date',
+                        Icons.access_time,
+                        setModalState,
+                      ),
+                      _buildSortOption(
+                        'Size',
+                        'size',
+                        Icons.data_usage,
+                        setModalState,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+          ),
+    );
+  }
+
+  Widget _buildSortOption(
+    String title,
+    String value,
+    IconData icon,
+    StateSetter setModalState,
+  ) {
+    final isSelected = _sortBy == value;
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color:
+              isSelected
+                  ? Colors.blue.withValues(alpha: 0.1)
+                  : Colors.grey[100],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, color: isSelected ? Colors.blue : Colors.grey[600]),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? Colors.blue : Colors.black87,
+        ),
+      ),
+      trailing:
+          isSelected
+              ? Icon(
+                _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                color: Colors.blue,
+              )
+              : null,
+      onTap: () {
+        setState(() {
+          if (_sortBy == value) {
+            _sortAscending = !_sortAscending;
+          } else {
+            _sortBy = value;
+            _sortAscending = true;
+          }
+          _sortFiles();
+        });
+        setModalState(() {});
+      },
+    );
+  }
+
+  void _showAdvancedFilters() {
+    final nameController = TextEditingController(text: _searchQuery);
+    final includeController = TextEditingController(text: _includeFormats);
+    final excludeController = TextEditingController(text: _excludeFormats);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setModalState) => Container(
+                  padding: const EdgeInsets.all(24),
+                  height: MediaQuery.of(context).size.height * 0.85,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Advanced Filters',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'File Name',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: nameController,
+                          decoration: InputDecoration(
+                            hintText: 'Search by name...',
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Include Formats',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Comma separated (e.g. jpg, png, pdf)',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: includeController,
+                          decoration: InputDecoration(
+                            hintText: 'e.g. jpg, png',
+                            prefixIcon: const Icon(Icons.check_circle_outline),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Exclude Formats',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Comma separated (e.g. exe, bat)',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: excludeController,
+                          decoration: InputDecoration(
+                            hintText: 'e.g. exe, bat',
+                            prefixIcon: const Icon(Icons.block),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Date Modified',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children:
+                              _dateFilters.map((filter) {
+                                final isSelected = _dateFilter == filter;
+                                return FilterChip(
+                                  label: Text(filter),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    setState(() {
+                                      _dateFilter = filter;
+                                    });
+                                    setModalState(() {});
+                                  },
+                                  backgroundColor: Colors.grey[100],
+                                  selectedColor: Colors.blue.shade50,
+                                  labelStyle: TextStyle(
+                                    color:
+                                        isSelected
+                                            ? Colors.blue
+                                            : Colors.black87,
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: BorderSide(
+                                      color:
+                                          isSelected
+                                              ? Colors.blue.withValues(
+                                                alpha: 0.5,
+                                              )
+                                              : Colors.transparent,
+                                    ),
+                                  ),
+                                  showCheckmark: false,
+                                );
+                              }).toList(),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'File Size',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children:
+                              _sizeFilters.map((filter) {
+                                final isSelected = _sizeFilter == filter;
+                                return FilterChip(
+                                  label: Text(filter),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    setState(() {
+                                      _sizeFilter = filter;
+                                    });
+                                    setModalState(() {});
+                                  },
+                                  backgroundColor: Colors.grey[100],
+                                  selectedColor: Colors.blue.shade50,
+                                  labelStyle: TextStyle(
+                                    color:
+                                        isSelected
+                                            ? Colors.blue
+                                            : Colors.black87,
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: BorderSide(
+                                      color:
+                                          isSelected
+                                              ? Colors.blue.withValues(
+                                                alpha: 0.5,
+                                              )
+                                              : Colors.transparent,
+                                    ),
+                                  ),
+                                  showCheckmark: false,
+                                );
+                              }).toList(),
+                        ),
+                        const SizedBox(height: 32),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  nameController.clear();
+                                  includeController.clear();
+                                  excludeController.clear();
+                                  setState(() {
+                                    _dateFilter = 'All Time';
+                                    _sizeFilter = 'Any Size';
+                                    _searchQuery = '';
+                                    _includeFormats = '';
+                                    _excludeFormats = '';
+                                  });
+                                  setModalState(() {});
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text('Reset'),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _searchQuery = nameController.text.trim();
+                                    _includeFormats =
+                                        includeController.text.trim();
+                                    _excludeFormats =
+                                        excludeController.text.trim();
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Apply Filters',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
           ),
     );
   }
@@ -392,10 +941,10 @@ class _MyFilesPageState extends State<MyFilesPage> {
               token,
               widget.username,
               File(file.path!),
+              folder: _currentPath,
             );
           } catch (e) {
             errors.add('Failed to upload ${file.name}');
-            print('Error uploading ${file.name}: $e');
           }
         }
       }
@@ -422,79 +971,291 @@ class _MyFilesPageState extends State<MyFilesPage> {
     }
   }
 
+  void _showAddOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder:
+          (context) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: const Text(
+                      'Create New',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.cloud_upload_rounded,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    title: const Text('Upload Files'),
+                    subtitle: const Text('Select files from your device'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickAndUploadFiles();
+                    },
+                  ),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.create_new_folder_rounded,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    title: const Text('Create Folder'),
+                    subtitle: const Text('Create a new folder'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showCreateFolderDialog();
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  void _navigateToFolder(String folderName) {
+    setState(() {
+      if (_currentPath == '/') {
+        _currentPath = '/$folderName';
+      } else {
+        _currentPath = '$_currentPath/$folderName';
+      }
+    });
+    _loadFiles();
+  }
+
+  void _navigateUp() {
+    if (_currentPath == '/') return;
+    setState(() {
+      final lastSlashIndex = _currentPath.lastIndexOf('/');
+      if (lastSlashIndex == 0) {
+        _currentPath = '/';
+      } else {
+        _currentPath = _currentPath.substring(0, lastSlashIndex);
+      }
+    });
+    _loadFiles();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        title: const Text(
-          'My Files',
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 20,
-            fontWeight: FontWeight.w500,
+    return WillPopScope(
+      onWillPop: () async {
+        if (_currentPath != '/') {
+          _navigateUp();
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: const Text(
+            'My Files',
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        iconTheme: const IconThemeData(color: Colors.black54),
-        actions: [
-          if (_isUploading)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+          centerTitle: false,
+          iconTheme: const IconThemeData(color: Colors.black87),
+          leading:
+              _currentPath != '/'
+                  ? IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                    onPressed: _navigateUp,
+                  )
+                  : null,
+          actions: [
+            if (_isUploading)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    ),
                   ),
                 ),
               ),
+            IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  _isGridView
+                      ? Icons.view_list_rounded
+                      : Icons.grid_view_rounded,
+                  size: 20,
+                ),
+              ),
+              onPressed: () => setState(() => _isGridView = !_isGridView),
             ),
-          IconButton(
-            icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
-            onPressed: () {
+            IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color:
+                      (_dateFilter != 'All Time' ||
+                              _sizeFilter != 'Any Size' ||
+                              _includeFormats.isNotEmpty ||
+                              _excludeFormats.isNotEmpty)
+                          ? Colors.blue.shade50
+                          : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.tune_rounded,
+                  size: 20,
+                  color:
+                      (_dateFilter != 'All Time' ||
+                              _sizeFilter != 'Any Size' ||
+                              _includeFormats.isNotEmpty ||
+                              _excludeFormats.isNotEmpty)
+                          ? Colors.blue
+                          : Colors.black87,
+                ),
+              ),
+              onPressed: _showAdvancedFilters,
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.sort_rounded, size: 20),
+              ),
+              onPressed: _showSortOptions,
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.create_new_folder_rounded,
+                  color: Colors.blue,
+                  size: 20,
+                ),
+              ),
+              onPressed: _showCreateFolderDialog,
+            ),
+            const SizedBox(width: 16),
+          ],
+        ),
+        drawer: AppDrawer(
+          username: widget.username,
+          email: widget.email,
+          currentPage: 'My Files',
+        ),
+        body: Column(
+          children: [_buildFilterBar(), Expanded(child: _buildBody())],
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _showAddOptions,
+          backgroundColor: Colors.blue,
+          elevation: 4,
+          icon: const Icon(Icons.add_rounded, color: Colors.white),
+          label: const Text(
+            'New',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterBar() {
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      color: Colors.white,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        scrollDirection: Axis.horizontal,
+        itemCount: _filters.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final filter = _filters[index];
+          final isSelected = _selectedFilter == filter;
+          return FilterChip(
+            label: Text(filter),
+            selected: isSelected,
+            onSelected: (selected) {
               setState(() {
-                _isGridView = !_isGridView;
+                _selectedFilter = filter;
               });
             },
-          ),
-          IconButton(icon: const Icon(Icons.sort), onPressed: _showSortOptions),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              if (value == 'new_folder') {
-                _showCreateFolderDialog();
-              }
-            },
-            itemBuilder:
-                (context) => [
-                  const PopupMenuItem(
-                    value: 'new_folder',
-                    child: Row(
-                      children: [
-                        Icon(Icons.create_new_folder, size: 20),
-                        SizedBox(width: 12),
-                        Text('New Folder'),
-                      ],
-                    ),
-                  ),
-                ],
-          ),
-        ],
-      ),
-      drawer: AppDrawer(
-        username: widget.username,
-        email: widget.email,
-        currentPage: 'My Files',
-      ),
-      body: _buildBody(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _pickAndUploadFiles,
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.cloud_upload, color: Colors.white),
+            backgroundColor: Colors.grey[100],
+            selectedColor: Colors.blue.withValues(alpha: 0.1),
+            labelStyle: TextStyle(
+              color: isSelected ? Colors.blue : Colors.grey[700],
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color:
+                    isSelected
+                        ? Colors.blue.withValues(alpha: 0.5)
+                        : Colors.transparent,
+              ),
+            ),
+            showCheckmark: false,
+          );
+        },
       ),
     );
   }
@@ -508,25 +1269,76 @@ class _MyFilesPageState extends State<MyFilesPage> {
       return ErrorView(message: _errorMessage!, onRetry: _loadFiles);
     }
 
-    if (_files.isEmpty) {
+    final filesToShow = _filteredFiles;
+
+    if (filesToShow.isEmpty) {
       return Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.folder_open, size: 80, color: Colors.grey[300]),
-            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.folder_open_rounded,
+                size: 64,
+                color: Colors.blue[300],
+              ),
+            ),
+            const SizedBox(height: 24),
             Text(
-              'No files yet',
+              _selectedFilter == 'All'
+                  ? 'No files yet'
+                  : 'No $_selectedFilter found',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[700],
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Upload files to get started',
+              'Upload files or create a folder to get started',
               style: TextStyle(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _showCreateFolderDialog,
+                  icon: const Icon(Icons.create_new_folder_rounded),
+                  label: const Text('Create Folder'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: _pickAndUploadFiles,
+                  icon: const Icon(Icons.cloud_upload_rounded),
+                  label: const Text('Upload Files'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -537,201 +1349,423 @@ class _MyFilesPageState extends State<MyFilesPage> {
       onRefresh: _loadFiles,
       child:
           _isGridView
-              ? _buildGridBody()
+              ? _buildGridBody(filesToShow)
               : ListView.builder(
                 padding: const EdgeInsets.all(16),
-                itemCount: _files.length,
+                itemCount: filesToShow.length,
                 itemBuilder: (context, index) {
-                  final file = _files[index];
+                  final file = filesToShow[index];
                   return _buildFileCard(file);
                 },
               ),
     );
   }
 
-  Widget _buildGridBody() {
+  Widget _buildGridBody(List<FileItem> files) {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 200,
+        maxCrossAxisExtent: 180,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 1.0,
+        childAspectRatio: 0.85,
       ),
-      itemCount: _files.length,
+      itemCount: files.length,
       itemBuilder: (context, index) {
-        return _buildGridItem(_files[index]);
+        return _buildGridItem(files[index]);
       },
     );
   }
 
   Widget _buildGridItem(FileItem file) {
-    return Stack(
-      children: [
-        InkWell(
-          onTap: () {
-            if (file.isFolder) {
-              // TODO: Navigate into folder
-            } else {
-              // TODO: Open file preview
-            }
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Expanded(child: Center(child: _buildFileIcon(file, size: 48))),
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    children: [
-                      Text(
-                        file.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  if (file.isFolder) {
+                    _navigateToFolder(file.name);
+                  } else {
+                    // TODO: Open file preview
+                  }
+                },
+                onLongPress: () => _showFileOptions(file),
+                borderRadius: BorderRadius.circular(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: _getFileColor(file).withValues(alpha: 0.1),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16),
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
+                        child: Center(child: _buildFileIcon(file, size: 48)),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        file.isFolder
-                            ? file.folderInfo
-                            : '${file.formattedSize} • ${_formatDate(file.lastModified)}',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            file.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            file.isFolder
+                                ? file.folderInfo
+                                : file.formattedSize,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 4,
+            right: 4,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => _toggleFavorite(file),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Icon(
+                    file.isFavorite ? Icons.favorite : Icons.favorite_border,
+                    size: 20,
+                    color: file.isFavorite ? Colors.red : Colors.grey[400],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-        Positioned(
-          top: 4,
-          right: 4,
-          child: IconButton(
-            icon: Icon(
-              file.isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: file.isFavorite ? Colors.red : Colors.grey[400],
-            ),
-            onPressed: () => _toggleFavorite(file),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildFileCard(FileItem file) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.blue.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
-          child: _buildFileIcon(file, size: 24),
-        ),
-        title: Text(
-          file.name,
-          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          file.isFolder
-              ? file.folderInfo
-              : '${file.formattedSize} • ${_formatDate(file.lastModified)}',
-          style: TextStyle(color: Colors.grey[600], fontSize: 13),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(
-                file.isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: file.isFavorite ? Colors.red : Colors.grey[400],
+        ],
+      ),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          leading: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: _getFileColor(file).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(child: _buildFileIcon(file, size: 24)),
+          ),
+          title: Text(
+            file.name,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 4),
+              Text(
+                file.isFolder
+                    ? file.folderInfo
+                    : '${file.formattedSize} • ${_formatDate(file.lastModified)}',
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
-              onPressed: () => _toggleFavorite(file),
-              tooltip:
-                  file.isFavorite
-                      ? 'Remove from favorites'
-                      : 'Add to favorites',
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: Colors.grey),
-              itemBuilder:
-                  (context) => [
-                    const PopupMenuItem(
-                      child: Row(
-                        children: [
-                          Icon(Icons.download, size: 20),
-                          SizedBox(width: 12),
-                          Text('Download'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      child: Row(
-                        children: [
-                          Icon(Icons.share, size: 20),
-                          SizedBox(width: 12),
-                          Text('Share'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline, size: 20),
-                          SizedBox(width: 12),
-                          Text('Details'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    const PopupMenuItem(
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.delete_outline,
-                            size: 20,
-                            color: Colors.red,
-                          ),
-                          SizedBox(width: 12),
-                          Text('Delete', style: TextStyle(color: Colors.red)),
-                        ],
-                      ),
-                    ),
-                  ],
-            ),
-          ],
+            ],
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(
+                  file.isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: file.isFavorite ? Colors.red : Colors.grey[400],
+                ),
+                onPressed: () => _toggleFavorite(file),
+              ),
+              IconButton(
+                icon: const Icon(Icons.more_vert_rounded),
+                color: Colors.grey[400],
+                onPressed: () => _showFileOptions(file),
+              ),
+            ],
+          ),
+          onTap: () {
+            if (file.isFolder) {
+              _navigateToFolder(file.name);
+            } else {
+              // TODO: Open file preview
+            }
+          },
         ),
-        onTap: () {
-          if (file.isFolder) {
-            // TODO: Navigate into folder
-          } else {
-            // TODO: Open file preview
-          }
-        },
       ),
     );
+  }
+
+  Future<void> _downloadFolder(FileItem file) async {
+    if (!file.isFolder) return;
+
+    try {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Text('Downloading ${file.name}...'),
+              ],
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      final token = await AuthService().getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      String folderPath =
+          _currentPath == '/' ? '/${file.name}' : '$_currentPath/${file.name}';
+
+      final zipBytes = await ApiService().downloadFolder(token, folderPath);
+
+      final directory = await getDownloadsDirectory();
+      final filePath = path.join(directory!.path, '${file.name}.zip');
+      final zipFile = File(filePath);
+      await zipFile.writeAsBytes(zipBytes);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloaded ${file.name}.zip to Downloads'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'OPEN',
+              textColor: Colors.white,
+              onPressed: () {
+                // TODO: Open file location
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error downloading folder: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showFileOptions(FileItem file) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder:
+          (context) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: _getFileColor(file).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(child: _buildFileIcon(file, size: 24)),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                file.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                file.isFolder ? 'Folder' : file.mimeType,
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: Icon(
+                      file.isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: file.isFavorite ? Colors.red : Colors.grey[700],
+                    ),
+                    title: Text(
+                      file.isFavorite
+                          ? 'Remove from Favorites'
+                          : 'Add to Favorites',
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _toggleFavorite(file);
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.download_rounded,
+                      color: Colors.grey[700],
+                    ),
+                    title: const Text('Download'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      if (file.isFolder) {
+                        _downloadFolder(file);
+                      } else {
+                        // TODO: Implement file download
+                      }
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.share_rounded, color: Colors.grey[700]),
+                    title: const Text('Share'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: Implement share
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.info_outline_rounded,
+                      color: Colors.grey[700],
+                    ),
+                    title: const Text('Details'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: Implement details
+                    },
+                  ),
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.red,
+                    ),
+                    title: const Text(
+                      'Delete',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: Implement delete
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  Color _getFileColor(FileItem file) {
+    if (file.isFolder) return Colors.blue;
+    if (file.mimeType.startsWith('image/')) return Colors.purple;
+    if (file.mimeType.startsWith('video/')) return Colors.orange;
+    if (file.mimeType.startsWith('audio/')) return Colors.red;
+    if (file.mimeType.contains('pdf')) return Colors.red;
+    if (file.mimeType.contains('word')) return Colors.blue;
+    if (file.mimeType.contains('excel')) return Colors.green;
+    return Colors.grey;
   }
 
   Widget _buildFileIcon(FileItem file, {double size = 24}) {
@@ -739,39 +1773,39 @@ class _MyFilesPageState extends State<MyFilesPage> {
     Color color;
 
     if (file.isFolder) {
-      icon = Icons.folder;
+      icon = Icons.folder_rounded;
       color = Colors.blue;
     } else if (file.mimeType.startsWith('image/')) {
-      icon = Icons.image;
-      color = Colors.green;
-    } else if (file.mimeType.startsWith('video/')) {
-      icon = Icons.videocam;
+      icon = Icons.image_rounded;
       color = Colors.purple;
-    } else if (file.mimeType.startsWith('audio/')) {
-      icon = Icons.audiotrack;
+    } else if (file.mimeType.startsWith('video/')) {
+      icon = Icons.videocam_rounded;
       color = Colors.orange;
+    } else if (file.mimeType.startsWith('audio/')) {
+      icon = Icons.audiotrack_rounded;
+      color = Colors.red;
     } else if (file.mimeType.contains('pdf')) {
-      icon = Icons.picture_as_pdf;
+      icon = Icons.picture_as_pdf_rounded;
       color = Colors.red;
     } else if (file.mimeType.contains('document') ||
         file.mimeType.contains('word')) {
-      icon = Icons.description;
-      color = Colors.blue[700]!;
+      icon = Icons.description_rounded;
+      color = Colors.blue;
     } else if (file.mimeType.contains('spreadsheet') ||
         file.mimeType.contains('excel')) {
-      icon = Icons.table_chart;
-      color = Colors.green[700]!;
+      icon = Icons.table_chart_rounded;
+      color = Colors.green;
     } else if (file.mimeType.contains('presentation') ||
         file.mimeType.contains('powerpoint')) {
-      icon = Icons.slideshow;
-      color = Colors.orange[700]!;
+      icon = Icons.slideshow_rounded;
+      color = Colors.orange;
     } else if (file.mimeType.contains('zip') ||
         file.mimeType.contains('archive') ||
         file.mimeType.contains('compressed')) {
-      icon = Icons.folder_zip;
+      icon = Icons.folder_zip_rounded;
       color = Colors.grey[700]!;
     } else {
-      icon = Icons.insert_drive_file;
+      icon = Icons.insert_drive_file_rounded;
       color = Colors.grey;
     }
 

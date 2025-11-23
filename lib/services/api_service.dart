@@ -210,11 +210,7 @@ class ApiService {
           'X-API-Key': Config.apiKey,
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'username': username,
-          'folder_name': folderName,
-          'path': currentPath,
-        }),
+        body: jsonEncode({'folder_name': '$currentPath/$folderName'}),
       );
 
       if (response.statusCode != 201 && response.statusCode != 200) {
@@ -247,6 +243,29 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error toggling favorite: $e');
+    }
+  }
+
+  Future<List<int>> downloadFolder(String token, String folderName) async {
+    final url = Uri.parse('$baseUrl/api/download_folder');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'folder_name': folderName}),
+      );
+
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      } else {
+        throw Exception('Failed to download folder: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error downloading folder: $e');
     }
   }
 }
