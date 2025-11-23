@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import '../config.dart';
@@ -29,7 +30,10 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> register(
-      String name, String email, String password) async {
+    String name,
+    String email,
+    String password,
+  ) async {
     final url = Uri.parse('$baseUrl/api/register');
     try {
       final response = await http.post(
@@ -54,6 +58,7 @@ class ApiService {
       throw Exception('Error registering: $e');
     }
   }
+
   Future<Map<String, dynamic>> verify(String email, String code) async {
     final url = Uri.parse('$baseUrl/api/verify');
     try {
@@ -63,10 +68,7 @@ class ApiService {
           'Content-Type': 'application/json',
           'X-API-Key': Config.apiKey,
         },
-        body: jsonEncode({
-          'email': email,
-          'code': code,
-        }),
+        body: jsonEncode({'email': email, 'code': code}),
       );
 
       if (response.statusCode == 200) {
@@ -78,6 +80,7 @@ class ApiService {
       throw Exception('Error verifying: $e');
     }
   }
+
   Future<void> resetPassword(String email) async {
     final url = Uri.parse('$baseUrl/api/reset_password');
     try {
@@ -97,7 +100,12 @@ class ApiService {
       throw Exception('Error sending reset link: $e');
     }
   }
-  Future<void> confirmPasswordReset(String email, String code, String newPassword) async {
+
+  Future<void> confirmPasswordReset(
+    String email,
+    String code,
+    String newPassword,
+  ) async {
     final url = Uri.parse('$baseUrl/api/confirm_reset_password');
     try {
       final response = await http.post(
@@ -120,5 +128,125 @@ class ApiService {
       throw Exception('Error resetting password: $e');
     }
   }
-}
 
+  Future<List<Map<String, dynamic>>> listFiles(
+    String token,
+    String username, {
+    String folder = '',
+  }) async {
+    final url = Uri.parse('$baseUrl/api/list_files');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'username': username, 'folder': folder}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return List<Map<String, dynamic>>.from(data['files'] ?? []);
+      } else {
+        throw Exception('Failed to load files: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error loading files: $e');
+    }
+  }
+
+  Future<void> uploadFile(
+    String token,
+    String username,
+    File file, {
+    String folder = '',
+  }) async {
+    final url = Uri.parse('$baseUrl/api/upload_file');
+    final request = http.MultipartRequest('POST', url);
+    request.headers.addAll({
+      'X-API-Key': Config.apiKey,
+      'Authorization': 'Bearer $token',
+    });
+    request.fields['username'] = username;
+    request.fields['folder'] = folder;
+
+    final stream = http.ByteStream(file.openRead());
+    final length = await file.length();
+
+    final multipartFile = http.MultipartFile(
+      'file',
+      stream,
+      length,
+      filename: file.path.split(Platform.pathSeparator).last,
+    );
+
+    request.files.add(multipartFile);
+
+    try {
+      final response = await request.send();
+      if (response.statusCode != 200) {
+        final respStr = await response.stream.bytesToString();
+        throw Exception('Failed to upload file: $respStr');
+      }
+    } catch (e) {
+      throw Exception('Error uploading file: $e');
+    }
+  }
+
+  Future<void> createFolder(
+    String token,
+    String username,
+    String folderName, {
+    String currentPath = '',
+  }) async {
+    final url = Uri.parse('$baseUrl/api/create_folder');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'username': username,
+          'folder_name': folderName,
+          'path': currentPath,
+        }),
+      );
+
+      if (response.statusCode != 201 && response.statusCode != 200) {
+        throw Exception('Failed to create folder: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error creating folder: $e');
+    }
+  }
+
+  Future<void> toggleFavorite(
+    String token,
+    String filename,
+    String folderName,
+  ) async {
+    final url = Uri.parse('$baseUrl/api/toggle_favorite');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'filename': filename, 'folder_name': folderName}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to toggle favorite: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error toggling favorite: $e');
+    }
+  }
+}

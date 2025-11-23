@@ -24,6 +24,10 @@ class AuthService {
     return {'token': token, 'username': username, 'email': email};
   }
 
+  Future<String?> getToken() async {
+    return await _storage.read(key: _keyToken);
+  }
+
   Future<bool> isLoggedIn() async {
     final token = await _storage.read(key: _keyToken);
     return token != null;

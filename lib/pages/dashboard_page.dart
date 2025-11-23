@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import 'login_page.dart';
+import '../widgets/app_drawer.dart';
 
 class DashboardPage extends StatelessWidget {
   final String username;
@@ -15,19 +14,31 @@ class DashboardPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 1,
-        title: const Row(
-          children: [
-            Icon(Icons.cloud_queue, color: Colors.blue, size: 28),
-            SizedBox(width: 12),
-            Text(
-              'Skysync Console',
-              style: TextStyle(
-                color: Colors.black87,
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+        title: LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = MediaQuery.of(context).size.width < 600;
+            return Row(
+              children: [
+                Icon(
+                  Icons.cloud_queue,
+                  color: Colors.blue,
+                  size: isMobile ? 24 : 28,
+                ),
+                SizedBox(width: isMobile ? 8 : 12),
+                Flexible(
+                  child: Text(
+                    'Skysync Console',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: isMobile ? 16 : 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
         iconTheme: const IconThemeData(color: Colors.black54),
         actions: [
@@ -48,50 +59,10 @@ class DashboardPage extends StatelessWidget {
           const SizedBox(width: 16),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(color: Colors.blue),
-              accountName: Text(username),
-              accountEmail: Text(email),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Text(
-                  username.isNotEmpty ? username[0].toUpperCase() : 'U',
-                  style: const TextStyle(fontSize: 24, color: Colors.blue),
-                ),
-              ),
-            ),
-            _buildDrawerItem(context, Icons.dashboard, 'Dashboard', true),
-            _buildDrawerItem(context, Icons.folder, 'My Files', false),
-            _buildDrawerItem(context, Icons.people, 'User Groups', false),
-            _buildDrawerItem(context, Icons.share, 'Shared with me', false),
-            const Divider(),
-            _buildDrawerItem(context, Icons.delete, 'Trash', false),
-            const Divider(),
-            _buildDrawerItem(context, Icons.settings, 'Settings', false),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text(
-                'Sign Out',
-                style: TextStyle(color: Colors.red),
-              ),
-              onTap: () async {
-                await AuthService().logout();
-                if (context.mounted) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) => false,
-                  );
-                }
-              },
-            ),
-          ],
-        ),
+      drawer: AppDrawer(
+        username: username,
+        email: email,
+        currentPage: 'Dashboard',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -232,27 +203,6 @@ class DashboardPage extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildDrawerItem(
-    BuildContext context,
-    IconData icon,
-    String title,
-    bool isSelected,
-  ) {
-    return ListTile(
-      leading: Icon(icon, color: isSelected ? Colors.blue : Colors.grey[600]),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: isSelected ? Colors.blue : Colors.black87,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
-      selected: isSelected,
-      selectedTileColor: Colors.blue.withValues(alpha: 0.1),
-      onTap: () {},
     );
   }
 

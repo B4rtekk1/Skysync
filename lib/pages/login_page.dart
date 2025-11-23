@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import 'dashboard_page.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
+import '../utils/page_transitions.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -58,11 +59,12 @@ class _LoginPageState extends State<LoginPage> {
           );
         }
 
+        if (!mounted) return;
+
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder:
-                (context) => DashboardPage(username: username, email: email),
+          PageTransitions.slideTransition(
+            DashboardPage(username: username, email: email),
           ),
         );
       }
@@ -182,8 +184,8 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const ForgotPasswordPage(),
+                      PageTransitions.slideTransition(
+                        const ForgotPasswordPage(),
                       ),
                     );
                   },
@@ -201,9 +203,7 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterPage(),
-                          ),
+                          PageTransitions.slideTransition(const RegisterPage()),
                         );
                       },
                       child: const Text(
