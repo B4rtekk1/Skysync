@@ -1,3 +1,7 @@
+// TODO: API service improvements
+// TODO: Replace generic Map<String, dynamic> responses with typed model classes.
+// TODO: Add centralized error mapping, retry/backoff strategy and request timeouts.
+// TODO: Implement token refresh handling on 401 responses and improve logging.
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;

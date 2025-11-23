@@ -2,7 +2,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Config {
   static String get baseUrl {
-    return dotenv.env['BASE_URL'] ?? 'http://localhost:8080/api';
+    return dotenv.env['BASE_URL'] ?? 'http://localhost:8080';
   }
 
   static String get apiKey {

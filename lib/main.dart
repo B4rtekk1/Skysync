@@ -1,3 +1,8 @@
+// TODO: Main app improvements
+// TODO: Add a proper splash screen and deep-link handling.
+// TODO: Centralize authentication state (token expiry/refresh) and route updates.
+// TODO: Add localization (i18n) support and RTL testing.
+// TODO: Consider moving initialization and dependency wiring to a dedicated setup class.
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'pages/login_page.dart';
