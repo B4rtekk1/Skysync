@@ -123,7 +123,7 @@ Skysync Team`, sanitizeHeaderValue(resetToken))
 	msg := fmt.Appendf(nil, "To: %s\r\n"+
 		"Subject: %s\r\n"+
 		"\r\n"+
-		"%s\r\n", toEmail, subject, body)
+		"%s\r\n", sanitizeEmailHeaderValue(toEmail), subject, body)
 
 	auth := smtp.PlainAuth("", emailConfig.SenderEmail, emailConfig.SenderPass, emailConfig.SMTPServer)
 	smtpAddr := fmt.Sprintf("%s:%s", emailConfig.SMTPServer, emailConfig.SMTPPort)
@@ -168,7 +168,7 @@ Skysync Team`, sanitizeHeaderValue(deletionToken))
 	msg := []byte(fmt.Sprintf("To: %s\r\n"+
 		"Subject: %s\r\n"+
 		"\r\n"+
-		"%s\r\n", toEmail, subject, body))
+		"%s\r\n", sanitizeEmailHeaderValue(toEmail), subject, body))
 
 	auth := smtp.PlainAuth("", emailConfig.SenderEmail, emailConfig.SenderPass, emailConfig.SMTPServer)
 	smtpAddr := fmt.Sprintf("%s:%s", emailConfig.SMTPServer, emailConfig.SMTPPort)
