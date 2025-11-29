@@ -2,11 +2,11 @@ max_request_size: 26214400 #25MB
 max_files_per_upload: 50
 session_timeout: 30 #minutes
 password_history_size: 5
-max_failed_login_attempts_per_hour: 10
+max_failed_attempts_per_hour: 10
 account_lockout_threshold: 10
 account_lockout_duration: 15 #minutes
 session_inactivity_timeout: 10 #minutes
-max_concurrent_session: 2
+max_concurrent_sessions: 2
 file_scan_timeout: 30 #seconds
 encryption_key_rotation_days: 30
 audit_log_retention_days: 365
