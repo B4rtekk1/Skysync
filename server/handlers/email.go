@@ -3,8 +3,11 @@ package handlers
 import (
 	"fmt"
 	"log"
+	"net/mail"
 	"net/smtp"
 	"os"
+	"regexp"
+	"strings"
 )
 
 type EmailConfig struct {
@@ -25,11 +28,41 @@ func getEmailConfig() EmailConfig {
 	}
 }
 
+func validateEmail(email string) error {
+	_, err := mail.ParseAddress(email)
+	if err != nil {
+		return fmt.Errorf("invalid email address: %v", err)
+	}
+
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`)
+	if !emailRegex.MatchString(email) {
+		return fmt.Errorf("email format does not match security requirements")
+	}
+
+	return nil
+}
+
+func sanitizeHeaderValue(value string) string {
+	value = strings.ReplaceAll(value, "\r", "")
+	value = strings.ReplaceAll(value, "\n", "")
+	value = strings.Map(func(r rune) rune {
+		if r < 32 && r != 9 {
+			return -1
+		}
+		return r
+	}, value)
+	return value
+}
+
 func SendVerificationEmail(toEmail, verificationCode string) error {
 	emailConfig = getEmailConfig()
 	if emailConfig.SenderEmail == "" || emailConfig.SenderPass == "" {
 		log.Println("Email config not set, skipping email sending")
 		return nil
+	}
+
+	if err := validateEmail(toEmail); err != nil {
+		return fmt.Errorf("invalid email address: %v", err)
 	}
 
 	subject := "Email Verification - Skysync"
@@ -42,7 +75,7 @@ This code will expire in 15 minutes.
 If you did not request this verification, please ignore this email.
 
 Best regards,
-Skysync Team`, verificationCode)
+Skysync Team`, sanitizeHeaderValue(verificationCode))
 
 	msg := fmt.Appendf(nil, "To: %s\r\n"+
 		"Subject: %s\r\n"+
@@ -69,6 +102,10 @@ func SendPasswordResetEmail(toEmail, resetToken string) error {
 		return nil
 	}
 
+	if err := validateEmail(toEmail); err != nil {
+		return fmt.Errorf("invalid email address: %v", err)
+	}
+
 	subject := "Password Reset - Skysync"
 	body := fmt.Sprintf(`Hello,
 
@@ -81,7 +118,7 @@ This token expires in 1 hour.
 If you did not request this, please ignore this email.
 
 Best regards,
-Skysync Team`, resetToken)
+Skysync Team`, sanitizeHeaderValue(resetToken))
 
 	msg := fmt.Appendf(nil, "To: %s\r\n"+
 		"Subject: %s\r\n"+
@@ -104,6 +141,10 @@ func SendAccountDeletionEmail(toEmail, deletionToken string) error {
 		return nil
 	}
 
+	if err := validateEmail(toEmail); err != nil {
+		return fmt.Errorf("invalid email address: %v", err)
+	}
+
 	subject := "Account Deletion Confirmation - Skysync"
 	body := fmt.Sprintf(`⚠️ ACCOUNT DELETION REQUEST
 
@@ -122,7 +163,7 @@ Token expires in 1 hour.
 If you did not request this, ignore this email.
 
 Best regards,
-Skysync Team`, deletionToken)
+Skysync Team`, sanitizeHeaderValue(deletionToken))
 
 	msg := []byte(fmt.Sprintf("To: %s\r\n"+
 		"Subject: %s\r\n"+

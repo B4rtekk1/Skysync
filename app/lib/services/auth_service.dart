@@ -1,11 +1,10 @@
-// TODO: Auth service improvements
-// TODO: Parse token expiry and expose token expiry time; proactively refresh tokens.
-// TODO: Consider extra encryption layers or platform-specific secure storage options.
-// TODO: Add optional server-side logout/invalidation and better error handling.
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import 'api_service.dart';
 
 class AuthService {
   final _storage = const FlutterSecureStorage();
+  final _apiService = ApiService();
 
   static const _keyToken = 'jwt_token';
   static const _keyUsername = 'username';
@@ -38,6 +37,10 @@ class AuthService {
   }
 
   Future<void> logout() async {
+    final token = await _storage.read(key: _keyToken);
+    if (token != null) {
+      await _apiService.logout(token);
+    }
     await _storage.deleteAll();
   }
 }

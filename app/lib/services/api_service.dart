@@ -272,4 +272,26 @@ class ApiService {
       throw Exception('Error downloading folder: $e');
     }
   }
+
+  Future<void> logout(String token) async {
+    final url = Uri.parse('$baseUrl/api/logout');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        // We log the error but don't throw, as we want to proceed with local logout anyway
+        print('Failed to logout on server: ${response.body}');
+      }
+    } catch (e) {
+      // Similarly, we log but allow local logout to proceed
+      print('Error logging out: $e');
+    }
+  }
 }
