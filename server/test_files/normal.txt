@@ -1,0 +1,2 @@
+To jest zwykly plik tekstowy.
+Kilka lini.

@@ -1,0 +1,45 @@
+max_request_size: 26214400 #25MB
+max_files_per_upload: 50
+session_timeout: 30 #minutes
+password_history_size: 5
+max_failed_login_attempts_per_hour: 10
+account_lockout_threshold: 10
+account_lockout_duration: 15 #minutes
+session_inactivity_timeout: 10 #minutes
+max_concurrent_session: 2
+file_scan_timeout: 30 #seconds
+encryption_key_rotation_days: 30
+audit_log_retention_days: 365
+backup_retention_days: 30
+max_file_name_length: 255
+max_folder_depth: 8
+rate_limit_window: 60 #seconds
+rate_limit_max_requests: 120
+csrf_protection: true
+xss_protection: true
+sql_injection_protection: true
+path_traversal_protection: true
+file_upload_validation: true
+content_type_validation: true
+virus_scanning: true
+encryption_at_rest: true
+encryption_in_transit: true
+session_fixation_protection: true
+clickjacking_protection: true
+mime_sniffing_protection: true
+referrer_policy: "strict-origin-when-cross-origin"
+content_security_policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+permissions_policy: "geolocation=(), microphone=(), camera=()"
+hsts_max_age: 31536000
+hsts_include_subdomains: true
+hsts_preload: true
+port: 8000
+scanner:
+  verbose: true
+  EntropyThreshold: 8.2
+
+users_config:
+  max_data_size: 5000000000 #5GB
+  max_files: 1000
+  max_folders: 100
+  max_file_size: 50000000 #50MB
