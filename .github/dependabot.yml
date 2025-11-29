@@ -6,13 +6,13 @@
 version: 2
 updates:
   - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/" # Location of package manifests
+    directory: "/server" # Location of package manifests
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
 
   - package-ecosystem: "pub"
-    directory: "/"
+    directory: "/app"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
