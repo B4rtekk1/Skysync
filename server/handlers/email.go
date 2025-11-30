@@ -65,6 +65,8 @@ func SendVerificationEmail(toEmail, verificationCode string) error {
 		return fmt.Errorf("invalid email address: %v", err)
 	}
 
+	safeToEmail := sanitizeHeaderValue(toEmail)
+
 	subject := "Email Verification - Skysync"
 	body := fmt.Sprintf(`Hello,
 
@@ -80,13 +82,13 @@ Skysync Team`, sanitizeHeaderValue(verificationCode))
 	msg := fmt.Appendf(nil, "To: %s\r\n"+
 		"Subject: %s\r\n"+
 		"\r\n"+
-		"%s\r\n", toEmail, subject, body)
+		"%s\r\n", safeToEmail, subject, body)
 
 	auth := smtp.PlainAuth("", emailConfig.SenderEmail, emailConfig.SenderPass, emailConfig.SMTPServer)
 
 	smtpAddr := fmt.Sprintf("%s:%s", emailConfig.SMTPServer, emailConfig.SMTPPort)
 
-	err := smtp.SendMail(smtpAddr, auth, emailConfig.SenderEmail, []string{toEmail}, msg)
+	err := smtp.SendMail(smtpAddr, auth, emailConfig.SenderEmail, []string{safeToEmail}, msg)
 	if err != nil {
 		return fmt.Errorf("failed to send verification email: %v", err)
 	}
@@ -106,6 +108,8 @@ func SendPasswordResetEmail(toEmail, resetToken string) error {
 		return fmt.Errorf("invalid email address: %v", err)
 	}
 
+	safeToEmail := sanitizeHeaderValue(toEmail)
+
 	subject := "Password Reset - Skysync"
 	body := fmt.Sprintf(`Hello,
 
@@ -123,12 +127,12 @@ Skysync Team`, sanitizeHeaderValue(resetToken))
 	msg := fmt.Appendf(nil, "To: %s\r\n"+
 		"Subject: %s\r\n"+
 		"\r\n"+
-		"%s\r\n", sanitizeEmailHeaderValue(toEmail), subject, body)
+		"%s\r\n", safeToEmail, subject, body)
 
 	auth := smtp.PlainAuth("", emailConfig.SenderEmail, emailConfig.SenderPass, emailConfig.SMTPServer)
 	smtpAddr := fmt.Sprintf("%s:%s", emailConfig.SMTPServer, emailConfig.SMTPPort)
 
-	err := smtp.SendMail(smtpAddr, auth, emailConfig.SenderEmail, []string{toEmail}, msg)
+	err := smtp.SendMail(smtpAddr, auth, emailConfig.SenderEmail, []string{safeToEmail}, msg)
 	if err != nil {
 		return fmt.Errorf("failed to send password reset email: %v", err)
 	}
@@ -137,13 +141,17 @@ Skysync Team`, sanitizeHeaderValue(resetToken))
 }
 
 func SendAccountDeletionEmail(toEmail, deletionToken string) error {
+	emailConfig = getEmailConfig()
 	if emailConfig.SenderEmail == "" || emailConfig.SenderPass == "" {
+		log.Println("Email config not set, skipping email sending")
 		return nil
 	}
 
 	if err := validateEmail(toEmail); err != nil {
 		return fmt.Errorf("invalid email address: %v", err)
 	}
+
+	safeToEmail := sanitizeHeaderValue(toEmail)
 
 	subject := "Account Deletion Confirmation - Skysync"
 	body := fmt.Sprintf(`⚠️ ACCOUNT DELETION REQUEST
@@ -165,18 +173,19 @@ If you did not request this, ignore this email.
 Best regards,
 Skysync Team`, sanitizeHeaderValue(deletionToken))
 
-	msg := []byte(fmt.Sprintf("To: %s\r\n"+
+	msg := fmt.Appendf(nil, "To: %s\r\n"+
 		"Subject: %s\r\n"+
 		"\r\n"+
-		"%s\r\n", sanitizeEmailHeaderValue(toEmail), subject, body))
+		"%s\r\n", safeToEmail, subject, body)
 
 	auth := smtp.PlainAuth("", emailConfig.SenderEmail, emailConfig.SenderPass, emailConfig.SMTPServer)
 	smtpAddr := fmt.Sprintf("%s:%s", emailConfig.SMTPServer, emailConfig.SMTPPort)
 
-	err := smtp.SendMail(smtpAddr, auth, emailConfig.SenderEmail, []string{toEmail}, msg)
+	err := smtp.SendMail(smtpAddr, auth, emailConfig.SenderEmail, []string{safeToEmail}, msg)
 	if err != nil {
 		return fmt.Errorf("failed to send deletion email: %v", err)
 	}
 
+	log.Printf("Account deletion email sent to %s", toEmail)
 	return nil
 }
