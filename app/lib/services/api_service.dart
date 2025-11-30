@@ -148,7 +148,7 @@ class ApiService {
           'X-API-Key': Config.apiKey,
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({'username': username, 'folder': folder}),
+        body: jsonEncode({'username': username, 'folder_name': folder}),
       );
 
       if (response.statusCode == 200) {
@@ -215,7 +215,9 @@ class ApiService {
           'X-API-Key': Config.apiKey,
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({'folder_name': '$currentPath/$folderName'}),
+        body: jsonEncode({
+          'folder_name': '${currentPath == "/" ? "" : currentPath}/$folderName',
+        }),
       );
 
       if (response.statusCode != 201 && response.statusCode != 200) {

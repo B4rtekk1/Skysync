@@ -49,7 +49,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-  late StreamSubscription _mediaStreamSubscription;
+  StreamSubscription? _mediaStreamSubscription;
 
   @override
   void initState() {
@@ -58,11 +58,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _initSharingIntent() {
-    _mediaStreamSubscription = FlutterSharingIntent.instance
-        .getMediaStream()
-        .listen(_handleSharedFiles);
+    if (Platform.isAndroid || Platform.isIOS) {
+      _mediaStreamSubscription = FlutterSharingIntent.instance
+          .getMediaStream()
+          .listen(_handleSharedFiles);
 
-    FlutterSharingIntent.instance.getInitialSharing().then(_handleSharedFiles);
+      FlutterSharingIntent.instance.getInitialSharing().then(
+        _handleSharedFiles,
+      );
+    }
   }
 
   Future<void> _handleSharedFiles(List<SharedFile> files) async {
@@ -256,7 +260,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
-    _mediaStreamSubscription.cancel();
+    _mediaStreamSubscription?.cancel();
     super.dispose();
   }
 

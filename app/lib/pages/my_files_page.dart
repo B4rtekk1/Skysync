@@ -44,6 +44,10 @@ class _MyFilesPageState extends State<MyFilesPage> {
   String _dateFilter = 'All Time';
   String _sizeFilter = 'Any Size';
   String _currentPath = '/';
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  double? _dragStartX;
+  double _dragAccumDx = 0.0;
+  double _dragAccumDy = 0.0;
 
   final List<String> _dateFilters = [
     'All Time',
@@ -453,6 +457,9 @@ class _MyFilesPageState extends State<MyFilesPage> {
   void _sortFiles() {
     setState(() {
       _files.sort((a, b) {
+        if (a.isFolder && !b.isFolder) return -1;
+        if (!a.isFolder && b.isFolder) return 1;
+
         int comparison;
         switch (_sortBy) {
           case 'name':
@@ -1078,19 +1085,21 @@ class _MyFilesPageState extends State<MyFilesPage> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: _currentPath == '/',
-      onPopInvoked: (bool didPop) {
+      onPopInvokedWithResult: (bool didPop, Object? result) {
         if (!didPop && _currentPath != '/') {
           _navigateUp();
         }
       },
       child: Scaffold(
         backgroundColor: Colors.grey[50],
+        key: _scaffoldKey,
+        drawerEnableOpenDragGesture: true,
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          title: const Text(
-            'My Files',
-            style: TextStyle(
+          title: Text(
+            _currentPath == '/' ? 'My Files' : _currentPath.split('/').last,
+            style: const TextStyle(
               color: Colors.black87,
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -1098,13 +1107,16 @@ class _MyFilesPageState extends State<MyFilesPage> {
           ),
           centerTitle: false,
           iconTheme: const IconThemeData(color: Colors.black87),
-          leading:
-              _currentPath != '/'
-                  ? IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                    onPressed: _navigateUp,
-                  )
-                  : null,
+          leading: Builder(
+            builder: (context) {
+              return IconButton(
+                icon: const Icon(Icons.menu, color: Colors.black87),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer();
+                },
+              );
+            },
+          ),
           actions: [
             if (_isUploading)
               Padding(
@@ -1199,8 +1211,39 @@ class _MyFilesPageState extends State<MyFilesPage> {
           email: widget.email,
           currentPage: 'My Files',
         ),
-        body: Column(
-          children: [_buildFilterBar(), Expanded(child: _buildBody())],
+        body: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onPanStart: (details) {
+            _dragStartX = details.globalPosition.dx;
+            _dragAccumDx = 0.0;
+            _dragAccumDy = 0.0;
+          },
+          onPanUpdate: (details) {
+            _dragAccumDx += details.delta.dx;
+            _dragAccumDy += details.delta.dy.abs();
+
+            if (_dragStartX != null &&
+                _dragStartX! < 100 &&
+                _dragAccumDx > 60 &&
+                _dragAccumDx > _dragAccumDy * 1.5) {
+              _scaffoldKey.currentState?.openDrawer();
+              _dragStartX = null;
+              _dragAccumDx = 0.0;
+              _dragAccumDy = 0.0;
+            }
+          },
+          onPanEnd: (_) {
+            _dragStartX = null;
+            _dragAccumDx = 0.0;
+            _dragAccumDy = 0.0;
+          },
+          child: Column(
+            children: [
+              _buildBreadcrumbs(),
+              _buildFilterBar(),
+              Expanded(child: _buildBody()),
+            ],
+          ),
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _showAddOptions,
@@ -1211,6 +1254,89 @@ class _MyFilesPageState extends State<MyFilesPage> {
             'New',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBreadcrumbs() {
+    final pathSegments =
+        _currentPath.split('/').where((s) => s.isNotEmpty).toList();
+
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            InkWell(
+              onTap: () {
+                if (_currentPath != '/') {
+                  setState(() {
+                    _currentPath = '/';
+                  });
+                  _loadFiles();
+                }
+              },
+              borderRadius: BorderRadius.circular(4),
+              child: Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Icon(
+                  Icons.home_rounded,
+                  size: 20,
+                  color: _currentPath == '/' ? Colors.grey[800] : Colors.blue,
+                ),
+              ),
+            ),
+            if (pathSegments.isNotEmpty) ...[
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 16,
+                color: Colors.grey,
+              ),
+              for (int i = 0; i < pathSegments.length; i++) ...[
+                InkWell(
+                  onTap:
+                      i == pathSegments.length - 1
+                          ? null
+                          : () {
+                            // Reconstruct path up to this segment
+                            final newPath =
+                                '/${pathSegments.sublist(0, i + 1).join('/')}';
+                            setState(() {
+                              _currentPath = newPath;
+                            });
+                            _loadFiles();
+                          },
+                  borderRadius: BorderRadius.circular(4),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 4,
+                    ),
+                    child: Text(
+                      pathSegments[i],
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color:
+                            i == pathSegments.length - 1
+                                ? Colors.grey[800]
+                                : Colors.blue,
+                      ),
+                    ),
+                  ),
+                ),
+                if (i < pathSegments.length - 1)
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
+              ],
+            ],
+          ],
         ),
       ),
     );
