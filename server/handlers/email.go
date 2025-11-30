@@ -165,10 +165,18 @@ If you did not request this, ignore this email.
 Best regards,
 Skysync Team`, sanitizeHeaderValue(deletionToken))
 
-	msg := []byte(fmt.Sprintf("To: %s\r\n"+
-		"Subject: %s\r\n"+
-		"\r\n"+
-		"%s\r\n", sanitizeHeaderValue(toEmail), subject, body))
+	to := mail.Address{Name: "", Address: toEmail}
+	from := mail.Address{Name: "Skysync Team", Address: emailConfig.SenderEmail}
+	header := make(map[string]string)
+	header["From"] = from.String()
+	header["To"] = to.String()
+	header["Subject"] = subject
+	var msgBuilder strings.Builder
+	for k, v := range header {
+		msgBuilder.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
+	}
+	msgBuilder.WriteString("\r\n" + body + "\r\n")
+	msg := []byte(msgBuilder.String())
 
 	auth := smtp.PlainAuth("", emailConfig.SenderEmail, emailConfig.SenderPass, emailConfig.SMTPServer)
 	smtpAddr := fmt.Sprintf("%s:%s", emailConfig.SMTPServer, emailConfig.SMTPPort)
