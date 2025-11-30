@@ -83,6 +83,7 @@ class _MyAppState extends State<MyApp> {
       return;
     }
 
+    if (!context.mounted) return;
     final selectedFolder = await _showFolderSelectionDialog(context);
     if (selectedFolder == null || !context.mounted) return;
 

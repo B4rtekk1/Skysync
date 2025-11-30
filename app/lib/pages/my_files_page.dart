@@ -1076,13 +1076,12 @@ class _MyFilesPageState extends State<MyFilesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        if (_currentPath != '/') {
+    return PopScope(
+      canPop: _currentPath == '/',
+      onPopInvoked: (bool didPop) {
+        if (!didPop && _currentPath != '/') {
           _navigateUp();
-          return false;
         }
-        return true;
       },
       child: Scaffold(
         backgroundColor: Colors.grey[50],

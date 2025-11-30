@@ -4,6 +4,7 @@
 // TODO: Implement token refresh handling on 401 responses and improve logging.
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../config.dart';
@@ -286,10 +287,10 @@ class ApiService {
       );
 
       if (response.statusCode != 200) {
-        print('Failed to logout on server: ${response.body}');
+        debugPrint('Failed to logout on server: ${response.body}');
       }
     } catch (e) {
-      print('Error logging out: $e');
+      debugPrint('Error logging out: $e');
     }
   }
 
