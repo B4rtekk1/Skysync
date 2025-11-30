@@ -524,6 +524,215 @@ class _MyFilesPageState extends State<MyFilesPage> {
     }
   }
 
+  Future<void> _showRenameDialog(FileItem file) async {
+    final controller = TextEditingController(text: file.name);
+
+    if (!file.isFolder && file.name.contains('.')) {
+      final lastDotIndex = file.name.lastIndexOf('.');
+      controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: lastDotIndex,
+      );
+    } else {
+      controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: file.name.length,
+      );
+    }
+
+    return showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.rectangle,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10.0,
+                      offset: Offset(0.0, 10.0),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.drive_file_rename_outline,
+                        size: 40,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Rename ${file.isFolder ? 'Folder' : 'File'}',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Enter a new name',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: controller,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: file.isFolder ? 'Folder Name' : 'File Name',
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Colors.blue,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        prefixIcon: Icon(
+                          file.isFolder
+                              ? Icons.folder_outlined
+                              : Icons.insert_drive_file_outlined,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (controller.text.trim().isEmpty) return;
+                              if (controller.text.trim() == file.name) {
+                                Navigator.pop(context);
+                                return;
+                              }
+                              Navigator.pop(context);
+                              await _renameFile(file, controller.text.trim());
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Rename',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+    );
+  }
+
+  Future<void> _renameFile(FileItem file, String newName) async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final authData = await AuthService().getAuthData();
+      final token = authData['token'];
+
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      if (file.id == null) {
+        throw Exception('File ID not available');
+      }
+
+      final apiService = ApiService();
+      await apiService.renameFile(token, file.id!, newName);
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Renamed to "$newName"'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        _refreshFilesSilently();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ErrorBox.show(
+          context,
+          message: e.toString().replaceAll('Exception: ', ''),
+          title: 'Failed to Rename',
+          onRetry: () => _renameFile(file, newName),
+        );
+      }
+    }
+  }
+
   void _showSortOptions() {
     showModalBottomSheet(
       context: context,
@@ -1757,125 +1966,145 @@ class _MyFilesPageState extends State<MyFilesPage> {
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: _getFileColor(file).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: _getFileColor(file).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Center(
+                              child: _buildFileIcon(file, size: 24),
+                            ),
                           ),
-                          child: Center(child: _buildFileIcon(file, size: 24)),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                file.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  file.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                file.isFolder ? 'Folder' : file.mimeType,
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 12,
+                                Text(
+                                  file.isFolder ? 'Folder' : file.mimeType,
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(
-                      file.isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: file.isFavorite ? Colors.red : Colors.grey[700],
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: Icon(
+                        file.isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: file.isFavorite ? Colors.red : Colors.grey[700],
+                      ),
+                      title: Text(
+                        file.isFavorite
+                            ? 'Remove from Favorites'
+                            : 'Add to Favorites',
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _toggleFavorite(file);
+                      },
                     ),
-                    title: Text(
-                      file.isFavorite
-                          ? 'Remove from Favorites'
-                          : 'Add to Favorites',
+                    ListTile(
+                      leading: Icon(
+                        Icons.download_rounded,
+                        color: Colors.grey[700],
+                      ),
+                      title: const Text('Download'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        if (file.isFolder) {
+                          _downloadFolder(file);
+                        } else {
+                          // TODO: Implement file download
+                        }
+                      },
                     ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _toggleFavorite(file);
-                    },
-                  ),
-                  ListTile(
-                    leading: Icon(
-                      Icons.download_rounded,
-                      color: Colors.grey[700],
+                    ListTile(
+                      leading: Icon(
+                        Icons.drive_file_rename_outline,
+                        color: Colors.grey[700],
+                      ),
+                      title: const Text('Rename'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showRenameDialog(file);
+                      },
                     ),
-                    title: const Text('Download'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      if (file.isFolder) {
-                        _downloadFolder(file);
-                      } else {
-                        // TODO: Implement file download
-                      }
-                    },
-                  ),
-                  ListTile(
-                    leading: Icon(Icons.share_rounded, color: Colors.grey[700]),
-                    title: const Text('Share'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      // TODO: Implement share
-                    },
-                  ),
-                  ListTile(
-                    leading: Icon(
-                      Icons.info_outline_rounded,
-                      color: Colors.grey[700],
+                    ListTile(
+                      leading: Icon(
+                        Icons.share_rounded,
+                        color: Colors.grey[700],
+                      ),
+                      title: const Text('Share'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Implement share
+                      },
                     ),
-                    title: const Text('Details'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      // TODO: Implement details
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: Colors.red,
+                    ListTile(
+                      leading: Icon(
+                        Icons.info_outline_rounded,
+                        color: Colors.grey[700],
+                      ),
+                      title: const Text('Details'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Implement details
+                      },
                     ),
-                    title: const Text(
-                      'Delete',
-                      style: TextStyle(color: Colors.red),
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Colors.red,
+                      ),
+                      title: const Text(
+                        'Delete',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Implement delete
+                      },
                     ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      // TODO: Implement delete
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                ],
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
             ),
           ),

@@ -340,4 +340,25 @@ class ApiService {
       throw Exception('Error updating username: $e');
     }
   }
+
+  Future<void> renameFile(String token, int fileId, String newName) async {
+    final url = Uri.parse('$baseUrl/api/rename_file');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'file_id': fileId, 'new_name': newName}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to rename file: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error renaming file: $e');
+    }
+  }
 }
