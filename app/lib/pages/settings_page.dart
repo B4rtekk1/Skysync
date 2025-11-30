@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'login_page.dart';
 import '../widgets/app_drawer.dart';
+import 'dashboard_page.dart';
 
 class SettingsPage extends StatefulWidget {
   final String username;
@@ -52,7 +53,7 @@ class _SettingsPageState extends State<SettingsPage> {
               title: 'Username',
               subtitle: widget.username,
               trailing: const Icon(Icons.edit, size: 20),
-              onTap: () => _showEditDialog('Username', widget.username),
+              onTap: () => _showChangeUsernameDialog(widget.username),
             ),
             const Divider(height: 1),
             _buildListTile(
@@ -333,6 +334,299 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ],
           ),
+    );
+  }
+
+  void _showChangeUsernameDialog(String currentUsername) {
+    final usernameController = TextEditingController(text: currentUsername);
+    final passwordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              child: Container(
+                width: 340,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.manage_accounts_outlined,
+                          color: Colors.blue.shade700,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Change Username',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Enter your new username and current password to confirm changes.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: usernameController,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'New Username',
+                          hintText: 'Enter new username',
+                          prefixIcon: Icon(
+                            Icons.person_outline,
+                            color: Colors.grey[500],
+                            size: 20,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.blue.shade400),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          isDense: true,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a username';
+                          }
+                          if (value.length < 3) {
+                            return 'Username must be at least 3 characters';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: passwordController,
+                        obscureText: true,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Current Password',
+                          hintText: 'Confirm with password',
+                          prefixIcon: Icon(
+                            Icons.lock_outline,
+                            color: Colors.grey[500],
+                            size: 20,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.blue.shade400),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          isDense: true,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed:
+                                  isLoading
+                                      ? null
+                                      : () => Navigator.pop(context),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed:
+                                  isLoading
+                                      ? null
+                                      : () async {
+                                        if (formKey.currentState!.validate()) {
+                                          setState(() => isLoading = true);
+                                          try {
+                                            await AuthService().updateUsername(
+                                              usernameController.text,
+                                              passwordController.text,
+                                            );
+                                            if (context.mounted) {
+                                              Navigator.pop(context);
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Username updated successfully',
+                                                  ),
+                                                  backgroundColor: Colors.green,
+                                                  behavior:
+                                                      SnackBarBehavior.floating,
+                                                ),
+                                              );
+                                              Navigator.pushAndRemoveUntil(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder:
+                                                      (
+                                                        context,
+                                                      ) => DashboardPage(
+                                                        username:
+                                                            usernameController
+                                                                .text,
+                                                        email: widget.email,
+                                                      ),
+                                                ),
+                                                (route) => false,
+                                              );
+                                            }
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    e.toString().replaceAll(
+                                                      'Exception: ',
+                                                      '',
+                                                    ),
+                                                  ),
+                                                  backgroundColor: Colors.red,
+                                                  behavior:
+                                                      SnackBarBehavior.floating,
+                                                ),
+                                              );
+                                            }
+                                          } finally {
+                                            if (context.mounted) {
+                                              setState(() => isLoading = false);
+                                            }
+                                          }
+                                        }
+                                      },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child:
+                                  isLoading
+                                      ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                      : const Text(
+                                        'Save Changes',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

@@ -286,12 +286,55 @@ class ApiService {
       );
 
       if (response.statusCode != 200) {
-        // We log the error but don't throw, as we want to proceed with local logout anyway
         print('Failed to logout on server: ${response.body}');
       }
     } catch (e) {
-      // Similarly, we log but allow local logout to proceed
       print('Error logging out: $e');
+    }
+  }
+
+  Future<bool> verifyToken(String token) async {
+    final url = Uri.parse('$baseUrl/api/verify_token');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> updateUsername(
+    String token,
+    String newUsername,
+    String password,
+  ) async {
+    final url = Uri.parse('$baseUrl/api/update_username');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'new_username': newUsername, 'password': password}),
+      );
+
+      if (response.statusCode != 200) {
+        final error =
+            jsonDecode(response.body)['error'] ?? 'Failed to update username';
+        throw Exception(error);
+      }
+    } catch (e) {
+      throw Exception('Error updating username: $e');
     }
   }
 }

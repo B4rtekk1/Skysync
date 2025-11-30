@@ -21,88 +21,138 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(0),
+          bottomRight: Radius.circular(0),
+        ),
+      ),
+      child: Column(
         children: [
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: Colors.blue),
-            accountName: Text(username),
-            accountEmail: Text(email),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Text(
-                username.isNotEmpty ? username[0].toUpperCase() : 'U',
-                style: const TextStyle(fontSize: 24, color: Colors.blue),
+          _buildHeader(),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+              children: [
+                _buildDrawerItem(
+                  context,
+                  Icons.dashboard_outlined,
+                  'Dashboard',
+                  currentPage == 'Dashboard',
+                  () => _navigateTo(context, 'Dashboard'),
+                ),
+                _buildDrawerItem(
+                  context,
+                  Icons.folder_outlined,
+                  'My Files',
+                  currentPage == 'My Files',
+                  () => _navigateTo(context, 'My Files'),
+                ),
+                _buildDrawerItem(
+                  context,
+                  Icons.people_outline,
+                  'User Groups',
+                  currentPage == 'User Groups',
+                  () {
+                    Navigator.pop(context);
+                  },
+                ),
+                _buildDrawerItem(
+                  context,
+                  Icons.share_outlined,
+                  'Shared with me',
+                  currentPage == 'Shared with me',
+                  () {
+                    Navigator.pop(context);
+                  },
+                ),
+                const SizedBox(height: 16),
+                const Divider(height: 1, thickness: 0.5, color: Colors.black12),
+                const SizedBox(height: 16),
+                _buildDrawerItem(
+                  context,
+                  Icons.delete_outline,
+                  'Trash',
+                  currentPage == 'Trash',
+                  () {
+                    Navigator.pop(context);
+                  },
+                ),
+                _buildDrawerItem(
+                  context,
+                  Icons.settings_outlined,
+                  'Settings',
+                  currentPage == 'Settings',
+                  () => _navigateTo(context, 'Settings'),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, thickness: 0.5, color: Colors.black12),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: _buildDrawerItem(
+              context,
+              Icons.logout,
+              'Sign Out',
+              false,
+              () async {
+                await AuthService().logout();
+                if (context.mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    (route) => false,
+                  );
+                }
+              },
+              isDestructive: true,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: Colors.blue.shade50,
+            child: Text(
+              username.isNotEmpty ? username[0].toUpperCase() : 'U',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue.shade700,
               ),
             ),
           ),
-          _buildDrawerItem(
-            context,
-            Icons.dashboard,
-            'Dashboard',
-            currentPage == 'Dashboard',
-            () => _navigateTo(context, 'Dashboard'),
-          ),
-          _buildDrawerItem(
-            context,
-            Icons.folder,
-            'My Files',
-            currentPage == 'My Files',
-            () => _navigateTo(context, 'My Files'),
-          ),
-          _buildDrawerItem(
-            context,
-            Icons.people,
-            'User Groups',
-            currentPage == 'User Groups',
-            () {
-              // TODO: Navigate to User Groups
-              Navigator.pop(context);
-            },
-          ),
-          _buildDrawerItem(
-            context,
-            Icons.share,
-            'Shared with me',
-            currentPage == 'Shared with me',
-            () {
-              // TODO: Navigate to Shared with me
-              Navigator.pop(context);
-            },
-          ),
-          const Divider(),
-          _buildDrawerItem(
-            context,
-            Icons.delete,
-            'Trash',
-            currentPage == 'Trash',
-            () {
-              // TODO: Navigate to Trash
-              Navigator.pop(context);
-            },
-          ),
-          const Divider(),
-          _buildDrawerItem(
-            context,
-            Icons.settings,
-            'Settings',
-            currentPage == 'Settings',
-            () => _navigateTo(context, 'Settings'),
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Sign Out', style: TextStyle(color: Colors.red)),
-            onTap: () async {
-              await AuthService().logout();
-              if (context.mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                  (route) => false,
-                );
-              }
-            },
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  username,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  email,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -114,20 +164,36 @@ class AppDrawer extends StatelessWidget {
     IconData icon,
     String title,
     bool isSelected,
-    VoidCallback onTap,
-  ) {
-    return ListTile(
-      leading: Icon(icon, color: isSelected ? Colors.blue : Colors.grey[600]),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: isSelected ? Colors.blue : Colors.black87,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
+    VoidCallback onTap, {
+    bool isDestructive = false,
+  }) {
+    final color =
+        isDestructive
+            ? Colors.red.shade400
+            : (isSelected ? Colors.blue.shade700 : Colors.grey.shade700);
+    final bgColor = isSelected ? Colors.blue.shade50 : Colors.transparent;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
       ),
-      selected: isSelected,
-      selectedTileColor: Colors.blue.withValues(alpha: 0.1),
-      onTap: onTap,
+      child: ListTile(
+        leading: Icon(icon, color: color, size: 22),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: color,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            fontSize: 14,
+          ),
+        ),
+        onTap: onTap,
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 

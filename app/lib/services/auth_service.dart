@@ -43,4 +43,24 @@ class AuthService {
     }
     await _storage.deleteAll();
   }
+
+  Future<bool> checkTokenValidity() async {
+    final token = await _storage.read(key: _keyToken);
+    if (token == null) return false;
+
+    final isValid = await _apiService.verifyToken(token);
+    if (!isValid) {
+      await logout();
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> updateUsername(String newUsername, String password) async {
+    final token = await _storage.read(key: _keyToken);
+    if (token == null) throw Exception('Not authenticated');
+
+    await _apiService.updateUsername(token, newUsername, password);
+    await _storage.write(key: _keyUsername, value: newUsername);
+  }
 }

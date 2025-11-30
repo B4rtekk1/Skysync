@@ -416,7 +416,7 @@ func WAFMiddleware(db *gorm.DB, config *utils.Config) gin.HandlerFunc {
 		path := c.Request.URL.Path
 		query := c.Request.URL.RawQuery
 
-		legitimateEndpoints := []string{"/groups/create", "/create_user", "/api/register", "/api/login", "api/reset_password", "/api/upload_file"}
+		legitimateEndpoints := []string{"/groups/create", "/create_user", "/api/register", "/api/login", "/api/reset_password", "/api/upload_file", "/api/update_username"}
 		isLegitimate := false
 		for _, ep := range legitimateEndpoints {
 			if path == ep {
@@ -740,6 +740,8 @@ func main() {
 		api.POST("/download_folder", JWTMiddleware(db, config), handlers.DownloadFolderEndpoint(db))
 		api.POST("/quick_share", JWTMiddleware(db, config), handlers.QuickShareEndpoint(db))
 		api.POST("/logout", JWTMiddleware(db, config), handlers.LogoutEndpoint(db))
+		api.POST("/update_username", JWTMiddleware(db, config), handlers.UpdateUsernameEndpoint(db, Logger))
+		api.GET("/verify_token", JWTMiddleware(db, config), handlers.VerifyTokenEndpoint())
 
 		api.POST("/check_username", handlers.CheckUsernameAvailabilityEndpoint(db))
 		api.GET("/app_version", utils.AppVersionEndpoint())
