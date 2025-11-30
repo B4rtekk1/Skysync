@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../pages/dashboard_page.dart';
 import '../pages/my_files_page.dart';
+import '../pages/groups_page.dart';
 import '../pages/settings_page.dart';
 import '../pages/login_page.dart';
 import '../services/auth_service.dart';
@@ -52,11 +53,9 @@ class AppDrawer extends StatelessWidget {
                 _buildDrawerItem(
                   context,
                   Icons.people_outline,
-                  'User Groups',
-                  currentPage == 'User Groups',
-                  () {
-                    Navigator.pop(context);
-                  },
+                  'Groups',
+                  currentPage == 'Groups',
+                  () => _navigateTo(context, 'Groups'),
                 ),
                 _buildDrawerItem(
                   context,
@@ -212,6 +211,9 @@ class AppDrawer extends StatelessWidget {
         break;
       case 'My Files':
         page = MyFilesPage(username: username, email: email);
+        break;
+      case 'Groups':
+        page = GroupsPage(username: username, email: email);
         break;
       case 'Settings':
         page = SettingsPage(username: username, email: email);

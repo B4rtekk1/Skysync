@@ -13,6 +13,7 @@ import (
 	"skysync/handlers"
 	models "skysync/models_db"
 	"skysync/utils"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -65,7 +66,7 @@ func generateLogFile(db *gorm.DB) error {
 			event.RequestPath,
 			event.RequestMethod)
 		if _, err := file.WriteString(logEntry); err != nil {
-			return fmt.Errorf("nie udało się zapisać do pliku logów: %v", err)
+			return fmt.Errorf("could not write to log file: %v", err)
 		}
 	}
 
@@ -416,14 +417,19 @@ func WAFMiddleware(db *gorm.DB, config *utils.Config) gin.HandlerFunc {
 		path := c.Request.URL.Path
 		query := c.Request.URL.RawQuery
 
-		legitimateEndpoints := []string{"/groups/create", "/create_user", "/api/register", "/api/login", "/api/reset_password", "/api/upload_file", "/api/update_username"}
-		isLegitimate := false
-		for _, ep := range legitimateEndpoints {
-			if path == ep {
-				isLegitimate = true
-				break
-			}
+		legitimateEndpoints := []string{
+			"/api/groups/create",
+			"/api/groups/list",
+			"/api/groups/add_member",
+			"/api/groups/remove_member",
+			"/create_user",
+			"/api/register",
+			"/api/login",
+			"/api/reset_password",
+			"/api/upload_file",
+			"/api/update_username",
 		}
+		isLegitimate := slices.Contains(legitimateEndpoints, path)
 		if isLegitimate {
 			c.Next()
 			return
@@ -735,6 +741,7 @@ func main() {
 		api.POST("/upload_file", JWTMiddleware(db, config), handlers.UploadFileEndpoint(db))
 		api.POST("/toggle_favorite", JWTMiddleware(db, config), handlers.AddToFavoriteEndpoint(db))
 		api.DELETE("/delete_file", JWTMiddleware(db, config), handlers.DeleteFileEndpoint(db))
+		api.POST("/rename_file", JWTMiddleware(db, config), handlers.RenameFileEndpoint(db))
 		api.GET("/download_file", JWTMiddleware(db, config), handlers.DownloadFileEndpoint(db))
 		api.POST("/create_folder", JWTMiddleware(db, config), handlers.CreateFolderEndpoint(db))
 		api.POST("/download_folder", JWTMiddleware(db, config), handlers.DownloadFolderEndpoint(db))
@@ -742,6 +749,13 @@ func main() {
 		api.POST("/logout", JWTMiddleware(db, config), handlers.LogoutEndpoint(db))
 		api.POST("/update_username", JWTMiddleware(db, config), handlers.UpdateUsernameEndpoint(db, Logger))
 		api.GET("/verify_token", JWTMiddleware(db, config), handlers.VerifyTokenEndpoint())
+
+		api.POST("/groups/create", JWTMiddleware(db, config), handlers.CreateGroupEndpoint(db))
+		api.GET("/groups/list", JWTMiddleware(db, config), handlers.ListGroupsEndpoint(db))
+		api.GET("/groups/:id", JWTMiddleware(db, config), handlers.GetGroupDetailsEndpoint(db))
+		api.POST("/groups/add_member", JWTMiddleware(db, config), handlers.AddMemberToGroupEndpoint(db))
+		api.POST("/groups/remove_member", JWTMiddleware(db, config), handlers.RemoveMemberFromGroupEndpoint(db))
+		api.DELETE("/groups/:id", JWTMiddleware(db, config), handlers.DeleteGroupEndpoint(db))
 
 		api.POST("/check_username", handlers.CheckUsernameAvailabilityEndpoint(db))
 		api.GET("/app_version", utils.AppVersionEndpoint())

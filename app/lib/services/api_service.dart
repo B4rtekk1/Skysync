@@ -361,4 +361,156 @@ class ApiService {
       throw Exception('Error renaming file: $e');
     }
   }
+
+  // Group Management Methods
+
+  Future<Map<String, dynamic>> createGroup(
+    String token,
+    String name,
+    String description,
+  ) async {
+    final url = Uri.parse('$baseUrl/api/groups/create');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'name': name, 'description': description}),
+      );
+
+      if (response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to create group: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error creating group: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> listGroups(String token) async {
+    final url = Uri.parse('$baseUrl/api/groups/list');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return List<Map<String, dynamic>>.from(data['groups'] ?? []);
+      } else {
+        throw Exception('Failed to load groups: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error loading groups: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getGroupDetails(
+    String token,
+    int groupId,
+  ) async {
+    final url = Uri.parse('$baseUrl/api/groups/$groupId');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to get group details: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error getting group details: $e');
+    }
+  }
+
+  Future<void> addMemberToGroup(
+    String token,
+    int groupId,
+    String username, {
+    bool isAdmin = false,
+  }) async {
+    final url = Uri.parse('$baseUrl/api/groups/add_member');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'group_id': groupId,
+          'username': username,
+          'is_admin': isAdmin,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to add member: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error adding member: $e');
+    }
+  }
+
+  Future<void> removeMemberFromGroup(
+    String token,
+    int groupId,
+    int userId,
+  ) async {
+    final url = Uri.parse('$baseUrl/api/groups/remove_member');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'group_id': groupId, 'user_id': userId}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to remove member: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error removing member: $e');
+    }
+  }
+
+  Future<void> deleteGroup(String token, int groupId) async {
+    final url = Uri.parse('$baseUrl/api/groups/$groupId');
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete group: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error deleting group: $e');
+    }
+  }
 }
