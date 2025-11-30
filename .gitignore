@@ -53,4 +53,4 @@ app/android/app/release
 app_version.yaml
 /users
 skysync.exe
-/storage
+/server/storage

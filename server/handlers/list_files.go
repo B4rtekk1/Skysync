@@ -77,7 +77,12 @@ func ListFilesEndpoint(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		physicalPath := filepath.Join("users", currentUser.UUID, cleanFolder)
+		// Ensure the path is relative by trimming leading separators
+		relFolder := strings.TrimLeft(cleanFolder, string(os.PathSeparator))
+		relFolder = strings.TrimLeft(relFolder, "/")
+		relFolder = strings.TrimLeft(relFolder, "\\")
+
+		physicalPath := filepath.Join("users", currentUser.UUID, relFolder)
 
 		if info, err := os.Stat(physicalPath); err == nil && info.IsDir() {
 			entries, err := os.ReadDir(physicalPath)

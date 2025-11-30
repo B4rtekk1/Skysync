@@ -50,7 +50,12 @@ func CreateFolderEndpoint(db *gorm.DB) gin.HandlerFunc {
 			}
 		}
 
-		folderPath := filepath.Join("users", user.UUID, cleanFolder)
+		// Ensure the path is relative by trimming leading separators
+		relFolder := strings.TrimLeft(cleanFolder, string(os.PathSeparator))
+		relFolder = strings.TrimLeft(relFolder, "/")
+		relFolder = strings.TrimLeft(relFolder, "\\")
+
+		folderPath := filepath.Join("users", user.UUID, relFolder)
 
 		if _, err := os.Stat(folderPath); !os.IsNotExist(err) {
 			c.JSON(http.StatusConflict, gin.H{"error": "Folder already exists"})
