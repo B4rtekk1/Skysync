@@ -362,8 +362,6 @@ class ApiService {
     }
   }
 
-  // Group Management Methods
-
   Future<Map<String, dynamic>> createGroup(
     String token,
     String name,
@@ -511,6 +509,124 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error deleting group: $e');
+    }
+  }
+
+  Future<void> shareFileWithGroup(String token, int groupId, int fileId) async {
+    final url = Uri.parse('$baseUrl/api/groups/share_file');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'group_id': groupId, 'file_id': fileId}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to share file: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error sharing file: $e');
+    }
+  }
+
+  Future<void> shareFolderWithGroup(
+    String token,
+    int groupId,
+    String folderPath,
+  ) async {
+    final url = Uri.parse('$baseUrl/api/groups/share_folder');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'group_id': groupId, 'folder_path': folderPath}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to share folder: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error sharing folder: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getGroupFiles(String token, int groupId) async {
+    final url = Uri.parse('$baseUrl/api/groups/$groupId/files');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to get group files: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error getting group files: $e');
+    }
+  }
+
+  Future<void> unshareFileFromGroup(
+    String token,
+    int groupId,
+    int fileId,
+  ) async {
+    final url = Uri.parse('$baseUrl/api/groups/unshare_file');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'group_id': groupId, 'file_id': fileId}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to unshare file: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error unsharing file: $e');
+    }
+  }
+
+  Future<void> unshareFolderFromGroup(
+    String token,
+    int groupId,
+    String folderPath,
+  ) async {
+    final url = Uri.parse('$baseUrl/api/groups/unshare_folder');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'group_id': groupId, 'folder_path': folderPath}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to unshare folder: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error unsharing folder: $e');
     }
   }
 }

@@ -422,6 +422,10 @@ func WAFMiddleware(db *gorm.DB, config *utils.Config) gin.HandlerFunc {
 			"/api/groups/list",
 			"/api/groups/add_member",
 			"/api/groups/remove_member",
+			"/api/groups/share_file",
+			"/api/groups/share_folder",
+			"/api/groups/unshare_file",
+			"/api/groups/unshare_folder",
 			"/create_user",
 			"/api/register",
 			"/api/login",
@@ -756,6 +760,11 @@ func main() {
 		api.POST("/groups/add_member", JWTMiddleware(db, config), handlers.AddMemberToGroupEndpoint(db))
 		api.POST("/groups/remove_member", JWTMiddleware(db, config), handlers.RemoveMemberFromGroupEndpoint(db))
 		api.DELETE("/groups/:id", JWTMiddleware(db, config), handlers.DeleteGroupEndpoint(db))
+		api.POST("/groups/share_file", JWTMiddleware(db, config), handlers.ShareFileWithGroupEndpoint(db))
+		api.POST("/groups/share_folder", JWTMiddleware(db, config), handlers.ShareFolderWithGroupEndpoint(db))
+		api.GET("/groups/:id/files", JWTMiddleware(db, config), handlers.GetGroupFilesEndpoint(db))
+		api.POST("/groups/unshare_file", JWTMiddleware(db, config), handlers.UnshareFileFromGroupEndpoint(db))
+		api.POST("/groups/unshare_folder", JWTMiddleware(db, config), handlers.UnshareFolderFromGroupEndpoint(db))
 
 		api.POST("/check_username", handlers.CheckUsernameAvailabilityEndpoint(db))
 		api.GET("/app_version", utils.AppVersionEndpoint())

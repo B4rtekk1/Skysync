@@ -1511,7 +1511,6 @@ class _MyFilesPageState extends State<MyFilesPage> {
                       i == pathSegments.length - 1
                           ? null
                           : () {
-                            // Reconstruct path up to this segment
                             final newPath =
                                 '/${pathSegments.sublist(0, i + 1).join('/')}';
                             setState(() {

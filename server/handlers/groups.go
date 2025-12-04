@@ -9,7 +9,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// CreateGroupEndpoint creates a new user group
 func CreateGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := c.MustGet("user").(models.User)
@@ -24,7 +23,6 @@ func CreateGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check if group name already exists
 		var existing models.UserGroup
 		if err := db.Where("name = ?", req.Name).First(&existing).Error; err == nil {
 			c.JSON(http.StatusConflict, gin.H{"error": "Group name already exists"})
@@ -44,7 +42,6 @@ func CreateGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Add creator as admin member
 		member := models.UserGroupMember{
 			GroupID:       group.ID,
 			UserID:        user.ID,
@@ -70,7 +67,6 @@ func CreateGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// ListGroupsEndpoint lists all groups the user is a member of
 func ListGroupsEndpoint(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := c.MustGet("user").(models.User)
@@ -94,11 +90,15 @@ func ListGroupsEndpoint(db *gorm.DB) gin.HandlerFunc {
 			}
 		}
 
-		// Get member counts for each group
 		type GroupWithMembers struct {
-			models.UserGroup
-			MemberCount int  `json:"member_count"`
-			IsAdmin     bool `json:"is_admin"`
+			ID              uint      `json:"id"`
+			Name            string    `json:"name"`
+			Description     string    `json:"description"`
+			CreatedAt       time.Time `json:"created_at"`
+			CreatedByUserID uint      `json:"created_by_user_id"`
+			IsActive        bool      `json:"is_active"`
+			MemberCount     int       `json:"member_count"`
+			IsAdmin         bool      `json:"is_admin"`
 		}
 
 		var result []GroupWithMembers
@@ -113,9 +113,14 @@ func ListGroupsEndpoint(db *gorm.DB) gin.HandlerFunc {
 			}
 
 			result = append(result, GroupWithMembers{
-				UserGroup:   group,
-				MemberCount: int(memberCount),
-				IsAdmin:     isAdmin,
+				ID:              group.ID,
+				Name:            group.Name,
+				Description:     group.Description,
+				CreatedAt:       group.CreatedAt,
+				CreatedByUserID: group.CreatedByUserID,
+				IsActive:        group.IsActive,
+				MemberCount:     int(memberCount),
+				IsAdmin:         isAdmin,
 			})
 		}
 
@@ -123,7 +128,6 @@ func ListGroupsEndpoint(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// GetGroupDetailsEndpoint gets details of a specific group
 func GetGroupDetailsEndpoint(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := c.MustGet("user").(models.User)
@@ -135,14 +139,12 @@ func GetGroupDetailsEndpoint(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check if user is a member
 		var membership models.UserGroupMember
 		if err := db.Where("group_id = ? AND user_id = ?", group.ID, user.ID).First(&membership).Error; err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"error": "You are not a member of this group"})
 			return
 		}
 
-		// Get all members
 		var members []models.UserGroupMember
 		db.Where("group_id = ?", group.ID).Find(&members)
 
@@ -174,7 +176,6 @@ func GetGroupDetailsEndpoint(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// AddMemberToGroupEndpoint adds a user to a group
 func AddMemberToGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := c.MustGet("user").(models.User)
@@ -190,21 +191,18 @@ func AddMemberToGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check if current user is admin of the group
 		var membership models.UserGroupMember
 		if err := db.Where("group_id = ? AND user_id = ? AND is_admin = ?", req.GroupID, user.ID, true).First(&membership).Error; err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Only group admins can add members"})
 			return
 		}
 
-		// Find user to add
 		var targetUser models.User
 		if err := db.Where("username = ?", req.Username).First(&targetUser).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
 
-		// Check if already a member
 		var existing models.UserGroupMember
 		if err := db.Where("group_id = ? AND user_id = ?", req.GroupID, targetUser.ID).First(&existing).Error; err == nil {
 			c.JSON(http.StatusConflict, gin.H{"error": "User is already a member"})
@@ -228,7 +226,6 @@ func AddMemberToGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// RemoveMemberFromGroupEndpoint removes a user from a group
 func RemoveMemberFromGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := c.MustGet("user").(models.User)
@@ -243,14 +240,12 @@ func RemoveMemberFromGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check if current user is admin
 		var membership models.UserGroupMember
 		if err := db.Where("group_id = ? AND user_id = ? AND is_admin = ?", req.GroupID, user.ID, true).First(&membership).Error; err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Only group admins can remove members"})
 			return
 		}
 
-		// Remove member
 		if err := db.Where("group_id = ? AND user_id = ?", req.GroupID, req.UserID).Delete(&models.UserGroupMember{}).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove member"})
 			return
@@ -260,7 +255,6 @@ func RemoveMemberFromGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// DeleteGroupEndpoint deletes a group (admin only)
 func DeleteGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := c.MustGet("user").(models.User)
@@ -272,17 +266,14 @@ func DeleteGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check if user is the creator or admin
 		var membership models.UserGroupMember
 		if err := db.Where("group_id = ? AND user_id = ? AND is_admin = ?", group.ID, user.ID, true).First(&membership).Error; err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Only group admins can delete the group"})
 			return
 		}
 
-		// Delete all members
 		db.Where("group_id = ?", group.ID).Delete(&models.UserGroupMember{})
 
-		// Delete group
 		if err := db.Delete(&group).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete group"})
 			return
