@@ -228,6 +228,9 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() {});
+    });
     _loadGroupData();
   }
 
@@ -273,7 +276,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
   }
 
   Future<void> _addMember() async {
-    final usernameController = TextEditingController();
+    final controller = TextEditingController();
     bool isAdmin = false;
 
     await showDialog(
@@ -281,70 +284,205 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
       builder:
           (context) => StatefulBuilder(
             builder:
-                (context, setState) => AlertDialog(
-                  title: const Text('Add Member'),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextField(
-                        controller: usernameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Username',
-                          hintText: 'Enter username to add',
-                          prefixIcon: Icon(Icons.person_add),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      CheckboxListTile(
-                        title: const Text('Make Admin'),
-                        value: isAdmin,
-                        onChanged:
-                            (val) => setState(() => isAdmin = val ?? false),
-                      ),
-                    ],
+                (context, setState) => Dialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (usernameController.text.trim().isEmpty) return;
-                        Navigator.pop(context);
-
-                        try {
-                          final authData = await AuthService().getAuthData();
-                          final token = authData['token'];
-                          if (token == null)
-                            throw Exception('Not authenticated');
-
-                          await ApiService().addMemberToGroup(
-                            token,
-                            widget.groupId,
-                            usernameController.text.trim(),
-                            isAdmin: isAdmin,
-                          );
-
-                          if (mounted) {
-                            _loadGroupData();
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  e.toString().replaceAll('Exception: ', ''),
-                                ),
-                                backgroundColor: Colors.red,
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.person_add_rounded,
+                            size: 32,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Invite Member',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Enter their email or username to add them to the group',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        TextField(
+                          controller: controller,
+                          autofocus: true,
+                          decoration: InputDecoration(
+                            labelText: 'Email or Username',
+                            hintText: 'john@example.com',
+                            prefixIcon: const Icon(
+                              Icons.alternate_email_rounded,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Colors.blue,
+                                width: 2,
                               ),
-                            );
-                          }
-                        }
-                      },
-                      child: const Text('Add'),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          decoration: BoxDecoration(
+                            color:
+                                isAdmin
+                                    ? Colors.blue.withValues(alpha: 0.05)
+                                    : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color:
+                                  isAdmin
+                                      ? Colors.blue.withValues(alpha: 0.3)
+                                      : Colors.grey[300]!,
+                            ),
+                          ),
+                          child: SwitchListTile(
+                            title: const Text(
+                              'Admin Access',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            subtitle: const Text(
+                              'Can manage members and settings',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            value: isAdmin,
+                            onChanged: (val) => setState(() => isAdmin = val),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(color: Colors.grey[700]),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  if (controller.text.trim().isEmpty) return;
+                                  Navigator.pop(context);
+
+                                  try {
+                                    final authData =
+                                        await AuthService().getAuthData();
+                                    final token = authData['token'];
+                                    if (token == null)
+                                      throw Exception('Not authenticated');
+
+                                    await ApiService().addMemberToGroup(
+                                      token,
+                                      widget.groupId,
+                                      controller.text.trim(),
+                                      isAdmin: isAdmin,
+                                    );
+
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Invitation sent successfully',
+                                          ),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                      _loadGroupData();
+                                    }
+                                  } catch (e) {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            e.toString().replaceAll(
+                                              'Exception: ',
+                                              '',
+                                            ),
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Invite',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
           ),
     );
@@ -1354,6 +1492,17 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
                     ),
                   ),
                   const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.info_outline_rounded,
+                      color: Colors.blue,
+                    ),
+                    title: const Text('File Details'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showFileDetails(file);
+                    },
+                  ),
                   if (_isAdmin || file['shared_by'] == widget.username)
                     ListTile(
                       leading: const Icon(
@@ -1374,6 +1523,100 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
               ),
             ),
           ),
+    );
+  }
+
+  void _showFileDetails(Map<String, dynamic> file) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _getFileColor(
+                        file['mime_type'],
+                      ).withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: _getFileIcon(file['mime_type'], size: 40),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    file['filename'] ?? 'Unknown',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildDetailRow('Size', _formatSize(file['file_size'])),
+                  const SizedBox(height: 12),
+                  _buildDetailRow('Type', file['mime_type'] ?? 'Unknown'),
+                  const SizedBox(height: 12),
+                  _buildDetailRow('Shared by', file['shared_by'] ?? 'Unknown'),
+                  const SizedBox(height: 12),
+                  _buildDetailRow(
+                    'Shared at',
+                    _formatDate(
+                      DateTime.parse(
+                        file['shared_at'] ?? DateTime.now().toIso8601String(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 
@@ -1420,18 +1663,18 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         clipBehavior: Clip.antiAlias,
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(
@@ -1487,18 +1730,18 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         clipBehavior: Clip.antiAlias,
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(
@@ -1530,16 +1773,10 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
               ),
             ],
           ),
-          trailing:
-              _isAdmin || file['shared_by'] == widget.username
-                  ? IconButton(
-                    icon: Icon(
-                      Icons.remove_circle_outline_rounded,
-                      color: Colors.red[400],
-                    ),
-                    onPressed: () => _unshareFile(file['id']),
-                  )
-                  : null,
+          trailing: IconButton(
+            icon: Icon(Icons.more_vert_rounded, color: Colors.grey[400]),
+            onPressed: () => _showFileOptions(file),
+          ),
         ),
       ),
     );
@@ -1548,94 +1785,164 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
   Widget _buildMemberCard(Map<String, dynamic> member) {
     final isMe = member['username'] == widget.username;
     final isAdminMember = member['is_admin'] == true;
+    final initial = (member['username'] as String)[0].toUpperCase();
+
+    // Generate a consistent color for the user based on their username
+    final colors = [
+      Colors.purple,
+      Colors.blue,
+      Colors.teal,
+      Colors.orange,
+      Colors.pink,
+      Colors.indigo,
+      Colors.red,
+      Colors.cyan,
+    ];
+    final colorIndex =
+        (member['username'] as String).codeUnits.fold(0, (a, b) => a + b) %
+        colors.length;
+    final userColor = colors[colorIndex];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
+        color: Colors.transparent,
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
-            vertical: 8,
+            vertical: 12,
           ),
-          leading: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.purple.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Text(
-                (member['username'] as String)[0].toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.purple,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
+          leading: Stack(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: userColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    initial,
+                    style: TextStyle(
+                      color: userColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              if (isAdminMember)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.orange,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Icon(
+                      Icons.star_rounded,
+                      color: Colors.white,
+                      size: 12,
+                    ),
+                  ),
+                ),
+            ],
           ),
-          title: Text(
-            member['username'],
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+          title: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  member['username'],
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (isMe) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'You',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 4),
               Text(
-                member['email'],
+                member['email'] ?? 'No email',
                 style: TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
             ],
           ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isAdminMember)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Admin',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.orange,
+          trailing:
+              _isAdmin && !isMe
+                  ? PopupMenuButton<String>(
+                    icon: Icon(
+                      Icons.more_vert_rounded,
+                      color: Colors.grey[400],
                     ),
-                  ),
-                ),
-              if (_isAdmin && !isMe) ...[
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: Icon(
-                    Icons.delete_outline_rounded,
-                    color: Colors.red[400],
-                  ),
-                  onPressed: () => _removeMember(member['id']),
-                ),
-              ],
-            ],
-          ),
+                    onSelected: (value) {
+                      if (value == 'remove') {
+                        _removeMember(member['id']);
+                      }
+                    },
+                    itemBuilder:
+                        (context) => [
+                          const PopupMenuItem(
+                            value: 'remove',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.person_remove_rounded,
+                                  color: Colors.red,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Remove',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                  )
+                  : null,
         ),
       ),
     );

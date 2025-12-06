@@ -200,7 +200,6 @@ func UnshareFileFromGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// UnshareFolderFromGroupEndpoint removes folder sharing from a group
 func UnshareFolderFromGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := c.MustGet("user").(models.User)
@@ -215,7 +214,6 @@ func UnshareFolderFromGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check if user is admin or the one who shared
 		var membership models.UserGroupMember
 		if err := db.Where("group_id = ? AND user_id = ?", req.GroupID, user.ID).First(&membership).Error; err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"error": "You are not a member of this group"})
@@ -228,13 +226,10 @@ func UnshareFolderFromGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check if user has permission to unshare (admin or original sharer)
 		if !membership.IsAdmin && sharedFolder.SharedByUserID != user.ID {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Only group admins or the user who shared can unshare"})
 			return
 		}
-
-		// Unshare the folder
 		if err := db.Delete(&sharedFolder).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unshare folder"})
 			return

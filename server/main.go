@@ -765,6 +765,7 @@ func main() {
 		api.GET("/groups/:id/files", JWTMiddleware(db, config), handlers.GetGroupFilesEndpoint(db))
 		api.POST("/groups/unshare_file", JWTMiddleware(db, config), handlers.UnshareFileFromGroupEndpoint(db))
 		api.POST("/groups/unshare_folder", JWTMiddleware(db, config), handlers.UnshareFolderFromGroupEndpoint(db))
+		api.POST("/share_file_user", JWTMiddleware(db, config), handlers.ShareFileWithUserEndpoint(db))
 
 		api.POST("/check_username", handlers.CheckUsernameAvailabilityEndpoint(db))
 		api.GET("/app_version", utils.AppVersionEndpoint())

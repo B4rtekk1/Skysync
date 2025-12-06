@@ -440,11 +440,18 @@ class ApiService {
   Future<void> addMemberToGroup(
     String token,
     int groupId,
-    String username, {
+    String emailOrUsername, {
     bool isAdmin = false,
   }) async {
     final url = Uri.parse('$baseUrl/api/groups/add_member');
     try {
+      final isEmail = emailOrUsername.contains('@');
+      final body = {
+        'group_id': groupId,
+        isEmail ? 'email' : 'username': emailOrUsername,
+        'is_admin': isAdmin,
+      };
+
       final response = await http.post(
         url,
         headers: {
@@ -452,15 +459,13 @@ class ApiService {
           'X-API-Key': Config.apiKey,
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'group_id': groupId,
-          'username': username,
-          'is_admin': isAdmin,
-        }),
+        body: jsonEncode(body),
       );
 
       if (response.statusCode != 200) {
-        throw Exception('Failed to add member: ${response.body}');
+        throw Exception(
+          jsonDecode(response.body)['error'] ?? 'Failed to add member',
+        );
       }
     } catch (e) {
       throw Exception('Error adding member: $e');
@@ -627,6 +632,39 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error unsharing folder: $e');
+    }
+  }
+
+  Future<void> shareFileWithUser(
+    String token,
+    int fileId,
+    String emailOrUsername,
+  ) async {
+    final url = Uri.parse('$baseUrl/api/share_file_user');
+    try {
+      final isEmail = emailOrUsername.contains('@');
+      final body = {
+        'file_id': fileId,
+        isEmail ? 'email' : 'username': emailOrUsername,
+      };
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode != 200) {
+        final error =
+            jsonDecode(response.body)['error'] ?? 'Failed to share file';
+        throw Exception(error);
+      }
+    } catch (e) {
+      throw Exception(e);
     }
   }
 }

@@ -182,7 +182,8 @@ func AddMemberToGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 
 		var req struct {
 			GroupID  uint   `json:"group_id" binding:"required"`
-			Username string `json:"username" binding:"required"`
+			Username string `json:"username"`
+			Email    string `json:"email"`
 			IsAdmin  bool   `json:"is_admin"`
 		}
 
@@ -198,7 +199,18 @@ func AddMemberToGroupEndpoint(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		var targetUser models.User
-		if err := db.Where("username = ?", req.Username).First(&targetUser).Error; err != nil {
+		var err error
+
+		if req.Email != "" {
+			err = db.Where("email = ?", req.Email).First(&targetUser).Error
+		} else if req.Username != "" {
+			err = db.Where("username = ?", req.Username).First(&targetUser).Error
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Email or Username is required"})
+			return
+		}
+
+		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}

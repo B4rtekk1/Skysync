@@ -377,9 +377,27 @@ class _GroupsPageState extends State<GroupsPage> {
     );
   }
 
+  Color _getGroupColor(String name) {
+    final colors = [
+      Colors.blue,
+      Colors.purple,
+      Colors.teal,
+      Colors.orange,
+      Colors.pink,
+      Colors.indigo,
+      Colors.cyan,
+      Colors.deepOrange,
+      Colors.green,
+    ];
+    final hash = name.codeUnits.fold(0, (prev, element) => prev + element);
+    return colors[hash % colors.length];
+  }
+
   Widget _buildGroupCard(Map<String, dynamic> group) {
     final memberCount = group['member_count'] ?? 0;
     final isAdmin = group['is_admin'] ?? false;
+    final groupName = group['name'] ?? 'Unnamed Group';
+    final groupColor = _getGroupColor(groupName);
 
     final groupId =
         group['id'] is int
@@ -389,79 +407,20 @@ class _GroupsPageState extends State<GroupsPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         clipBehavior: Clip.antiAlias,
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-          leading: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.group, color: Colors.blue, size: 24),
-          ),
-          title: Text(
-            group['name'] ?? 'Unnamed Group',
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 4),
-              Text(
-                '$memberCount ${memberCount == 1 ? 'member' : 'members'}',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
-              ),
-            ],
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isAdmin)
-                Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Admin',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.orange,
-                    ),
-                  ),
-                ),
-              IconButton(
-                icon: const Icon(Icons.more_vert_rounded),
-                color: Colors.grey[400],
-                onPressed: () => _showGroupOptions(group, groupId),
-              ),
-            ],
-          ),
+        child: InkWell(
           onTap: () {
             Navigator.push(
               context,
@@ -469,12 +428,121 @@ class _GroupsPageState extends State<GroupsPage> {
                 builder:
                     (context) => GroupDetailsPage(
                       groupId: groupId,
-                      groupName: group['name'] ?? 'Unnamed Group',
+                      groupName: groupName,
                       username: widget.username,
                     ),
               ),
             );
           },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Hero(
+                  tag: 'group_icon_$groupId',
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: groupColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Center(
+                      child: Text(
+                        groupName.isNotEmpty ? groupName[0].toUpperCase() : '?',
+                        style: TextStyle(
+                          color: groupColor,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              groupName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 17,
+                                color: Colors.black87,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isAdmin) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.orange.shade300,
+                                    Colors.orange.shade500,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.orange.withValues(alpha: 0.3),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Text(
+                                'ADMIN',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.people_outline_rounded,
+                            size: 16,
+                            color: Colors.grey[500],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$memberCount ${memberCount == 1 ? 'member' : 'members'}',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.more_horiz_rounded, color: Colors.grey[400]),
+                  onPressed: () => _showGroupOptions(group, groupId),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -482,6 +550,9 @@ class _GroupsPageState extends State<GroupsPage> {
 
   void _showGroupOptions(Map<String, dynamic> group, int groupId) {
     final isAdmin = group['is_admin'] ?? false;
+    final groupName = group['name'] ?? 'Unnamed Group';
+    final groupColor = _getGroupColor(groupName);
+    final initial = groupName.isNotEmpty ? groupName[0].toUpperCase() : '?';
 
     showModalBottomSheet(
       context: context,
@@ -513,13 +584,18 @@ class _GroupsPageState extends State<GroupsPage> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.1),
+                            color: groupColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
-                            Icons.group,
-                            color: Colors.blue,
-                            size: 24,
+                          child: Center(
+                            child: Text(
+                              initial,
+                              style: TextStyle(
+                                color: groupColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 24,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 16),

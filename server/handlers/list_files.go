@@ -77,7 +77,6 @@ func ListFilesEndpoint(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Ensure the path is relative by trimming leading separators
 		relFolder := strings.TrimLeft(cleanFolder, string(os.PathSeparator))
 		relFolder = strings.TrimLeft(relFolder, "/")
 		relFolder = strings.TrimLeft(relFolder, "\\")
