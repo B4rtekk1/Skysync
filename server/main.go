@@ -432,6 +432,8 @@ func WAFMiddleware(db *gorm.DB, config *utils.Config) gin.HandlerFunc {
 			"/api/reset_password",
 			"/api/upload_file",
 			"/api/update_username",
+			"/api/upload_avatar",
+			"/api/change_password",
 		}
 		isLegitimate := slices.Contains(legitimateEndpoints, path)
 		if isLegitimate {
@@ -753,6 +755,10 @@ func main() {
 		api.POST("/logout", JWTMiddleware(db, config), handlers.LogoutEndpoint(db))
 		api.POST("/update_username", JWTMiddleware(db, config), handlers.UpdateUsernameEndpoint(db, Logger))
 		api.GET("/verify_token", JWTMiddleware(db, config), handlers.VerifyTokenEndpoint())
+		api.POST("/upload_avatar", JWTMiddleware(db, config), handlers.UploadAvatarEndpoint(db))
+		api.DELETE("/delete_avatar", JWTMiddleware(db, config), handlers.DeleteAvatarEndpoint(db))
+		api.GET("/avatar/:username", handlers.GetAvatarEndpoint(db))
+		api.POST("/change_password", JWTMiddleware(db, config), handlers.ChangePasswordEndpoint(db, Logger))
 
 		api.POST("/groups/create", JWTMiddleware(db, config), handlers.CreateGroupEndpoint(db))
 		api.GET("/groups/list", JWTMiddleware(db, config), handlers.ListGroupsEndpoint(db))

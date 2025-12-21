@@ -1,37 +1,215 @@
-// TODO: API service improvements
-// TODO: Replace generic Map<String, dynamic> responses with typed model classes.
-// TODO: Add centralized error mapping, retry/backoff strategy and request timeouts.
-// TODO: Implement token refresh handling on 401 responses and improve logging.
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../config.dart';
+
+class ApiException implements Exception {
+  final String message;
+  final int? statusCode;
+  final String? errorCode;
+
+  ApiException(this.message, {this.statusCode, this.errorCode});
+
+  @override
+  String toString() => message;
+
+  static ApiException fromResponse(http.Response response) {
+    String message;
+    String? errorCode;
+
+    try {
+      final body = jsonDecode(response.body);
+      message =
+          body['error'] ??
+          body['message'] ??
+          _getDefaultMessage(response.statusCode);
+      errorCode = body['code']?.toString();
+    } catch (_) {
+      message = _getDefaultMessage(response.statusCode);
+    }
+
+    return ApiException(
+      message,
+      statusCode: response.statusCode,
+      errorCode: errorCode,
+    );
+  }
+
+  static String _getDefaultMessage(int statusCode) {
+    switch (statusCode) {
+      case 400:
+        return 'Invalid request. Please check your input.';
+      case 401:
+        return 'Session expired. Please log in again.';
+      case 403:
+        return 'Access denied. You don\'t have permission.';
+      case 404:
+        return 'Resource not found.';
+      case 409:
+        return 'Conflict. This resource already exists.';
+      case 413:
+        return 'File too large.';
+      case 429:
+        return 'Too many requests. Please wait a moment.';
+      case 500:
+        return 'Server error. Please try again later.';
+      case 502:
+      case 503:
+      case 504:
+        return 'Service temporarily unavailable.';
+      default:
+        return 'An error occurred. Please try again.';
+    }
+  }
+}
 
 class ApiService {
   static String baseUrl = Config.baseUrl;
 
-  Future<Map<String, dynamic>> login(String email, String password) async {
-    final url = Uri.parse('$baseUrl/api/login');
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': Config.apiKey,
-        },
-        body: jsonEncode({'username': email, 'password': password}),
-      );
+  static const Duration defaultTimeout = Duration(seconds: 30);
+  static const int maxRetries = 3;
+  static const Duration initialRetryDelay = Duration(milliseconds: 500);
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception('Failed to login: ${response.body}');
-      }
-    } catch (e) {
-      throw Exception('Error logging in: $e');
+  Map<String, String> _baseHeaders({String? token}) {
+    final headers = {
+      'Content-Type': 'application/json',
+      'X-API-Key': Config.apiKey,
+    };
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
     }
+    return headers;
+  }
+
+  Future<http.Response> _executeWithRetry(
+    Future<http.Response> Function() request, {
+    int retries = maxRetries,
+    bool retryOnServerError = true,
+  }) async {
+    int attempt = 0;
+    Duration delay = initialRetryDelay;
+
+    while (true) {
+      try {
+        attempt++;
+        final response = await request().timeout(defaultTimeout);
+
+        if (response.statusCode >= 400 && response.statusCode < 500) {
+          if (response.statusCode == 429 && attempt < retries) {
+            await Future.delayed(delay * 2);
+            delay *= 2;
+            continue;
+          }
+          return response;
+        }
+
+        if (response.statusCode >= 500 &&
+            retryOnServerError &&
+            attempt < retries) {
+          debugPrint(
+            '[API] Server error ${response.statusCode}, retrying (attempt $attempt/$retries)',
+          );
+          await Future.delayed(delay);
+          delay *= 2;
+          continue;
+        }
+
+        return response;
+      } on TimeoutException {
+        if (attempt < retries) {
+          debugPrint(
+            '[API] Request timeout, retrying (attempt $attempt/$retries)',
+          );
+          await Future.delayed(delay);
+          delay *= 2;
+          continue;
+        }
+        throw ApiException('Connection timed out. Please check your internet.');
+      } on SocketException {
+        if (attempt < retries) {
+          debugPrint(
+            '[API] Network error, retrying (attempt $attempt/$retries)',
+          );
+          await Future.delayed(delay);
+          delay *= 2;
+          continue;
+        }
+        throw ApiException(
+          'No internet connection. Please check your network.',
+        );
+      } catch (e) {
+        if (attempt < retries && e is! ApiException) {
+          debugPrint('[API] Error: $e, retrying (attempt $attempt/$retries)');
+          await Future.delayed(delay);
+          delay *= 2;
+          continue;
+        }
+        rethrow;
+      }
+    }
+  }
+
+  Future<dynamic> _get(String endpoint, {String? token}) async {
+    final response = await _executeWithRetry(
+      () => http.get(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: _baseHeaders(token: token),
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw ApiException.fromResponse(response);
+  }
+
+  Future<dynamic> _post(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) async {
+    final response = await _executeWithRetry(
+      () => http.post(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: _baseHeaders(token: token),
+        body: body != null ? jsonEncode(body) : null,
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw ApiException.fromResponse(response);
+  }
+
+  Future<dynamic> _delete(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) async {
+    final response = await _executeWithRetry(
+      () => http.delete(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: _baseHeaders(token: token),
+        body: body != null ? jsonEncode(body) : null,
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw ApiException.fromResponse(response);
+  }
+
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    return await _post(
+      '/api/login',
+      body: {'username': email, 'password': password},
+    );
   }
 
   Future<Map<String, dynamic>> register(
@@ -131,6 +309,28 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error resetting password: $e');
+    }
+  }
+
+  Future<void> resendVerificationCode(String email) async {
+    final url = Uri.parse('$baseUrl/api/resend_verification');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+        },
+        body: jsonEncode({'email': email}),
+      );
+
+      if (response.statusCode != 200) {
+        final error =
+            jsonDecode(response.body)['error'] ?? 'Failed to resend code';
+        throw Exception(error);
+      }
+    } catch (e) {
+      throw Exception('$e');
     }
   }
 
@@ -276,6 +476,24 @@ class ApiService {
     }
   }
 
+  Future<List<int>> downloadFile(String token, int fileId) async {
+    final url = Uri.parse('$baseUrl/api/download_file?file_id=$fileId');
+    try {
+      final response = await http.get(
+        url,
+        headers: {'X-API-Key': Config.apiKey, 'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      } else {
+        throw Exception('Failed to download file: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error downloading file: $e');
+    }
+  }
+
   Future<void> logout(String token) async {
     final url = Uri.parse('$baseUrl/api/logout');
     try {
@@ -390,26 +608,8 @@ class ApiService {
   }
 
   Future<List<Map<String, dynamic>>> listGroups(String token) async {
-    final url = Uri.parse('$baseUrl/api/groups/list');
-    try {
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': Config.apiKey,
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return List<Map<String, dynamic>>.from(data['groups'] ?? []);
-      } else {
-        throw Exception('Failed to load groups: ${response.body}');
-      }
-    } catch (e) {
-      throw Exception('Error loading groups: $e');
-    }
+    final data = await _get('/api/groups/list', token: token);
+    return List<Map<String, dynamic>>.from(data['groups'] ?? []);
   }
 
   Future<Map<String, dynamic>> getGroupDetails(
@@ -498,23 +698,7 @@ class ApiService {
   }
 
   Future<void> deleteGroup(String token, int groupId) async {
-    final url = Uri.parse('$baseUrl/api/groups/$groupId');
-    try {
-      final response = await http.delete(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': Config.apiKey,
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed to delete group: ${response.body}');
-      }
-    } catch (e) {
-      throw Exception('Error deleting group: $e');
-    }
+    await _delete('/api/groups/$groupId', token: token);
   }
 
   Future<void> shareFileWithGroup(String token, int groupId, int fileId) async {
@@ -665,6 +849,117 @@ class ApiService {
       }
     } catch (e) {
       throw Exception(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> uploadAvatar(String token, File file) async {
+    final url = Uri.parse('$baseUrl/api/upload_avatar');
+    final request = http.MultipartRequest('POST', url);
+    request.headers.addAll({
+      'X-API-Key': Config.apiKey,
+      'Authorization': 'Bearer $token',
+    });
+
+    final bytes = await file.readAsBytes();
+    final filename = file.path.split(Platform.pathSeparator).last;
+
+    String contentType = 'image/jpeg';
+    final ext = filename.toLowerCase().split('.').last;
+    switch (ext) {
+      case 'png':
+        contentType = 'image/png';
+        break;
+      case 'gif':
+        contentType = 'image/gif';
+        break;
+      case 'webp':
+        contentType = 'image/webp';
+        break;
+      case 'jpg':
+      case 'jpeg':
+      default:
+        contentType = 'image/jpeg';
+    }
+
+    final multipartFile = http.MultipartFile.fromBytes(
+      'avatar',
+      bytes,
+      filename: filename,
+      contentType: MediaType.parse(contentType),
+    );
+
+    request.files.add(multipartFile);
+
+    try {
+      final response = await request.send();
+      final respStr = await response.stream.bytesToString();
+      debugPrint('Avatar upload response: $respStr');
+      if (response.statusCode == 200) {
+        return jsonDecode(respStr);
+      } else {
+        final decoded = jsonDecode(respStr);
+        final error = decoded['error'] ?? 'Failed to upload avatar';
+        throw Exception(error);
+      }
+    } catch (e) {
+      debugPrint('Avatar upload error: $e');
+      throw Exception('Error uploading avatar: $e');
+    }
+  }
+
+  Future<void> deleteAvatar(String token) async {
+    final url = Uri.parse('$baseUrl/api/delete_avatar');
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        final error =
+            jsonDecode(response.body)['error'] ?? 'Failed to delete avatar';
+        throw Exception(error);
+      }
+    } catch (e) {
+      throw Exception('Error deleting avatar: $e');
+    }
+  }
+
+  String getAvatarUrl(String username) {
+    return '$baseUrl/api/avatar/$username';
+  }
+
+  Future<void> changePassword(
+    String token,
+    String currentPassword,
+    String newPassword,
+  ) async {
+    final url = Uri.parse('$baseUrl/api/change_password');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Config.apiKey,
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        final error =
+            jsonDecode(response.body)['error'] ?? 'Failed to change password';
+        throw Exception(error);
+      }
+    } catch (e) {
+      throw Exception('$e');
     }
   }
 }

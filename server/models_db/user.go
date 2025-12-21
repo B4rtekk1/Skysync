@@ -25,7 +25,8 @@ type User struct {
 	FailedLoginAttempts int `gorm:"default:0"`
 	AccountLockedUntil  *time.Time
 	LastLogin           *time.Time
-	IsActive            bool `gorm:"default:true"`
+	IsActive            bool   `gorm:"default:true"`
+	AvatarPath          string `gorm:"size:500"`
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 	DeletedAt           gorm.DeletedAt `gorm:"index"`

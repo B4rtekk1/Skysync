@@ -9,6 +9,9 @@ import '../services/auth_service.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/error_view.dart';
 import '../widgets/error_box.dart';
+import 'image_preview_page.dart';
+import 'text_preview_page.dart';
+import 'pdf_preview_page.dart';
 
 class MyFilesPage extends StatefulWidget {
   final String username;
@@ -1733,7 +1736,7 @@ class _MyFilesPageState extends State<MyFilesPage> {
                   if (file.isFolder) {
                     _navigateToFolder(file.name);
                   } else {
-                    // TODO: Open file preview
+                    _openFile(file);
                   }
                 },
                 onLongPress: () => _showFileOptions(file),
@@ -1878,7 +1881,7 @@ class _MyFilesPageState extends State<MyFilesPage> {
             if (file.isFolder) {
               _navigateToFolder(file.name);
             } else {
-              // TODO: Open file preview
+              _openFile(file);
             }
           },
         ),
@@ -1936,7 +1939,7 @@ class _MyFilesPageState extends State<MyFilesPage> {
               label: 'OPEN',
               textColor: Colors.white,
               onPressed: () {
-                // TODO: Open file location
+                _openFileLocation(filePath);
               },
             ),
           ),
@@ -1952,6 +1955,195 @@ class _MyFilesPageState extends State<MyFilesPage> {
         );
       }
     }
+  }
+
+  Future<void> _openFile(FileItem file) async {
+    if (file.isFolder || file.id == null) return;
+
+    if (file.mimeType.startsWith('image/')) {
+      _openImagePreview(file);
+      return;
+    }
+
+    if (file.mimeType == 'application/pdf' ||
+        file.name.toLowerCase().endsWith('.pdf')) {
+      _openPdfPreview(file);
+      return;
+    }
+
+    if (_isTextFile(file)) {
+      _openTextPreview(file);
+      return;
+    }
+    try {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Text('Opening ${file.name}...'),
+              ],
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      final token = await AuthService().getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      final fileBytes = await ApiService().downloadFile(token, file.id!);
+
+      final directory = await getDownloadsDirectory();
+      final filePath = path.join(directory!.path, file.name);
+      final localFile = File(filePath);
+      await localFile.writeAsBytes(fileBytes);
+
+      if (Platform.isWindows) {
+        await Process.run('explorer', [filePath]);
+      } else if (Platform.isMacOS) {
+        await Process.run('open', [filePath]);
+      } else if (Platform.isLinux) {
+        await Process.run('xdg-open', [filePath]);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening file: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _openFileLocation(String filePath) async {
+    try {
+      if (Platform.isWindows) {
+        await Process.run('explorer', ['/select,', filePath]);
+      } else if (Platform.isMacOS) {
+        await Process.run('open', ['-R', filePath]);
+      } else if (Platform.isLinux) {
+        final directory = path.dirname(filePath);
+        await Process.run('xdg-open', [directory]);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening file location: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _openImagePreview(FileItem file) {
+    final allImages =
+        _filteredFiles
+            .where((f) => f.mimeType.startsWith('image/') && f.id != null)
+            .toList();
+    final currentIndex = allImages.indexWhere((f) => f.id == file.id);
+
+    if (currentIndex == -1 || allImages.isEmpty) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) =>
+                ImagePreviewPage(images: allImages, initialIndex: currentIndex),
+      ),
+    );
+  }
+
+  bool _isTextFile(FileItem file) {
+    final textMimeTypes = [
+      'text/plain',
+      'text/html',
+      'text/css',
+      'text/javascript',
+      'text/markdown',
+      'text/xml',
+      'text/csv',
+      'application/json',
+      'application/xml',
+      'application/javascript',
+    ];
+
+    final textExtensions = [
+      '.txt',
+      '.md',
+      '.json',
+      '.xml',
+      '.html',
+      '.htm',
+      '.css',
+      '.js',
+      '.ts',
+      '.dart',
+      '.py',
+      '.java',
+      '.c',
+      '.cpp',
+      '.h',
+      '.hpp',
+      '.cs',
+      '.go',
+      '.rs',
+      '.rb',
+      '.php',
+      '.swift',
+      '.kt',
+      '.scala',
+      '.sh',
+      '.bash',
+      '.zsh',
+      '.yml',
+      '.yaml',
+      '.toml',
+      '.ini',
+      '.cfg',
+      '.conf',
+      '.log',
+      '.sql',
+      '.env',
+      '.gitignore',
+      '.dockerfile',
+      '.makefile',
+    ];
+
+    if (textMimeTypes.contains(file.mimeType)) return true;
+
+    final fileName = file.name.toLowerCase();
+    return textExtensions.any((ext) => fileName.endsWith(ext));
+  }
+
+  void _openTextPreview(FileItem file) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TextPreviewPage(file: file)),
+    );
+  }
+
+  void _openPdfPreview(FileItem file) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => PdfPreviewPage(file: file)),
+    );
   }
 
   Future<void> _showShareOptions(FileItem file) async {
@@ -2157,7 +2349,6 @@ class _MyFilesPageState extends State<MyFilesPage> {
   }
 
   Future<void> _shareWithGroupList(FileItem file) async {
-    // Show loading dialog then fetch groups
     showDialog(
       context: context,
       barrierDismissible: false,

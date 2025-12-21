@@ -92,12 +92,15 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
             if (item['type'] == 'folder') return false;
 
             final mimeType = item['mime_type'] as String;
-            if (_selectedFilter == 'Images')
+            if (_selectedFilter == 'Images') {
               return mimeType.startsWith('image/');
-            if (_selectedFilter == 'Videos')
+            }
+            if (_selectedFilter == 'Videos') {
               return mimeType.startsWith('video/');
-            if (_selectedFilter == 'Audio')
+            }
+            if (_selectedFilter == 'Audio') {
               return mimeType.startsWith('audio/');
+            }
             if (_selectedFilter == 'Documents') {
               return mimeType.contains('pdf') ||
                   mimeType.contains('document') ||
@@ -412,14 +415,17 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
                               child: ElevatedButton(
                                 onPressed: () async {
                                   if (controller.text.trim().isEmpty) return;
+                                  final scaffoldMessenger =
+                                      ScaffoldMessenger.of(this.context);
                                   Navigator.pop(context);
 
                                   try {
                                     final authData =
                                         await AuthService().getAuthData();
                                     final token = authData['token'];
-                                    if (token == null)
+                                    if (token == null) {
                                       throw Exception('Not authenticated');
+                                    }
 
                                     await ApiService().addMemberToGroup(
                                       token,
@@ -428,35 +434,29 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
                                       isAdmin: isAdmin,
                                     );
 
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Invitation sent successfully',
-                                          ),
-                                          backgroundColor: Colors.green,
+                                    if (!mounted) return;
+                                    scaffoldMessenger.showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Invitation sent successfully',
                                         ),
-                                      );
-                                      _loadGroupData();
-                                    }
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                    _loadGroupData();
                                   } catch (e) {
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            e.toString().replaceAll(
-                                              'Exception: ',
-                                              '',
-                                            ),
+                                    if (!mounted) return;
+                                    scaffoldMessenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          e.toString().replaceAll(
+                                            'Exception: ',
+                                            '',
                                           ),
-                                          backgroundColor: Colors.red,
                                         ),
-                                      );
-                                    }
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
@@ -667,7 +667,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
   }
 
   Future<void> _selectFromServer() async {
-    final scaffoldContext = context;
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     showDialog(
       context: context,
@@ -690,7 +690,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                  scaffoldMessenger.showSnackBar(
                     SnackBar(
                       content: Text(e.toString().replaceAll('Exception: ', '')),
                       backgroundColor: Colors.red,
@@ -1954,12 +1954,15 @@ class _GroupDetailsPageState extends State<GroupDetailsPage>
     if (mimeType.startsWith('video/')) return Colors.orange;
     if (mimeType.startsWith('audio/')) return Colors.red;
     if (mimeType.contains('pdf')) return Colors.red;
-    if (mimeType.contains('word') || mimeType.contains('document'))
+    if (mimeType.contains('word') || mimeType.contains('document')) {
       return Colors.blue;
-    if (mimeType.contains('excel') || mimeType.contains('spreadsheet'))
+    }
+    if (mimeType.contains('excel') || mimeType.contains('spreadsheet')) {
       return Colors.green;
-    if (mimeType.contains('zip') || mimeType.contains('compressed'))
+    }
+    if (mimeType.contains('zip') || mimeType.contains('compressed')) {
       return Colors.grey;
+    }
     return Colors.blue;
   }
 
@@ -2127,16 +2130,20 @@ class _FileSelectionDialogState extends State<_FileSelectionDialog> {
     if (mimeType.startsWith('video/')) return Icons.video_file_rounded;
     if (mimeType.startsWith('audio/')) return Icons.audio_file_rounded;
     if (mimeType.contains('pdf')) return Icons.picture_as_pdf_rounded;
-    if (mimeType.contains('document') || mimeType.contains('word'))
+    if (mimeType.contains('document') || mimeType.contains('word')) {
       return Icons.description_rounded;
-    if (mimeType.contains('spreadsheet') || mimeType.contains('excel'))
+    }
+    if (mimeType.contains('spreadsheet') || mimeType.contains('excel')) {
       return Icons.table_chart_rounded;
-    if (mimeType.contains('presentation') || mimeType.contains('powerpoint'))
+    }
+    if (mimeType.contains('presentation') || mimeType.contains('powerpoint')) {
       return Icons.slideshow_rounded;
+    }
     if (mimeType.contains('zip') ||
         mimeType.contains('archive') ||
-        mimeType.contains('compressed'))
+        mimeType.contains('compressed')) {
       return Icons.folder_zip_rounded;
+    }
     return Icons.insert_drive_file_rounded;
   }
 
@@ -2146,14 +2153,18 @@ class _FileSelectionDialogState extends State<_FileSelectionDialog> {
     if (mimeType.startsWith('video/')) return Colors.purple;
     if (mimeType.startsWith('audio/')) return Colors.orange;
     if (mimeType.contains('pdf')) return Colors.red;
-    if (mimeType.contains('document') || mimeType.contains('word'))
+    if (mimeType.contains('document') || mimeType.contains('word')) {
       return Colors.blue;
-    if (mimeType.contains('spreadsheet') || mimeType.contains('excel'))
+    }
+    if (mimeType.contains('spreadsheet') || mimeType.contains('excel')) {
       return Colors.green;
-    if (mimeType.contains('presentation') || mimeType.contains('powerpoint'))
+    }
+    if (mimeType.contains('presentation') || mimeType.contains('powerpoint')) {
       return Colors.deepOrange;
-    if (mimeType.contains('zip') || mimeType.contains('archive'))
+    }
+    if (mimeType.contains('zip') || mimeType.contains('archive')) {
       return Colors.amber;
+    }
     return Colors.grey;
   }
 
@@ -2162,8 +2173,9 @@ class _FileSelectionDialogState extends State<_FileSelectionDialog> {
     final bytes = size is int ? size : int.tryParse(size.toString()) ?? 0;
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024)
+    if (bytes < 1024 * 1024 * 1024) {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 

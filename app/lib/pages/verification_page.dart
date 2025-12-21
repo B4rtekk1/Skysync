@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
@@ -20,7 +21,10 @@ class _VerificationPageState extends State<VerificationPage> {
   final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
   final ApiService _apiService = ApiService();
   bool _isLoading = false;
+  bool _isResending = false;
   String? _errorMessage;
+  int _resendCooldown = 0;
+  Timer? _cooldownTimer;
 
   @override
   void dispose() {
@@ -30,7 +34,25 @@ class _VerificationPageState extends State<VerificationPage> {
     for (var node in _focusNodes) {
       node.dispose();
     }
+    _cooldownTimer?.cancel();
     super.dispose();
+  }
+
+  void _startCooldownTimer() {
+    setState(() {
+      _resendCooldown = 60;
+    });
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _resendCooldown--;
+        });
+        if (_resendCooldown <= 0) {
+          timer.cancel();
+        }
+      }
+    });
   }
 
   void _onCodeChanged(String value, int index) {
@@ -66,7 +88,10 @@ class _VerificationPageState extends State<VerificationPage> {
       await _apiService.verify(widget.email, code);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Verification successful!')),
+          const SnackBar(
+            content: Text('Verification successful!'),
+            backgroundColor: Colors.green,
+          ),
         );
         Navigator.pushAndRemoveUntil(
           context,
@@ -84,6 +109,47 @@ class _VerificationPageState extends State<VerificationPage> {
       if (mounted) {
         setState(() {
           _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _resendCode() async {
+    if (_resendCooldown > 0 || _isResending) return;
+
+    setState(() {
+      _isResending = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await _apiService.resendVerificationCode(widget.email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('New verification code sent!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        for (var controller in _controllers) {
+          controller.clear();
+        }
+        _focusNodes[0].requestFocus();
+        _startCooldownTimer();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResending = false;
         });
       }
     }
@@ -201,13 +267,31 @@ class _VerificationPageState extends State<VerificationPage> {
                 ),
                 const SizedBox(height: 16),
                 TextButton(
-                  onPressed: () {
-                    // TODO: Implement resend code logic
-                  },
-                  child: const Text(
-                    'Resend Code',
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                  onPressed:
+                      (_resendCooldown > 0 || _isResending)
+                          ? null
+                          : _resendCode,
+                  child:
+                      _isResending
+                          ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.grey,
+                            ),
+                          )
+                          : Text(
+                            _resendCooldown > 0
+                                ? 'Resend Code ($_resendCooldown s)'
+                                : 'Resend Code',
+                            style: TextStyle(
+                              color:
+                                  _resendCooldown > 0
+                                      ? Colors.grey[400]
+                                      : Colors.grey,
+                            ),
+                          ),
                 ),
               ],
             ),

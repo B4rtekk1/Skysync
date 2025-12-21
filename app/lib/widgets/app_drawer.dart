@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config.dart';
 import '../pages/dashboard_page.dart';
 import '../pages/my_files_page.dart';
 import '../pages/groups_page.dart';
@@ -115,19 +116,52 @@ class AppDrawer extends StatelessWidget {
   }
 
   Widget _buildHeader() {
+    final avatarUrl = '${Config.baseUrl}/api/avatar/$username';
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: Colors.blue.shade50,
-            child: Text(
-              username.isNotEmpty ? username[0].toUpperCase() : 'U',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.blue.shade700,
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.blue.shade50,
+            ),
+            child: ClipOval(
+              child: Image.network(
+                avatarUrl,
+                fit: BoxFit.cover,
+                headers: {'X-API-Key': Config.apiKey},
+                errorBuilder:
+                    (context, error, stackTrace) => Center(
+                      child: Text(
+                        username.isNotEmpty ? username[0].toUpperCase() : 'U',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue.shade700,
+                        ),
+                      ),
+                    ),
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        value:
+                            loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
