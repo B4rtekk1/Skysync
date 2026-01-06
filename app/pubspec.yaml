@@ -43,7 +43,7 @@ dependencies:
   google_fonts: ^6.3.2
   http_parser: ^4.0.2
   flutter_sharing_intent: ^2.0.4
-  syncfusion_flutter_pdfviewer: ^28.2.6
+  syncfusion_flutter_pdfviewer: ^32.1.22
 
 dev_dependencies:
   flutter_test:
